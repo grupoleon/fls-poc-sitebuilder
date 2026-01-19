@@ -42,7 +42,7 @@
         }
       ]
     },
-    "kinsta_token": "218863b6a60338636de5a99c85c437d00c7fd4daa36cb7b05ba3ec965e67866a",
+    "kinsta_token": "",
     "logo": "logo_1763567165.png",
     "site_title": "poc site",
     "display_name": "poc-site",
@@ -60,11 +60,11 @@
   },
   "authentication": {
     "api_keys": {
-      "google_maps": "AIzaSyB4kxpQKrIiwTQR41eqGw3FRGAsqEoPDMI",
+      "google_maps": "",
       "google_analytics": "G-XXXXXXXXXX",
       "recaptcha": {
-        "site_key": "6LcybYwrAAAAAJpqHkRj-Q0vPdLKOAISfEj-p_g6",
-        "secret_key": "6LcybYwrAAAAAHsri3Oj_dMNGP3Vhx524l9CYRRT"
+        "site_key": "",
+        "secret_key": ""
       },
       "security": {
         "wpvulndb_api_key": "",
