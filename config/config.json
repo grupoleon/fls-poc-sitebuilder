@@ -1,0 +1,317 @@
+{
+  "site": {
+    "admin": {
+      "username": "FrontlineStrategies",
+      "email": "vishnu@frontlinestrategies.co",
+      "password": "p3XOIDlTBARs2h^R"
+    },
+    "settings": {
+      "delete_default_pages": true
+    },
+    "navigation": {
+      "enabled": false,
+      "replace_existing": false,
+      "menu_items": [
+        {
+          "title": "Home",
+          "url": "/"
+        },
+        {
+          "title": "About",
+          "url": "/about"
+        },
+        {
+          "title": "Get Involved",
+          "url": "/get-involved"
+        },
+        {
+          "title": "Issues",
+          "url": "/issues"
+        },
+        {
+          "title": "Endorsements",
+          "url": "/endorsements"
+        },
+        {
+          "title": "Contact",
+          "url": "/contact"
+        },
+        {
+          "title": "News",
+          "url": "/news"
+        }
+      ]
+    },
+    "kinsta_token": "218863b6a60338636de5a99c85c437d00c7fd4daa36cb7b05ba3ec965e67866a",
+    "logo": "logo_1763567165.png",
+    "site_title": "poc site",
+    "display_name": "poc-site",
+    "admin_email": "admin@example.com",
+    "admin_user": "frontline",
+    "admin_password": "secure123",
+    "region": "us-central1",
+    "company": "41d66480-c263-4ded-b73d-975768952cb0",
+    "wp_language": "en_US",
+    "install_mode": "new",
+    "is_multisite": false,
+    "is_subdomain_multisite": false,
+    "woocommerce": false,
+    "wordpressseo": false
+  },
+  "authentication": {
+    "api_keys": {
+      "google_maps": "AIzaSyB4kxpQKrIiwTQR41eqGw3FRGAsqEoPDMI",
+      "google_analytics": "G-XXXXXXXXXX",
+      "recaptcha": {
+        "site_key": "6LcybYwrAAAAAJpqHkRj-Q0vPdLKOAISfEj-p_g6",
+        "secret_key": "6LcybYwrAAAAAHsri3Oj_dMNGP3Vhx524l9CYRRT"
+      },
+      "security": {
+        "wpvulndb_api_key": "",
+        "vulnerability_scanner_api": ""
+      }
+    }
+  },
+  "security": {
+    "enabled": true,
+    "geo_blocking": {
+      "enabled": true,
+      "allowed_countries": [
+        "US",
+        "IN"
+      ],
+      "block_admin_area": true,
+      "block_frontend": true,
+      "emergency_access": true,
+      "emergency_access_code": "fls-1718",
+      "whitelist_ips": []
+    },
+    "two_factor_auth": {
+      "enabled": true,
+      "required_for_all_users": false,
+      "required_roles": [
+        "administrator",
+        "editor",
+        "author"
+      ],
+      "grace_period_days": 0
+    },
+    "login_protection": {
+      "enabled": true,
+      "custom_login_url": "fls-login",
+      "hide_login_page": true,
+      "limit_failed_attempts": true
+    },
+    "wordpress_hardening": {
+      "enabled": true,
+      "disable_file_editing": false,
+      "disable_installer": false,
+      "hide_wp_version": true,
+      "disable_xmlrpc": true,
+      "security_headers": true
+    },
+    "recaptcha_protection": {
+      "enabled": true,
+      "protect_forms": true,
+      "protect_login": true,
+      "protect_comments": true
+    },
+    "vulnerability_monitoring": {
+      "enabled": true,
+      "notification_email": "vishnu@frontlinestrategies.co",
+      "check_frequency": "weekly",
+      "check_plugins": true,
+      "check_themes": false,
+      "auto_update_minor": true,
+      "severity_threshold": "medium"
+    },
+    "vulnerability_notifications": {
+      "enabled": true,
+      "email": "vishnu@frontlinestrategies.co",
+      "frequency": "weekly"
+    },
+    "malware_protection": {
+      "enabled": true,
+      "real_time_scanning": {
+        "enabled": true,
+        "sensitivity": "high"
+      },
+      "scheduled_scans": {
+        "enabled": true,
+        "frequency": "daily",
+        "scan_hour": 2
+      },
+      "scan_options": {
+        "scan_malware": true,
+        "scan_file_changes": true,
+        "scan_core_files": true,
+        "scan_plugins": true,
+        "scan_themes": true,
+        "scan_images": true,
+        "scan_comments": true,
+        "scan_posts": true
+      },
+      "email_alerts": {
+        "enabled": true,
+        "scan_issues": true,
+        "blocking_events": true,
+        "login_lockouts": true,
+        "admin_logins": true,
+        "breach_attempts": true,
+        "plugin_deactivation": true,
+        "file_changes": true,
+        "alert_frequency": "immediately",
+        "alert_threshold": "medium"
+      },
+      "auto_cleaning": {
+        "enabled": false,
+        "comment": "this option must be used carefully"
+      }
+    },
+    "brute_force_protection": {
+      "enabled": true,
+      "login_attempt_threshold": 3,
+      "block_duration_hours": 24,
+      "immediate_ip_blocking": true
+    }
+  },
+  "password_policy": {
+    "min_length": 12,
+    "require_uppercase": true,
+    "require_lowercase": true,
+    "require_numbers": true,
+    "require_special_chars": true,
+    "prevent_username_password": true,
+    "prevent_common_passwords": true
+  },
+  "wp_2fa_config": {
+    "enabled": true,
+    "enforce_on_multisite": true,
+    "enforcement_policy": "enforce-on-login",
+    "grace_policy": "use-grace-policy",
+    "grace_period": 7,
+    "enforced_roles": [
+      "administrator",
+      "editor",
+      "author",
+      "contributor",
+      "subscriber"
+    ],
+    "backup_codes_enabled": true,
+    "enable_destroy_session": true,
+    "create_custom_user_page": true,
+    "custom_user_page_url": "/2fa-setup",
+    "redirect_after_wizard_redirect": true,
+    "login_code_expiry_time": 5,
+    "backup_codes_wrapper": 10
+  },
+  "wp_security_audit_log": {
+    "restrict_log_viewer": "only_admins",
+    "incognito_mode": false,
+    "hide_plugin": false,
+    "frontend_events": true,
+    "backend_events": true,
+    "login_page_notification": true,
+    "pruning_date_e": 365,
+    "pruning_limit_e": 10000,
+    "log_404": true,
+    "purge_404_log": true,
+    "log_visitor_404": false
+  },
+  "plugins": {
+    "keep": [
+      "yoast-seo",
+      "kinsta-mu-plugins"
+    ],
+    "install": [
+      "forminator",
+      "wp-google-maps",
+      "wordfence",
+      "wp-2fa",
+      "wp-security-audit-log",
+      "wps-hide-login",
+      "advanced-google-recaptcha",
+      "black-studio-tinymce-widget",
+      "classic-editor",
+      "custom-post-type-ui",
+      "redux-framework",
+      "ga-google-analytics",
+      "classic-widgets",
+      "siteorigin-panels",
+      "so-widgets-bundle"
+    ]
+  },
+  "themes": {
+    "install": []
+  },
+  "integrations": {
+    "analytics": {
+      "enabled": true
+    },
+    "theme_customization": {
+      "enabled": true
+    },
+    "forms": {
+      "enabled": true,
+      "contact_form": {
+        "enabled": true,
+        "placement": "contact",
+        "placeholders": [
+          "[form]",
+          "[contact-form]",
+          "[contact]"
+        ]
+      },
+      "volunteer_form": {
+        "enabled": true,
+        "placement": "get-involved",
+        "placeholders": [
+          "[volunteer-form]",
+          "[volunteer]"
+        ]
+      },
+      "document_upload_form": {
+        "enabled": false,
+        "placement": "get-involved",
+        "placeholders": [
+          "[document-form]",
+          "[document-upload-form]",
+          "[document]",
+          "[upload-form]",
+          "[upload]"
+        ]
+      },
+      "auto_find_placements": true,
+      "test_form": {
+        "enabled": false,
+        "placement": "",
+        "placeholders": []
+      }
+    },
+    "social_links": {
+      "enabled": false,
+      "placement": "footer",
+      "facebook": "",
+      "twitter": "",
+      "instagram": "",
+      "linkedin": ""
+    },
+    "maps": {
+      "enabled": true,
+      "placement": "contact",
+      "markers": [
+        {
+          "title": "Washington, D.C.",
+          "lat": 38.8977,
+          "lng": -77.0365
+        }
+      ],
+      "center": {
+        "lat": 38.8977,
+        "lng": -77.0365
+      },
+      "zoom": 10,
+      "auto_find_placements": false
+    }
+  }
+}

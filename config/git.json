@@ -1,0 +1,10 @@
+{
+    "token": "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",
+    "org": "Frontline-Strategies",
+    "repo": "WebsiteBuild",
+    "branch": "content_automation",
+    "host": "146.148.59.197",
+    "user": "pocsite",
+    "port": 44125,
+    "path": "/www/pocsite/public"
+}

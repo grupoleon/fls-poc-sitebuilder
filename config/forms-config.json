@@ -1,0 +1,31 @@
+{
+    "contact-form": {
+        "placeholders": [
+            "[form]",
+            "[contact-form]",
+            "[contact]"
+        ]
+    },
+    "volunteer-form": {
+        "placeholders": [
+            "[volunteer-form]",
+            "[volunteer]",
+            "[join-team]",
+            "[join-us]"
+        ]
+    },
+    "document-upload-form": {
+        "placeholders": [
+            "[document-form]",
+            "[document-upload-form]",
+            "[document]",
+            "[upload-form]",
+            "[upload]",
+            "[doc-form]",
+            "[doc]"
+        ]
+    },
+    "test-form": {
+        "placeholders": []
+    }
+}

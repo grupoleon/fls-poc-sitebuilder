@@ -1,0 +1,28 @@
+{
+    "environment": {
+        "php_executable": null,
+        "auto_detect_php": true
+    },
+    "logging": {
+        "level": "info",
+        "max_log_size_mb": 10,
+        "retain_days": 30
+    },
+    "uploads": {
+        "max_file_size_mb": 10,
+        "allowed_extensions": [
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "webp",
+            "svg",
+            "pdf"
+        ]
+    },
+    "interface": {
+        "theme": "default",
+        "items_per_page": 20,
+        "enable_debug_mode": false
+    }
+}
