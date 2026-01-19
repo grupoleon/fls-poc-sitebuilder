@@ -1,0 +1,15 @@
+# nixpacks.toml
+# Force the PHP provider (since this repo doesn't have a composer.json or index.php)
+providers = ["php"]
+
+[variables]
+# Use router.php as the fallback so nginx (PHP provider) routes like the built-in server
+NIXPACKS_PHP_FALLBACK_PATH = "/router.php"
+
+[phases.setup]
+# Ensure the local web helper is executable inside the image
+cmds = ["chmod +x ./web"]
+
+[start]
+# Start the app using the project's `web` launcher and let the platform set $PORT
+cmd = "./web $PORT"
