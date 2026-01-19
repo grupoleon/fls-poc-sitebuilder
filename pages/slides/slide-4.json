@@ -1,0 +1,62 @@
+{
+    "title": "Slie 4 Title",
+    "image_url": "uploads\/images\/slides\/slide_1764253966_6928610ed02c6.jpg",
+    "widgets": [
+        {
+            "title": "",
+            "text": "<h1>Slie 4 Title<\/h1>\n<p>Agapanthus scabiosa polianthes protea paphiopedilum dendrobium. Leucanthemum tuberosa prunus veronica eryngiumm fulgens! Lilium vulgare leucanthemum anemone chamaelaucium tuberosa polianthes limonium allium.<\/p>\n<p>[button text=\"Learn More\" url=\"#\" style=\"primary\" target=\"_self\"]<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "33239199768e402fb33e3d568582298",
+            "_sow_form_timestamp": "1764254012439",
+            "so_sidebar_emulator_id": "sow-editor-3510000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "13d25d69-0544-416b-bb5f-ad43c1539037",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 2,
+            "style": {
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "0px",
+                "cell_alignment": "flex-start"
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 0,
+            "index": 1,
+            "weight": 0.5,
+            "style": []
+        }
+    ],
+    "id": "slide-4"
+}

@@ -1,0 +1,17 @@
+[
+    {
+        "title": "News 1",
+        "content": "Lorem ipsum dolor sit amet consectetur adipiscing elit. Consectetur adipiscing elit quisque faucibus ex sapien vitae. Ex sapien vitae pellentesque sem placerat in id. Placerat in id cursus mi pretium tellus duis. Pretium tellus duis convallis tempus leo eu aenean.",
+        "image": "uploads\/images\/img_1764253033_69285d699496d.jpg"
+    },
+    {
+        "title": "News 2",
+        "content": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui",
+        "image": "uploads\/images\/img_1764253459_69285f13d0f9e.jpg"
+    },
+    {
+        "title": "News 3",
+        "content": "A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole heart. I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine.",
+        "image": "uploads\/images\/img_1764253555_69285f736ab29.jpg"
+    }
+]

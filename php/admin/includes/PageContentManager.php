@@ -21,16 +21,17 @@ class PageContentManager
     public function getAvailableThemes()
     {
         $themes       = [];
-        $excludedDirs = ['Custom Posts']; // Exclude non-theme directories
+        $excludedDirs = ['cpt', 'slides', 'forms']; // Exclude non-theme directories
+        $themesDir    = $this->pagesDir . '/themes';
 
-        if (is_dir($this->pagesDir)) {
-            $dirs = scandir($this->pagesDir);
+        if (is_dir($themesDir)) {
+            $dirs = scandir($themesDir);
             foreach ($dirs as $dir) {
-                if ($dir !== '.' && $dir !== '..' && is_dir($this->pagesDir . '/' . $dir)) {
+                if ($dir !== '.' && $dir !== '..' && is_dir($themesDir . '/' . $dir)) {
                     // Skip excluded directories that are not themes
                     if (! in_array($dir, $excludedDirs)) {
                         // Additional check: ensure it's a theme by checking for layouts directory
-                        $layoutsDir = $this->pagesDir . '/' . $dir . '/layouts';
+                        $layoutsDir = $themesDir . '/' . $dir . '/layouts';
                         if (is_dir($layoutsDir)) {
                             $themes[] = $dir;
                         }
@@ -48,7 +49,7 @@ class PageContentManager
     public function getThemePages($theme)
     {
         $pages      = [];
-        $layoutsDir = $this->pagesDir . '/' . $theme . '/layouts';
+        $layoutsDir = $this->pagesDir . '/themes/' . $theme . '/layouts';
 
         if (is_dir($layoutsDir)) {
             $files = scandir($layoutsDir);
@@ -94,7 +95,7 @@ class PageContentManager
     public function getThemePagesWithNames($theme)
     {
         $pages      = [];
-        $layoutsDir = $this->pagesDir . '/' . $theme . '/layouts';
+        $layoutsDir = $this->pagesDir . '/themes/' . $theme . '/layouts';
 
         if (is_dir($layoutsDir)) {
             $files = scandir($layoutsDir);
@@ -174,7 +175,7 @@ class PageContentManager
     public function getAllThemePages($theme)
     {
         $pages      = [];
-        $layoutsDir = $this->pagesDir . '/' . $theme . '/layouts';
+        $layoutsDir = $this->pagesDir . '/themes/' . $theme . '/layouts';
 
         if (is_dir($layoutsDir)) {
             $files = scandir($layoutsDir);
@@ -193,7 +194,7 @@ class PageContentManager
      */
     public function getPageContent($theme, $page)
     {
-        $filePath = $this->pagesDir . '/' . $theme . '/layouts/' . $page . '.json';
+        $filePath = $this->pagesDir . '/themes/' . $theme . '/layouts/' . $page . '.json';
 
         if (! file_exists($filePath)) {
             throw new Exception("Page layout not found: {$theme}/{$page}");
@@ -218,7 +219,7 @@ class PageContentManager
             throw new Exception("Invalid page structure for SiteOrigin");
         }
 
-        $filePath = $this->pagesDir . '/' . $theme . '/layouts/' . $page . '.json';
+        $filePath = $this->pagesDir . '/themes/' . $theme . '/layouts/' . $page . '.json';
         $dirPath  = dirname($filePath);
 
         // Ensure directory exists
@@ -626,9 +627,9 @@ class PageContentManager
             throw new Exception("Invalid file type. Only images are allowed.");
         }
 
-        $maxSize = 5 * 1024 * 1024; // 5MB
+        $maxSize = 10 * 1024 * 1024; // 10MB
         if ($file['size'] > $maxSize) {
-            throw new Exception("File too large. Maximum size is 5MB.");
+            throw new Exception("File too large. Maximum size is 10MB.");
         }
 
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
@@ -694,11 +695,135 @@ class PageContentManager
     }
 
     /**
+     * Clean unused files from uploads directory (images/videos)
+     * Scans all JSON files in the pages folder for references and deletes
+     * files in the uploads directory which are not referenced anywhere.
+     *
+     * @param bool $execute If true, actually deletes files. If false, returns what would be deleted.
+     * @return array Summary with keys: total, referenced, to_delete, deleted, errors
+     */
+    public function cleanUnusedUploads($execute = false)
+    {
+        $result = [
+            'success' => true,
+            'data'    => [
+                'total'      => 0,
+                'referenced' => 0,
+                'to_delete'  => [],
+                'deleted'    => [],
+                'errors'     => [],
+            ],
+        ];
+
+        // Gather all files from uploads (recursive)
+        $uploadsRoot = dirname(dirname(dirname(__DIR__))) . '/uploads';
+        if (! is_dir($uploadsRoot)) {
+            $result['success']          = false;
+            $result['data']['errors'][] = 'Uploads directory not found.';
+            return $result;
+        }
+
+        $allFiles   = [];
+        $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'ogg', 'mov', 'avi'];
+
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($uploadsRoot));
+        foreach ($rii as $file) {
+            if ($file->isDir()) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($file->getFilename(), PATHINFO_EXTENSION));
+            if (! in_array($ext, $allowedExt)) {
+                continue;
+            }
+            // only images/videos
+            $absPath            = $file->getPathname();
+            $relPath            = substr($absPath, strlen(dirname(dirname(dirname(__DIR__))) . '/'));
+            $allFiles[$relPath] = $absPath;
+        }
+
+        $result['data']['total'] = count($allFiles);
+
+        // Scan all JSON files under pages and collect content
+        $pagesDir     = dirname(dirname(dirname(__DIR__))) . '/pages';
+        $jsonContents = '';
+        if (is_dir($pagesDir)) {
+            $rii2 = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pagesDir));
+            foreach ($rii2 as $file) {
+                if ($file->isDir()) {
+                    continue;
+                }
+
+                if (strtolower(pathinfo($file->getFilename(), PATHINFO_EXTENSION)) !== 'json') {
+                    continue;
+                }
+
+                $jsonContents .= ' ' . file_get_contents($file->getPathname());
+            }
+        }
+
+        // Build set of referenced file basenames and relative path references
+        $referenced = [];
+        foreach (array_keys($allFiles) as $rel) {
+            $basename = basename($rel);
+            // Check for common patterns in json contents
+            $found    = false;
+            $patterns = [
+                $rel, // uploads/images/whatever.jpg
+                '/' . $rel,
+                '../' . $rel,
+                $basename,
+                'wp-content/uploads/' . $basename,
+            ];
+            foreach ($patterns as $patt) {
+                if (strpos($jsonContents, $patt) !== false) {
+                    $found = true;
+                    break;
+                }
+            }
+
+            if ($found) {
+                $referenced[] = $rel;
+            }
+        }
+
+        $result['data']['referenced'] = count($referenced);
+
+        // Determine which files to delete (present in uploads but not referenced)
+        foreach ($allFiles as $rel => $abs) {
+            if (in_array($rel, $referenced)) {
+                continue;
+            }
+
+            $result['data']['to_delete'][] = $rel;
+        }
+
+        if ($execute) {
+            // Attempt to delete
+            foreach ($result['data']['to_delete'] as $rel) {
+                $abs = $allFiles[$rel];
+                if (file_exists($abs) && is_writable($abs)) {
+                    if (@unlink($abs)) {
+                        $result['data']['deleted'][] = $rel;
+                    } else {
+                        $result['data']['errors'][] = "Failed to delete $rel";
+                    }
+                } else {
+                    $result['data']['errors'][] = "Not writable or missing: $rel";
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Get theme forms
      */
     public function getThemeForms($theme)
     {
-        $formsDir = $this->pagesDir . '/' . $theme . '/forms';
+        // Forms are now stored in a common location, not theme-specific
+        $formsDir = dirname($this->pagesDir) . '/pages/forms';
         $forms    = [];
 
         if (is_dir($formsDir)) {
@@ -729,9 +854,9 @@ class PageContentManager
             throw new Exception('Invalid logo file type. Only PNG, JPG, SVG, and WebP are allowed.');
         }
 
-        // Validate file size (2MB max)
-        if ($file['size'] > 2 * 1024 * 1024) {
-            throw new Exception('Logo file size must be less than 2MB');
+        // Validate file size (10MB max)
+        if ($file['size'] > 10 * 1024 * 1024) {
+            throw new Exception('Logo file size must be less than 10MB');
         }
 
         // Create uploads directory if it doesn't exist
@@ -750,6 +875,9 @@ class PageContentManager
             throw new Exception('Failed to save logo file');
         }
 
+        // Save logo filename to config.json
+        $this->saveLogoToConfig($filename);
+
         return $filename;
     }
 
@@ -759,12 +887,30 @@ class PageContentManager
     public function getCurrentLogo()
     {
         $uploadsDir = dirname(dirname(dirname(__DIR__))) . '/uploads/images';
+        $configFile = dirname(dirname(dirname(__DIR__))) . '/config/config.json';
 
+        // First try to get logo from config.json
+        if (file_exists($configFile)) {
+            $config = json_decode(file_get_contents($configFile), true);
+            if (isset($config['site']['logo']) && ! empty($config['site']['logo'])) {
+                $filename = $config['site']['logo'];
+                $filepath = $uploadsDir . '/' . $filename;
+
+                if (file_exists($filepath)) {
+                    return [
+                        'filename'    => $filename,
+                        'logo_url'    => 'uploads/images/' . $filename,
+                        'upload_time' => filemtime($filepath),
+                    ];
+                }
+            }
+        }
+
+        // Fallback: Look for logo files (most recent first)
         if (! is_dir($uploadsDir)) {
             return null;
         }
 
-        // Look for logo files (most recent first)
         $logoFiles = glob($uploadsDir . '/logo_*.*');
 
         if (empty($logoFiles)) {
@@ -781,9 +927,49 @@ class PageContentManager
 
         return [
             'filename'    => $filename,
-            'logo_url'    => 'uploads/images/' . $filename, // Fixed: Remove ../ relative path
+            'logo_url'    => 'uploads/images/' . $filename,
             'upload_time' => filemtime($latestLogo),
         ];
+    }
+
+    /**
+     * Save logo filename to config.json
+     */
+    private function saveLogoToConfig($filename)
+    {
+        $configFile = dirname(dirname(dirname(__DIR__))) . '/config/config.json';
+
+        // Ensure directory exists
+        $configDir = dirname($configFile);
+        if (! is_dir($configDir)) {
+            @mkdir($configDir, 0755, true);
+        }
+
+        // Read existing config or create a fresh structure if missing/invalid
+        $config = [];
+        if (file_exists($configFile)) {
+            $raw     = file_get_contents($configFile);
+            $decoded = @json_decode($raw, true);
+            if (is_array($decoded)) {
+                $config = $decoded;
+            } else {
+                // Backup invalid config
+                @copy($configFile, $configFile . '.bak.' . time());
+            }
+        }
+
+        // Ensure site block exists
+        if (! isset($config['site']) || ! is_array($config['site'])) {
+            $config['site'] = [];
+        }
+
+        // Save logo filename (just the basename) in site.logo
+        $config['site']['logo'] = $filename;
+
+        // Write back to file
+        $written = file_put_contents($configFile, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        return $written !== false;
     }
 
     /**
@@ -801,8 +987,8 @@ class PageContentManager
             return $this->getFormContents();
         }
 
-        $customPostsDir = dirname($this->pagesDir) . '/pages/Custom Posts';
-        $filePath       = $customPostsDir . '/' . $type . '.json';
+        $cptDir   = dirname($this->pagesDir) . '/pages/cpt';
+        $filePath = $cptDir . '/' . $type . '.json';
 
         if (! file_exists($filePath)) {
             return [];
@@ -888,14 +1074,14 @@ class PageContentManager
             return $this->saveFormContents($contents);
         }
 
-        $customPostsDir = dirname($this->pagesDir) . '/pages/Custom Posts';
+        $cptDir = dirname($this->pagesDir) . '/pages/cpt';
 
         // Ensure directory exists
-        if (! is_dir($customPostsDir)) {
-            mkdir($customPostsDir, 0755, true);
+        if (! is_dir($cptDir)) {
+            mkdir($cptDir, 0755, true);
         }
 
-        $filePath = $customPostsDir . '/' . $type . '.json';
+        $filePath = $cptDir . '/' . $type . '.json';
 
         // Validate content structure based on type
         if ($type === 'testimonials') {
@@ -1041,7 +1227,7 @@ class PageContentManager
      */
     public function saveFullPageData($theme, $page, $data)
     {
-        $pageFile = $this->pagesDir . '/' . $theme . '/layouts/' . $page . '.json';
+        $pageFile = $this->pagesDir . '/themes/' . $theme . '/layouts/' . $page . '.json';
 
         if (! file_exists($pageFile)) {
             throw new Exception("Page file not found: {$pageFile}");

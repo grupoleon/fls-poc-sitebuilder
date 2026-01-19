@@ -163,7 +163,7 @@ try {
             'name'   => 'Trigger Deployment',
         ],
         'github-actions' => [
-            'script' => 'scripts/github-actions-monitor.sh',
+            'script' => 'scripts/actions.sh',
             'name'   => 'GitHub Actions',
         ],
     ];

@@ -1,0 +1,751 @@
+{
+    "widgets": [
+        {
+            "title": "",
+            "text": "<h2 style=\"text-align: center;\">Our specialties.<\/h2>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, consectetur adipiscing elit<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "174295143968f399d993a6e421283732",
+            "_sow_form_timestamp": "1760821605790",
+            "so_sidebar_emulator_id": "sow-editor-16110000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "4a9438f0-8397-4c9a-8692-30b0bf1bf35a",
+                "style": {
+                    "padding": "0% 0% 4% 0%",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "features": [
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "elegantline-refresh",
+                    "icon_title": "",
+                    "icon_color": "#ff4612",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<h6 style=\"text-align: center;\">Knowing<\/h6>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, quis consect.<\/p>\n",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": "#"
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "elegantline-genius",
+                    "icon_title": "",
+                    "icon_color": "#ff4612",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<h6 style=\"text-align: center;\">Selling<\/h6>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, quis consect.<\/p>\n",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": "#"
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "elegantline-pencil",
+                    "icon_title": "",
+                    "icon_color": "#ff4612",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<h6 style=\"text-align: center;\">Learning<\/h6>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, quis consect.<\/p>\n",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": "#"
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "elegantline-envelope",
+                    "icon_title": "",
+                    "icon_color": "#ff4612",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<h6 style=\"text-align: center;\"><a href=\"https:\/\/everlead.qodeinteractive.com\/get-in-touch\/\" target=\"_self\"><span class=\"mkdf-iwt-title-text\">Contact<\/span><\/a><\/h6>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, quis consect.<\/p>\n",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": "#"
+                }
+            ],
+            "fonts": {
+                "title_options": {
+                    "tag": "h5",
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "text_options": {
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "more_text_options": {
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "so_field_container_state": "closed"
+            },
+            "container_shape": "",
+            "container_size": "100px",
+            "container_size_unit": "px",
+            "icon_size": "100px",
+            "icon_size_unit": "px",
+            "per_row": 4,
+            "feature_spacing": "25px 25px",
+            "feature_spacing_mobile": "",
+            "responsive": true,
+            "icon_link": true,
+            "link_feature": true,
+            "_sow_form_id": "212111973868f39a90aecfd817775621",
+            "_sow_form_timestamp": "1760796131127",
+            "icon_size_custom": "",
+            "center_items": "",
+            "more_text_bottom_align": "",
+            "title_link": "",
+            "new_window": "",
+            "so_sidebar_emulator_id": "sow-features-16110001",
+            "option_name": "widget_sow-features",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Features_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 1,
+                "widget_id": "32f3282d-a800-4653-867c-bfa75b61cc5b",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": "",
+            "image_fallback": "https:\/\/i.postimg.cc\/cLGKFp4B\/profile-rect.jpg",
+            "size": "full",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "center",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "34632312268f3b411da6a0410740641",
+            "_sow_form_timestamp": "1760801847184",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-16110002",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 0,
+                "id": 2,
+                "widget_id": "00573a70-5638-4d05-9200-f965e7927a7c",
+                "style": {
+                    "widget_css": "transform:scale(1.2);\ntransform-origin:left center;\nz-index:0;",
+                    "mobile_css": "transform:none;",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h4>Jason Bickford<\/h4>\n<p><strong>Founder and Executive Director<\/strong><\/p>\n<hr \/>\n<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...<\/p>\n<p>[button text=\"Read More\" url=\"#\" style=\"primary\" target=\"_self\"]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "101541372668f3b44335ea9263919096",
+            "_sow_form_timestamp": "1760802233085",
+            "so_sidebar_emulator_id": "sow-editor-16110003",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 3,
+                "widget_id": "0d7e8464-61ff-4363-9e68-4bc3dda247ca",
+                "style": {
+                    "widget_css": "position:relative;\nz-index:1;",
+                    "padding": "10% 10% 10% 10%",
+                    "background": "#ffffff",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "box_shadow": true,
+                    "box_shadow_color": "rgba(0,0,0,0.15)",
+                    "box_shadow_inset": "",
+                    "box_shadow_offset_vertical": "0px",
+                    "box_shadow_blur": "5px",
+                    "box_shadow_spread": "2px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h3>Creative Leader.<\/h3>\n<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do nulla eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut etim enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in sociis.<\/p>\n<p>[button text=\"Read more\" url=\"#\" style=\"outline\" target=\"_self\"]<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "93702860468f3cf0e8026c681649187",
+            "_sow_form_timestamp": "1760808734660",
+            "so_sidebar_emulator_id": "sow-editor-16110004",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 4,
+                "widget_id": "c22b8376-8912-4064-8c61-49646298a09a",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h6>[progress_bar title=\"Mentorship\" percent=\"75\" color=\"#ff4612\"]<\/h6>\n<h6>[progress_bar title=\"Education\" percent=\"90\" color=\"#ff4612\"]<\/h6>\n<h6>[progress_bar title=\"Learning\" percent=\"65\" color=\"#ff4612\"]<\/h6>\n<h6>[progress_bar title=\"Motivation\" percent=\"80\" color=\"#ff4612\"]<\/h6>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "79351667068f3d138335e4655415316",
+            "_sow_form_timestamp": "1760810275647",
+            "so_sidebar_emulator_id": "sow-editor-16110005",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 1,
+                "id": 5,
+                "widget_id": "6a936432-a330-4a53-b7a8-b74b14169cdb",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h2 style=\"text-align: center;\">Latest news.<\/h2>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, consectetur adipiscing elit<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "165296437568f3d5bedda09478375236",
+            "_sow_form_timestamp": "1760821613132",
+            "so_sidebar_emulator_id": "sow-editor-16110006",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 6,
+                "widget_id": "26c77113-b024-4304-ab59-197198ff2e85",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[home-blog slider=true]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "83057419368f3d5d2056d0623303483",
+            "_sow_form_timestamp": "1760810467227",
+            "so_sidebar_emulator_id": "sow-editor-16110007",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 7,
+                "widget_id": "3ae29ce3-89ce-40ee-984f-0b5abf9d2513",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>https:\/\/www.youtube.com\/watch?v=RzW0bp6zCmM<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "17024410768f3f5f04b108943567279",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-16110008",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 1,
+                "id": 8,
+                "widget_id": "c89cd22f-d073-4313-a414-690ee3c31c3e",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h2 style=\"text-align: center;\">Testimonials<\/h2>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "214483212568f3f89d9db20433555337",
+            "_sow_form_timestamp": "1760821619296",
+            "so_sidebar_emulator_id": "sow-editor-16110009",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 5,
+                "cell": 1,
+                "id": 9,
+                "widget_id": "75ed48cb-8e63-4662-93eb-fa84b6d884ae",
+                "style": {
+                    "mobile_css": "max-width:300px;\nmargin:0 auto;",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[testimonials]<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "134723254068f3f8ca618a9281235582",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-16110010",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 5,
+                "cell": 1,
+                "id": 10,
+                "widget_id": "abc9d1e7-120d-4394-bea0-bb8c63ad5205",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"25\"]<\/h1>\n<p>Years of experience<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "78270807668f617843c4ec117123868",
+            "_sow_form_timestamp": "1760958633494",
+            "so_sidebar_emulator_id": "sow-editor-16110011",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 0,
+                "id": 11,
+                "widget_id": "259b6c23-7f1f-409d-9daf-ddd9b77d8b92",
+                "style": {
+                    "widget_css": "text-align:center;\nmax-width:300px;\nmargin:0 auto;\nbox-sizing:border-box;",
+                    "padding": "10% 10% 10% 10%",
+                    "background": "#ff4612",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"36\"]<\/h1>\n<p>Successful projects<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "192222152068f618bcbb3e4513952949",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-16110012",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 1,
+                "id": 12,
+                "widget_id": "9a19fcd9-f690-45cf-9c94-75437500b14a",
+                "style": {
+                    "widget_css": "text-align:center;\nmax-width:300px;\nmargin:0 auto;\nbox-sizing:border-box;",
+                    "padding": "10% 10% 10% 10%",
+                    "background": "#ff4612",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"76\"]<\/h1>\n<p>Reliable clients<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "36624474668f618beefe8a733952390",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-16110013",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 2,
+                "id": 13,
+                "widget_id": "e8101c4a-2617-4887-82bf-2f37c80e4757",
+                "style": {
+                    "widget_css": "text-align:center;\nmax-width:300px;\nmargin:0 auto;\nbox-sizing:border-box;",
+                    "padding": "10% 10% 10% 10%",
+                    "background": "#ff4612",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"25\"]<\/h1>\n<p>Years of experience<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "186856094668f618c10e48b650980614",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-16110014",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 3,
+                "id": 14,
+                "widget_id": "be5cdbda-cd2d-4b8b-ad73-3042863ef05a",
+                "style": {
+                    "widget_css": "text-align:center;\nmax-width:300px;\nmargin:0 auto;\nbox-sizing:border-box;",
+                    "padding": "10% 10% 10% 10%",
+                    "background": "#ff4612",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 1,
+            "style": {
+                "padding": "7% 0% 7% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "12% 0% 12% 0%",
+                "background": "#fafafa",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "center",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "10% 0% 10% 0%",
+                "background": "#ffffff",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "6%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background": "#fafafa",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "10% 0% 10% 0%",
+                "background": "#ffffff",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "https:\/\/i.postimg.cc\/vBrSVmv2\/Gemini-Generated-Image-wt834cwt834cwt83.png",
+                "background_display": "cover",
+                "background_image_size": "full",
+                "background_image_opacity": "50",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "10% 0% 10% 0%",
+                "background": "#1c1c1c",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 4,
+            "style": {
+                "padding": "12% 0% 12% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 0,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 1,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 0,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 1,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 3,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 0,
+            "weight": 0.200000000000000011102230246251565404236316680908203125,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 1,
+            "weight": 0.59999999999999997779553950749686919152736663818359375,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 2,
+            "weight": 0.200000000000000011102230246251565404236316680908203125,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 0,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 1,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 2,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 0,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 1,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 2,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 3,
+            "weight": 0.25,
+            "style": []
+        }
+    ],
+    "name": "Home",
+    "id": "home"
+}

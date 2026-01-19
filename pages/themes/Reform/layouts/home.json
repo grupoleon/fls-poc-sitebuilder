@@ -1,0 +1,732 @@
+{
+    "widgets": [
+        {
+            "title": "",
+            "text": "<h6 style=\"text-align: center;\">Empowering Voices<\/h6>\n<h1 style=\"text-align: center;\">We drive positive<br \/>\nchange for citizens<\/h1>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "122462778368a8578e2c006919652067",
+            "_sow_form_timestamp": "1755862952266",
+            "so_sidebar_emulator_id": "sow-editor-13610000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 1,
+                "id": 0,
+                "widget_id": "89c2623b-a073-4557-a68e-af924c33bae6",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff",
+                    "link_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h6>Empowering communities<\/h6>\n<h3>Driving change through advocacy<\/h3>\n<p>Reform is a leading political campaign organization dedicated to empowering communities through effective governance and advocacy.<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610001",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 0,
+                "id": 1,
+                "widget_id": "544a091b-4e1b-4980-969e-fcf9c788ef62",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": "",
+            "image_fallback": "https:\/\/i.postimg.cc\/02p79xf1\/pexels-dibert-1222438.jpg",
+            "size": "1536x1536",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "center",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "closed",
+                "enable": ""
+            },
+            "_sow_form_id": "21887198668a8587e2ddef769073176",
+            "_sow_form_timestamp": "",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-13610002",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 0,
+                "id": 2,
+                "widget_id": "f6d0956c-fc47-4556-9050-4585f089a5b8",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            }
+        },
+        {
+            "image": "",
+            "image_fallback": "https:\/\/i.postimg.cc\/mDJ7ggJB\/pexels-august-de-richelieu-4427555.jpg",
+            "size": "1536x1536",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "center",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "closed",
+                "enable": ""
+            },
+            "_sow_form_id": "4999409268a85891d8841310917457",
+            "_sow_form_timestamp": "",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-13610003",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 3,
+                "widget_id": "e14a5a75-706c-4a14-9b26-4bb8769f5e29",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h6>Empowering communities<\/h6>\n<h2>Citizens first<\/h2>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610004",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 4,
+                "widget_id": "ce3335d2-a1a8-4b0c-a00c-f3dc2c82b094",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>Reform is a leading political campaign organization dedicated to empowering communities through effective governance and advocacy. Our mission is to drive positive change by connecting citizens with their representatives.<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610005",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 1,
+                "id": 5,
+                "widget_id": "8c75d868-d55e-40a8-90c1-ee27dabcff8c",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>Founded in 2020, Reform emerged from a need for more effective political engagement in the digital age. Our commitment to excellence has allowed us to manage numerous campaigns and advocate for impactful policy changes.<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610006",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 2,
+                "id": 6,
+                "widget_id": "888c50d5-e1e8-4b7c-a887-fa31bcc22818",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h6 style=\"text-align: center;\">Empowering your community<\/h6>\n<h2 style=\"text-align: center;\">Your support<br \/>\npowers our mission<\/h2>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "106192085668a8591c4cb7d851018927",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-13610007",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 7,
+                "widget_id": "661955e2-8e18-4c01-b589-ed02c7288e2b",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff",
+                    "link_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[cpt type=\"issues\" posts=\"3\" columns=\"3\"]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610008",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 8,
+                "widget_id": "b4dd634e-8ae4-47e4-8402-268ed29f9a61",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h6>Empowering communities<\/h6>\n<h2>We develop strategies<\/h2>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610009",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 0,
+                "id": 9,
+                "widget_id": "b1e46be3-f6b6-4a4c-b9ea-38019ddceeb7",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[cpt type=\"news\" posts=\"2\" columns=\"2\"]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610010",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 1,
+                "id": 10,
+                "widget_id": "702bdcca-ab7e-49f4-884b-ce4f5594e85f",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h5 style=\"text-align: center;\">Empower your community<br \/>\nfor a brighter future<\/h5>\n<p style=\"text-align: center;\">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.<\/p>\n<p style=\"text-align: center;\"><a class=\"button\" href=\"#\">Join Us<\/a><\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "203852427268a859a417caf182676520",
+            "_sow_form_timestamp": "1755863463703",
+            "so_sidebar_emulator_id": "sow-editor-13610011",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 5,
+                "cell": 2,
+                "id": 11,
+                "widget_id": "dff0c028-902f-489a-aee5-2a964e14a3ff",
+                "style": {
+                    "class": "animation slide-up",
+                    "padding": "30px 30px 30px 30px",
+                    "background": "#ffffff",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            }
+        },
+        {
+            "image": "",
+            "image_fallback": "https:\/\/i.postimg.cc\/R0j03JSs\/pexels-sora-shimazaki-5926352.jpg",
+            "size": "full",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "default",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "65034120368a85a1e1b556277800756",
+            "_sow_form_timestamp": "1755863601629",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-13610012",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 0,
+                "id": 12,
+                "widget_id": "5d789eaf-27b3-4def-ae88-99fcbdf325b6",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1 style=\"text-align: center;\">[counter number=\"22\"]<\/h1>\n<h6 style=\"text-align: center;\">Campaigns Launched<\/h6>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610013",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 1,
+                "id": 13,
+                "widget_id": "92aa9276-65cd-407d-9118-c488fc1dad02",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1 style=\"text-align: center;\">[counter number=\"9\"]<\/h1>\n<h6 style=\"text-align: center;\">Years Strong<\/h6>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610014",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 1,
+                "id": 14,
+                "widget_id": "69b67f55-476e-42e9-a759-25aa7afb9683",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1 style=\"text-align: center;\">[counter number=\"53\"]<\/h1>\n<h6 style=\"text-align: center;\">Engaged Citizens<\/h6>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610015",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 2,
+                "id": 15,
+                "widget_id": "b547b8c7-7656-4bfb-8007-2dc97630f9fa",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1 style=\"text-align: center;\">[counter number=\"89\"]<\/h1>\n<h6 style=\"text-align: center;\">Issues addressed<\/h6>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "so_sidebar_emulator_id": "sow-editor-13610016",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 2,
+                "id": 16,
+                "widget_id": "38e7af1d-915b-4148-9f12-ddea97904d9b",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 3,
+            "style": {
+                "row_css": "box-sizing:border-box;",
+                "padding": "15vh 0vh 15vh 0vh",
+                "mobile_padding": "50vh 0vh 15vh 0vh",
+                "background": "#000000",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "https:\/\/i.postimg.cc\/3JMgMW2Z\/pexels-chris-f-38966-8157344.jpg",
+                "background_display": "cover",
+                "background_image_size": "full",
+                "background_image_opacity": "78",
+                "border_thickness": "1px",
+                "full_height": true,
+                "bottom_margin": "0px",
+                "gutter": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-end",
+                "mobile_bottom_margin": "0px",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "8%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background": "#001851",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "6%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "10% 0% 10% 0%",
+                "background": "#000000",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "https:\/\/i.postimg.cc\/FH4gS1RK\/pexels-adanvdo-42038771-8839417.jpg",
+                "background_display": "cover",
+                "background_image_size": "full",
+                "background_image_opacity": "75",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "mobile_bottom_margin": "0px",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "6%",
+                "row_stretch": "full",
+                "cell_alignment": "center"
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 0.200000000000000011102230246251565404236316680908203125,
+            "style": []
+        },
+        {
+            "grid": 0,
+            "index": 1,
+            "weight": 0.59999999999999997779553950749686919152736663818359375,
+            "style": []
+        },
+        {
+            "grid": 0,
+            "index": 2,
+            "weight": 0.200000000000000011102230246251565404236316680908203125,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 0,
+            "weight": 0.564999999999999946709294817992486059665679931640625,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 1,
+            "weight": 0.435000000000000053290705182007513940334320068359375,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 0,
+            "weight": 0.34999999999999997779553950749686919152736663818359375,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 1,
+            "weight": 0.325000000000000011102230246251565404236316680908203125,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 2,
+            "weight": 0.325000000000000011102230246251565404236316680908203125,
+            "style": []
+        },
+        {
+            "grid": 3,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 0,
+            "weight": 0.34999999999999997779553950749686919152736663818359375,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 1,
+            "weight": 0.65000000000000002220446049250313080847263336181640625,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 0,
+            "weight": 0.333333333333333314829616256247390992939472198486328125,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 1,
+            "weight": 0.333333333333333314829616256247390992939472198486328125,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 2,
+            "weight": 0.333333333333333314829616256247390992939472198486328125,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 0,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 1,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 2,
+            "weight": 0.25,
+            "style": []
+        }
+    ],
+    "name": "Home",
+    "id": "home"
+}

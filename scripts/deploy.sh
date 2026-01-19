@@ -272,44 +272,44 @@ upload_pages() {
     # Create pages directory on server
     ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages"
     
-    # Upload Custom Posts JSON files first
-    local custom_posts_dir="$pages_dir/Custom Posts"
+    # Upload CPT JSON files first
+    local custom_posts_dir="$pages_dir/cpt"
     local custom_posts_dir_server="/tmp/pages/cpt"
     if [[ -d "$custom_posts_dir" ]]; then
-        print_info "Uploading Custom Posts JSON files..."
+        print_info "Uploading CPT JSON files..."
         
-        # Create Custom Posts directory on server
+        # Create CPT directory on server
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p '$custom_posts_dir_server'"
         
         # Count and upload JSON files
         local custom_posts_count=$(find "$custom_posts_dir" -name "*.json" -type f | wc -l)
-        print_info "Found $custom_posts_count Custom Posts JSON files"
+        print_info "Found $custom_posts_count CPT JSON files"
         
         for json_file in "$custom_posts_dir"/*.json; do
             if [[ -f "$json_file" ]]; then
                 local file_name=$(basename "$json_file")
-                print_info "Uploading Custom Post: $file_name"
+                print_info "Uploading CPT: $file_name"
                 
                 # Validate JSON before upload
                 if ! jq empty "$json_file" 2>/dev/null; then
-                    print_error "Invalid JSON in Custom Posts file: $file_name"
+                    print_error "Invalid JSON in CPT file: $file_name"
                     exit 1
                 fi
 
                 if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" "$json_file" "${KINSTA_USER}@${KINSTA_HOST}:$custom_posts_dir_server/"; then
-                    print_success "Custom Post $file_name uploaded successfully"
+                    print_success "CPT $file_name uploaded successfully"
                 else
-                    print_error "Failed to upload Custom Post: $file_name"
+                    print_error "Failed to upload CPT: $file_name"
                     exit 1
                 fi
             fi
         done
         
         if [[ $custom_posts_count -gt 0 ]]; then
-            print_success "All Custom Posts uploaded successfully ($custom_posts_count files)"
+            print_success "All CPT files uploaded successfully ($custom_posts_count files)"
         fi
     else
-        print_info "No Custom Posts directory found at: $custom_posts_dir"
+        print_info "No CPT directory found at: $custom_posts_dir"
     fi
     
     # Get active theme to verify we have custom content for it
@@ -319,8 +319,8 @@ upload_pages() {
         print_info "Active theme from config: $active_theme"
     fi
     
-    # Only upload files for the active theme (excluding Custom Posts which was handled above)
-    local active_theme_dir="$pages_dir/$active_theme"
+    # Only upload files for the active theme (excluding CPT which was handled above)
+    local active_theme_dir="$pages_dir/themes/$active_theme"
     if [[ -d "$active_theme_dir" ]]; then
         local theme_name="$active_theme"
         print_info "Uploading pages for ACTIVE theme only: $theme_name"
@@ -379,12 +379,10 @@ upload_pages() {
     else
         print_warning "Active theme directory not found: $active_theme_dir"
         print_info "Available theme directories:"
-        for theme_dir in "$pages_dir"/*; do
+        for theme_dir in "$pages_dir/themes"/*; do
             if [[ -d "$theme_dir" ]]; then
                 local dir_name=$(basename "$theme_dir")
-                if [[ "$dir_name" != "Custom Posts" && "$dir_name" != "slides" ]]; then
-                    print_info "  - $dir_name"
-                fi
+                print_info "  - $dir_name"
             fi
         done
     fi
@@ -481,36 +479,59 @@ upload_images() {
         print_info "Active theme detected: $active_theme"
     fi
     
-    # Find current logo from page files
+    # Get logo filename from config.json
     local current_logo=""
-    for page_file in "$ROOT_DIR/pages/$active_theme/header-1.json" "$ROOT_DIR/pages/$active_theme/header-2.json" "$ROOT_DIR/pages/$active_theme/home.json"; do
-        if [[ -f "$page_file" ]]; then
-            current_logo=$(jq -r '.global_logo // empty' "$page_file" 2>/dev/null)
-            if [[ -n "$current_logo" && "$current_logo" != "null" ]]; then
-                break
-            fi
-        fi
-    done
+    local config_file="$ROOT_DIR/config/config.json"
     
-    # If no logo found in page files, get most recent logo file
-    if [[ -z "$current_logo" || "$current_logo" == "null" ]]; then
-        current_logo=$(find "$uploads_dir" -name "logo_*" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) -exec ls -t {} + 2>/dev/null | head -n1 | xargs -r basename)
+    if [[ -f "$config_file" ]]; then
+        current_logo=$(jq -r '.site.logo // empty' "$config_file" 2>/dev/null)
+        if [[ -n "$current_logo" && "$current_logo" != "null" ]]; then
+            print_info "Logo from config.json: $current_logo"
+        fi
     fi
     
-    # Upload current logo as standardized logo.png
+    # If no logo in config, fallback to page files
+    if [[ -z "$current_logo" || "$current_logo" == "null" ]]; then
+        for page_file in "$ROOT_DIR/pages/themes/$active_theme/layouts/header.json" "$ROOT_DIR/pages/themes/$active_theme/layouts/footer.json" "$ROOT_DIR/pages/themes/$active_theme/layouts/home.json"; do
+            if [[ -f "$page_file" ]]; then
+                current_logo=$(jq -r '.global_logo // empty' "$page_file" 2>/dev/null)
+                if [[ -n "$current_logo" && "$current_logo" != "null" ]]; then
+                    print_info "Logo from page file: $current_logo"
+                    break
+                fi
+            fi
+        done
+    fi
+    
+    # Upload current logo preserving file extension
+    # current_logo may be a bare filename or a path — accept both
+    # Normalize current_logo to a filename (accept bare filename or path)
+    if [[ -n "$current_logo" ]]; then
+        if [[ -f "$uploads_dir/$current_logo" ]]; then
+            : # keep as-is
+        elif [[ -f "$uploads_dir/$(basename "$current_logo")" ]]; then
+            current_logo="$(basename "$current_logo")"
+        fi
+    fi
+
     if [[ -n "$current_logo" && -f "$uploads_dir/$current_logo" ]]; then
+        # Get file extension
+        local logo_ext="${current_logo##*.}"
+        local logo_target="/tmp/logo.$logo_ext"
+        
         print_info "Uploading current logo: $current_logo"
         print_info "Logo file size: $(stat -f%z "$uploads_dir/$current_logo" 2>/dev/null || echo "unknown") bytes"
+        print_info "Logo extension: $logo_ext"
         print_info "SSH key file: ~/.ssh/id_rsa (exists: $(test -f ~/.ssh/id_rsa && echo "yes" || echo "no"))"
         
-        if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" -v "$uploads_dir/$current_logo" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/logo.png" 2>&1; then
-            print_success "Logo uploaded successfully: $current_logo -> /tmp/logo.png"
+        if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" -v "$uploads_dir/$current_logo" "${KINSTA_USER}@${KINSTA_HOST}:$logo_target" 2>&1; then
+            print_success "Logo uploaded successfully: $current_logo -> $logo_target"
         else
             scp_exit_code=$?
             print_error "Failed to upload logo: $current_logo (exit code: $scp_exit_code)"
             print_error "Upload directory: $uploads_dir"
             print_error "Logo file path: $uploads_dir/$current_logo"
-            print_error "Target: ${KINSTA_USER}@${KINSTA_HOST}:/tmp/logo.png"
+            print_error "Target: ${KINSTA_USER}@${KINSTA_HOST}:$logo_target"
             exit 1
         fi
     else
@@ -744,9 +765,9 @@ main() {
     upload_configs
     log_step_complete "Configuration files upload"
 
-    log_step_start "STEP 2/6: Uploading custom page layouts and Custom Posts"
+    log_step_start "STEP 2/6: Uploading custom page layouts and CPT"
     upload_pages
-    log_step_complete "Page layouts and Custom Posts upload"
+    log_step_complete "Page layouts and CPT upload"
     
     log_step_start "STEP 3/6: Uploading images and logo"
     upload_images

@@ -8,7 +8,7 @@ readonly DEFAULT_PORT=8000
 # Keep the route separately for browser opening if needed.
 readonly ROUTER_FILE="router.php"
 
-PORT=${1:-${PORT:-$DEFAULT_PORT}}
+PORT=${1:-$DEFAULT_PORT}
 URL="http://localhost:$PORT"
 PLATFORM=""
 
@@ -270,7 +270,7 @@ handle_browser_opening() {
 }
 
 start_server() {
-    exec php -S "0.0.0.0:$PORT" "$ROUTER_FILE"
+    exec php -S "localhost:$PORT" "$ROUTER_FILE"
 }
 
 main() {

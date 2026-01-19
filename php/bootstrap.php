@@ -1,5 +1,9 @@
 <?php
 
+// Suppress all error output to prevent HTML error messages from interfering with JSON responses
+ini_set('display_errors', '0');
+error_reporting(E_ERROR | E_PARSE);
+
 // Include required classes
 require_once __DIR__ . '/admin/includes/ConfigManager.php';
 require_once __DIR__ . '/admin/includes/PageContentManager.php';
@@ -132,8 +136,24 @@ function handleRequest()
                 }
 
                 try {
-                    $themeConfig                 = $configManager->getConfig('theme');
+                    // Get existing theme config to preserve all fields
+                    $themeConfig = $configManager->getConfig('theme');
+
+                    // Ensure available_themes is set, if not, get from available themes
+                    if (! isset($themeConfig['available_themes']) || empty($themeConfig['available_themes'])) {
+                        $themeConfig['available_themes'] = $configManager->getAvailableThemes();
+                    }
+
+                    // Validate that the selected theme is available
+                    if (! in_array($theme, $themeConfig['available_themes'])) {
+                        echo json_encode(['success' => false, 'message' => 'Selected theme is not available']);
+                        break;
+                    }
+
+                    // Update active theme
                     $themeConfig['active_theme'] = $theme;
+
+                    // Save the updated config
                     $configManager->updateConfig('theme', $themeConfig);
 
                     echo json_encode(['success' => true, 'message' => 'Active theme updated successfully']);
@@ -143,7 +163,38 @@ function handleRequest()
                 }
                 break;
 
-            case 'get_pages':
+            case 'refresh_theme_list':
+                try {
+                    // Get available themes from folder structure
+                    $availableThemes = $configManager->getAvailableThemes();
+
+                    // Get current theme config
+                    $themeConfig = $configManager->getConfig('theme');
+
+                    // Update available_themes list
+                    $themeConfig['available_themes'] = $availableThemes;
+
+                    // Validate active theme still exists
+                    if (! in_array($themeConfig['active_theme'], $availableThemes)) {
+                        $themeConfig['active_theme'] = $availableThemes[0] ?? 'LifeGuide';
+                    }
+
+                    // Save updated config
+                    $configManager->updateConfig('theme', $themeConfig);
+
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Theme list refreshed successfully',
+                        'data'    => [
+                            'themes'       => $availableThemes,
+                            'active_theme' => $themeConfig['active_theme'],
+                        ],
+                    ]);
+                } catch (Exception $e) {
+                    error_log("Theme refresh error: " . $e->getMessage());
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;case 'get_pages':
                 $themes      = $configManager->getAvailableThemes();
                 $themeConfig = $configManager->getConfig('theme');
                 $activeTheme = $themeConfig['active_theme'] ?? ($themes[0] ?? 'FLS-One');
@@ -453,6 +504,20 @@ function handleRequest()
                         'success' => true,
                         'message' => 'No deployment status file found',
                     ]);
+                }
+                break;
+
+            case 'clean_uploads':
+                // Scan all uploads and remove any images/videos not referenced in pages JSON
+                $confirmed = isset($_GET['confirmed']) ? $_GET['confirmed'] : (isset($_POST['confirmed']) ? $_POST['confirmed'] : 'false');
+                $execute   = ($confirmed === '1' || strtolower($confirmed) === 'true');
+
+                try {
+                    $cleanResult = $pageManager->cleanUnusedUploads($execute);
+                    echo json_encode($cleanResult);
+                } catch (Exception $e) {
+                    error_log('Clean uploads error: ' . $e->getMessage());
+                    echo json_encode(['success' => false, 'message' => 'Failed to clean uploads: ' . $e->getMessage()]);
                 }
                 break;
 

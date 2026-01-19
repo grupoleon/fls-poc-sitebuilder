@@ -11,5 +11,6 @@ NIXPACKS_PHP_FALLBACK_PATH = "/router.php"
 cmds = ["chmod +x ./web"]
 
 [start]
-# Start the app using the project's `web` launcher and let the platform set $PORT
-cmd = "./web $PORT"
+# Start the app directly to bind to 0.0.0.0 so Kinsta's proxy can connect.
+# Also print explicit startup message to logs for verification.
+cmd = "echo \"Starting php dev server on 0.0.0.0:$PORT\" && exec php -S \"0.0.0.0:$PORT\" router.php"

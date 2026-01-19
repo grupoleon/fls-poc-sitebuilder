@@ -13,19 +13,19 @@
     --brand-secondary-light: #9ca3af;
     --brand-secondary-dark: #4b5563;
 
-    /* Semantic Colors - Minimal Grey Scale */
-    --success: #374151;
-    --success-light: #4b5563;
-    --success-dark: #1f2937;
-    --warning: #6b7280;
-    --warning-light: #9ca3af;
-    --warning-dark: #4b5563;
-    --error: #6b7280;
-    --error-light: #9ca3af;
-    --error-dark: #4b5563;
-    --info: #374151;
-    --info-light: #4b5563;
-    --info-dark: #1f2937;
+    /* Semantic Colors - Proper Color Coding */
+    --success: #198754;
+    --success-light: #6fb569;
+    --success-dark: #146c43;
+    --warning: #fd7e14;
+    --warning-light: #feb673;
+    --warning-dark: #dc6604;
+    --error: #dc3545;
+    --error-light: #ea868f;
+    --error-dark: #b52d3a;
+    --info: #0d6efd;
+    --info-light: #6ea8fe;
+    --info-dark: #0b5ed7;
 
     /* Neutral Colors - Clean Palette */
     --white: #ffffff;
@@ -63,11 +63,11 @@
     /* Medium dark green */
     --color-green-dark: #146c43;
     /* Darker green */
-    --color-blue: #0d6efd;
+    --color-blue: #3964a4;
     /* Sky blue */
     --color-blue-dark: #0b5ed7;
     /* Dark blue */
-    --color-red: #dc3545;
+    --color-red: #c22030c9;
     /* Dark red */
     --color-orange: #fd7e14;
     /* Orange */
@@ -77,6 +77,20 @@
     --bg-secondary: var(--bg-light-gray);
     --bg-card: var(--bg-white);
     --bg-sidebar: var(--bg-light-gray);
+    --bg-brand: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+
+    /* Brand Colors for Components */
+    --brand-blue: #0d6efd;
+    --brand-blue-light: #6ea8fe;
+    --brand-purple: #6f42c1;
+    --brand-red: #dc3545;
+    --brand-red-light: #ea868f;
+
+    /* Accent Colors */
+    --accent-blue: #0d6efd;
+    --accent-green: #198754;
+    --accent-orange: #fd7e14;
+    --accent-red: #dc3545;
 
     /* Text Applications - Following contrast rules */
     --text-primary: var(--text-black);
@@ -724,6 +738,12 @@ body {
 
 .btn.btn-outline-primary {
     margin: 15px 0;
+}
+
+.btn-outline-light {
+    background: transparent;
+    color: var(--white) !important;
+    border: 2px solid var(--white) !important;
 }
 
 .align-items-end .btn {
@@ -1742,7 +1762,7 @@ form>button {
 .modal-header {
     padding: 3rem 2rem 2rem;
     text-align: center;
-    color: white;
+    color: white !important;
     position: relative;
     background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-purple) 100%);
 }
@@ -1761,6 +1781,13 @@ form>button {
 
 .modal-header-blue {
     background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-purple) 100%);
+}
+
+.modal-header h1,
+.modal-header h2,
+.modal-header h3 {
+    color: white !important;
+    padding: 10px 0;
 }
 
 .modal-icon-ring {
@@ -1811,7 +1838,8 @@ form>button {
 }
 
 /* Content Area */
-.modal-content {
+
+.modern-modal-container .modal-content {
     padding: 2rem;
 }
 

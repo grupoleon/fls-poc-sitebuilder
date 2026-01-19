@@ -1,0 +1,215 @@
+{
+    "widgets": [
+        {
+            "title": "",
+            "text": "<p>[map]<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "39444524468fa2dbf2aaf6906232135",
+            "_sow_form_timestamp": "1761226334745",
+            "so_sidebar_emulator_id": "sow-editor-29910000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "d1abf462-6d07-40a5-9ef2-256b72da39e0",
+                "style": {
+                    "padding": "30px 0px 30px 0px",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                },
+                "label": ""
+            }
+        },
+        {
+            "title": "",
+            "text": "<h2 style=\"text-align: center;\">Contact us.<\/h2>\n<h5><\/h5>\n<h5 style=\"text-align: center;\">Let\u2019s Start a Conversation<\/h5>\n<p>&nbsp;<\/p>\n<p style=\"text-align: center;\">Your questions and feedback are important to us. Our dedicated team is ready to assist you with any inquiries.<\/p>\n<p style=\"text-align: center;\">Simply complete the form, and we\u2019ll respond within 24\u201348 hours.<\/p>\n<p style=\"text-align: center;\"><em>We value your time and look forward to connecting with you.<\/em><\/p>\n<p style=\"text-align: center;\">Email: hello@example.com | Phone: +1 (123) 456-7890<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "155888255568a61e45de165767267510",
+            "_sow_form_timestamp": "1761226069535",
+            "so_sidebar_emulator_id": "sow-editor-29910001",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 1,
+                "widget_id": "7966b9e6-c344-4136-9de8-8144bfd85b96",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[contact-form]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "86426687468a61f3a3bb9e231121099",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-29910002",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 1,
+                "id": 2,
+                "widget_id": "9ee47f17-05f8-49bb-b268-8f73da3dfc46",
+                "style": {
+                    "class": "dark-theme",
+                    "padding": "30px 30px 30px 30px",
+                    "background": "#ff4612",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff",
+                    "link_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "text": "<div style=\"max-width: min(1200px, 80vw);margin:20px auto;\"><h3>Contact Form Form<\/h3>\n[forminator_form id=\"332\"]<\/div>\n",
+            "filter": "1",
+            "so_sidebar_emulator_id": "sow-editor-29910003",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 3,
+                "widget_id": "bf067024-801f-441e-8280-8ced9c53b3ca",
+                "style": {
+                    "padding": "20px 0px 20px 0px",
+                    "background_display": "tile"
+                },
+                "label": ""
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 1,
+            "style": {
+                "background": "#f8f9fa",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "8% 5% 8% 5%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background": "#000000",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "https:\/\/i.postimg.cc\/3JMgMW2Z\/pexels-chris-f-38966-8157344.jpg",
+                "background_display": "cover",
+                "background_image_size": "full",
+                "background_image_opacity": "75",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "8%",
+                "row_stretch": "full",
+                "cell_alignment": "stretch"
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "background_display": "tile",
+                "full_height": ""
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 0,
+            "weight": 0.09981981981981979,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 1,
+            "weight": 0.8003603603603604,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 2,
+            "weight": 0.0998198198198198,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 0,
+            "weight": 0.4,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 1,
+            "weight": 0.6,
+            "style": {
+                "background": "#e5e5e5",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "auto"
+            }
+        },
+        {
+            "grid": 3,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        }
+    ],
+    "name": "Contact",
+    "id": "contact"
+}

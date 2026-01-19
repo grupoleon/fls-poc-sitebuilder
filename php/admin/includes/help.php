@@ -2,7 +2,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3>Help & Keyboard Shortcuts</h3>
-            <button type="button" class="close-modal" aria-label="Close">
+            <button type="button" class="close-modal modal-close-btn" aria-label="Close">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -57,10 +57,10 @@
                 </ul>
             </div>
         </div>
-        <div class="modal-footer">
-            <p class="text-center">&copy; <?php echo date('Y') ?> FrontlineStrategies. All rights reserved.
+        <!-- <div class="modal-footer">
+            <p class="text-center">&copy;                                                                                   <?php echo date('Y') ?> FrontlineStrategies. All rights reserved.
             </p>
-        </div>
+        </div> -->
     </div>
 </div>
 <div class="modal-overlay"></div>

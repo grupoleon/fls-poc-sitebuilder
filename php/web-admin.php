@@ -1958,9 +1958,22 @@
                             <div class="card-body">
                                 <div class="form-group">
                                     <label class="form-label">Active Theme</label>
-                                    <select id="page-theme-select" class="form-select">
-                                        <option value="">Loading themes...</option>
-                                    </select>
+                                    <div class="d-flex gap-2">
+                                        <select id="page-theme-select" class="form-select" style="flex: 1;">
+                                            <option value="">Loading themes...</option>
+                                        </select>
+                                        <button type="button" id="refresh-theme-list-btn" class="btn btn-outline"
+                                            title="Refresh theme list from folder structure">
+                                            <i class="fas fa-sync-alt"></i> Refresh
+                                        </button>
+                                        <button type="button" id="clean-uploads-btn" class="btn btn-outline"
+                                            title="Delete unused uploads from the repo" style="white-space:nowrap;"
+                                            onclick="window.adminInterface.cleanUnusedUploads()">
+                                            <i class="fas fa-trash-alt"></i> Clean Uploads
+                                        </button>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">Themes are loaded from pages/themes
+                                        folder</small>
                                 </div>
                             </div>
                         </div>

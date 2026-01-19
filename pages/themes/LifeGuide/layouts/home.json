@@ -1,0 +1,465 @@
+{
+    "widgets": [
+        {
+            "title": "",
+            "text": "<p>[cpt type=\"issues\" posts=\"3\" columns=\"3\"]</p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "issues_section_widget",
+            "_sow_form_timestamp": 1762810000000,
+            "so_sidebar_emulator_id": "sow-editor-720000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "issues-cpt-widget",
+                "style": {
+                    "widget_css": "margin-top:-80px;",
+                    "mobile_css": "margin-top:0px;",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h5><span style=\"color: #46a5e5; font-size:60px;\">Hi<\/span> <strong>Lorem ipsum dolor sit, <\/strong><\/h5>\nconsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\n[button text=\"Read more\" url=\"\/about-the-candidate\" style=\"outline\" target=\"_self\"]",
+            "text_selected_editor": "html",
+            "autop": true,
+            "_sow_form_id": "63548489369124c7c54b7d441541087",
+            "_sow_form_timestamp": 1762808097190,
+            "so_sidebar_emulator_id": "sow-editor-720001",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 0,
+                "id": 1,
+                "widget_id": "40a1c2aa-01c4-4b2d-886f-e86be238c0d2",
+                "style": {
+                    "padding": "8% 0% 25% 0%",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": "",
+            "image_fallback": "https:\/\/i.postimg.cc\/3JYrx8nw\/about344.png",
+            "size": "full",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "default",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "175721020369124e579d34d187176993",
+            "_sow_form_timestamp": 1762807466123,
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-720002",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 2,
+                "widget_id": "aff13df6-6352-4840-890d-6c34a7865147",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h2 style=\"text-align: center;\">NEWS<\/h2>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "13924328306912540397e81848413692",
+            "_sow_form_timestamp": 1762808944016,
+            "so_sidebar_emulator_id": "sow-editor-720003",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 3,
+                "widget_id": "c2dcf97b-3da2-4c76-a2f2-26cde5cc8df5",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff",
+                    "link_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[cpt type=\"post\" posts=\"3\" columns=\"3\"]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "_sow_form_id": "1909815701691253d6657cf638755034",
+            "_sow_form_timestamp": 1762808847847,
+            "autop": "",
+            "so_sidebar_emulator_id": "sow-editor-720004",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 4,
+                "widget_id": "c7f34206-527c-4986-9eed-63945b9cd9d8",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p style=\"text-align: center;\">[button text=\"View More\" url=\"\/news\" style=\"primary\" target=\"_self\"]<\/p>\n",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "6922253236912543fa3886175546407",
+            "_sow_form_timestamp": 1762808944016,
+            "so_sidebar_emulator_id": "sow-editor-720005",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 5,
+                "widget_id": "db3c74bb-9726-4795-8444-788e3b1b2151",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h2>Stories<br \/>\n<strong>Of Success<\/strong><\/h2>\n<p>consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "1336885339691255a8c9724174139348",
+            "_sow_form_timestamp": 1762809762718,
+            "so_sidebar_emulator_id": "sow-editor-720006",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 6,
+                "widget_id": "a2217e80-5d17-48cc-a8da-fdd612c60809",
+                "style": {
+                    "padding": "8% 0% 25% 0%",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": "",
+            "image_fallback": "https:\/\/i.postimg.cc\/FKS14trr\/Gemini-Generated-Image-g51esig51esig51e.png",
+            "size": "full",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "default",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "1314556056912561f20b50830071737",
+            "_sow_form_timestamp": 1762809762719,
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-720007",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 1,
+                "id": 7,
+                "widget_id": "4c716808-268a-4dcc-90ea-54d9ed15022e",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h2 style=\"text-align: center;\">Testimonials<\/h2>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "214483212568f3f89d9db20433555337",
+            "_sow_form_timestamp": 1762809903336,
+            "so_sidebar_emulator_id": "sow-editor-720008",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 1,
+                "id": 8,
+                "widget_id": "75ed48cb-8e63-4662-93eb-fa84b6d884ae",
+                "style": {
+                    "mobile_css": "max-width:300px;\nmargin:0 auto;",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[cpt type=\"testimonials\" posts=\"10\" columns=\"1\" class=\"testimonialList\"]<\/p>\n",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "134723254068f3f8ca618a9281235582",
+            "_sow_form_timestamp": 1762809903337,
+            "so_sidebar_emulator_id": "sow-editor-720009",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 1,
+                "id": 9,
+                "widget_id": "abc9d1e7-120d-4394-bea0-bb8c63ad5205",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 1,
+            "style": {
+                "padding": "0px 0px 0px 0px",
+                "mobile_padding": "50px 0px 0px 0px",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "cell_alignment": "flex-start",
+                "mobile_bottom_margin": "0px"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "10% 0% 0% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "8%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-end"
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "https:\/\/i.postimg.cc\/5083pSc3\/dark-textured-background.jpg",
+                "background_display": "fixed",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "10% 0% 10% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "8%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-end"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "12% 0% 12% 0%",
+                "background": "#ffffff",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "https:\/\/i.postimg.cc\/vBrSVmv2\/wt834cwt834cwt83.png",
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "10",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "mobile_cell_margin": "0px"
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 0,
+            "weight": 0.45,
+            "style": {
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "auto"
+            }
+        },
+        {
+            "grid": 1,
+            "index": 1,
+            "weight": 0.55,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 3,
+            "index": 0,
+            "weight": 0.45,
+            "style": {
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "auto"
+            }
+        },
+        {
+            "grid": 3,
+            "index": 1,
+            "weight": 0.55,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 0,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 1,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 2,
+            "weight": 0.25,
+            "style": []
+        }
+    ],
+    "name": "Home",
+    "id": "home"
+}

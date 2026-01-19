@@ -461,14 +461,14 @@
 .modal-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-primary) !important;
 }
 
 .modal-close {
-    background: none;
+    background: var(--gray-100);
     border: none;
     font-size: 1.5rem;
-    color: var(--text-muted);
+    color: var(--text-primary);
     cursor: pointer;
     padding: var(--space-2);
     border-radius: var(--radius-md);
@@ -476,14 +476,56 @@
 }
 
 .modal-close:hover {
-    background: var(--gray-100);
+    background: var(--gray-200);
     color: var(--text-primary);
+    transform: scale(1.05);
 }
 
 .modal-body {
     padding: var(--space-8);
     height: calc(100% - 120px);
     overflow-y: auto;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.modal-body h1,
+.modal-body h2,
+.modal-body h3,
+.modal-body h4,
+.modal-body h5,
+.modal-body h6 {
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+}
+
+.modal-body p {
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+}
+
+.modal-body ul,
+.modal-body ol {
+    color: var(--text-primary);
+    margin-left: var(--space-5);
+}
+
+.modal-body li {
+    margin-bottom: var(--space-2);
+}
+
+.modal-body strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.modal-body kbd {
+    background: var(--gray-100);
+    color: var(--text-primary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: 0.85em;
+    border: 1px solid var(--gray-300);
 }
 
 .modal-footer {
@@ -1042,6 +1084,31 @@ input[type="file"].file-input {
 .status-badge.bg-blue-500 {
     background: var(--brand-blue);
     color: var(--white);
+}
+
+/* Additional Status Classes */
+.status-success {
+    color: var(--success-dark);
+    background: rgba(25, 135, 84, 0.1);
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.status-error {
+    color: var(--error-dark);
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.status-warning {
+    color: var(--warning-dark);
+    background: rgba(253, 126, 20, 0.1);
+    border: 1px solid rgba(253, 126, 20, 0.2);
+}
+
+.status-info {
+    color: var(--info-dark);
+    background: rgba(13, 110, 253, 0.1);
+    border: 1px solid rgba(13, 110, 253, 0.2);
 }
 
 /* Deployment Status Steps - Enhanced Visibility */
@@ -1739,6 +1806,31 @@ input[type="file"].file-input {
     pointer-events: none;
 }
 
+/* Enhanced Button Visibility Classes */
+.btn-contrast {
+    background: var(--text-primary) !important;
+    color: var(--white) !important;
+    border: 2px solid var(--text-primary) !important;
+}
+
+.btn-contrast:hover:not(:disabled) {
+    background: var(--gray-800) !important;
+    border-color: var(--gray-800) !important;
+    transform: translateY(-2px);
+}
+
+.btn-light-contrast {
+    background: var(--white) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--gray-300) !important;
+}
+
+.btn-light-contrast:hover:not(:disabled) {
+    background: var(--gray-50) !important;
+    border-color: var(--gray-400) !important;
+    transform: translateY(-1px);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .compact-steps-container {
@@ -1763,4 +1855,47 @@ input[type="file"].file-input {
         min-width: 15px;
         margin: 0 var(--space-1);
     }
+}
+
+/* ===== ACCORDION COMPONENTS ===== */
+.accordion-header {
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    user-select: none;
+}
+
+.accordion-header:hover {
+    background: rgba(55, 66, 250, 0.05);
+}
+
+.accordion-icon {
+    transition: transform var(--transition-normal);
+    font-size: 1.25rem;
+    color: var(--brand-blue);
+}
+
+/* Collapsed state - chevron pointing down */
+.card.collapsed .accordion-icon {
+    transform: rotate(0deg);
+}
+
+/* Expanded state - chevron pointing up */
+.card:not(.collapsed) .accordion-icon {
+    transform: rotate(180deg);
+}
+
+/* Show content when expanded */
+.card:not(.collapsed) .accordion-content {
+    display: block !important;
+}
+
+/* Hide content when collapsed */
+.card.collapsed .accordion-content {
+    display: none !important;
+}
+
+/* Smooth transition for content */
+.accordion-content {
+    transition: all var(--transition-normal);
+    overflow: hidden;
 }

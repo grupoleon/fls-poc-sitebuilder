@@ -568,7 +568,7 @@
 .options-modal-close {
     background: none;
     border: none;
-    color: white;
+    color: #374151;
     font-size: 2rem;
     line-height: 1;
     cursor: pointer;
@@ -579,11 +579,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    transition: background 0.2s;
+    transition: all 0.2s;
 }
 
 .options-modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(55, 65, 81, 0.1);
+    color: #1f2937;
+    transform: scale(1.05);
 }
 
 .options-modal-body {
@@ -1336,7 +1338,7 @@ h3,
 h4,
 h5,
 h6 {
-    color: var(--color-green) !important;
+    color: var(--color-green);
 }
 
 /* Card titles should use blue for distinction */

@@ -425,15 +425,12 @@ class AdminInterface {
             }
         });
 
-        // Toggle switch clicks - handle all toggle switches globally
+        // Click handlers (toggle switches now handled by initializeToggleSwitches())
         document.addEventListener('click',(e) => {
-            if(e.target.classList.contains('toggle-switch')) {
-                const checkbox=e.target.previousElementSibling;
-                if(checkbox&&checkbox.classList.contains('toggle-input')) {
-                    checkbox.checked=!checkbox.checked;
-                    // Trigger change event for any listeners
-                    checkbox.dispatchEvent(new Event('change',{bubbles: true}));
-                }
+            // Refresh theme list button
+            if(e.target.id==='refresh-theme-list-btn'||e.target.closest('#refresh-theme-list-btn')) {
+                e.preventDefault();
+                this.refreshThemeList();
             }
         });
 
@@ -1063,7 +1060,7 @@ class AdminInterface {
         }
     }
 
-    switchTab(tab) {
+    async switchTab(tab) {
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
@@ -1101,18 +1098,12 @@ class AdminInterface {
                 this.loadOtherContents();
                 break;
             case 'pages':
+                await this.loadThemes();
                 this.loadPageEditor();
-                // Ensure theme select is populated with current active theme
-                setTimeout(() => {
-                    this.populateThemeSelect();
-                },100);
                 break;
             case 'deployment':
+                await this.loadThemes();
                 this.loadDeploymentStatus();
-                // Ensure theme select is populated with current active theme
-                setTimeout(() => {
-                    this.populateThemeSelect();
-                },100);
                 // Force check GitHub Actions status once after loading deployment tab
                 setTimeout(() => {
                     console.log('🔍 Force checking GitHub Actions status on deployment tab load...');
@@ -1305,46 +1296,58 @@ class AdminInterface {
     }
 
     async populateThemeSelect(themes) {
-        const themeSelect=document.getElementById('page-theme-select');
-        if(!themeSelect) {
-            console.error('Theme select element not found');
+        const pageThemeSelect=document.getElementById('page-theme-select');
+        const deploymentThemeSelect=document.getElementById('deployment-theme-select');
+
+        if(!themes||themes.length===0) {
+            if(pageThemeSelect) pageThemeSelect.innerHTML='<option value="">No themes found</option>';
+            if(deploymentThemeSelect) deploymentThemeSelect.innerHTML='<option value="">No themes found</option>';
             return;
         }
 
-        // Clear existing options except the first one
-        themeSelect.innerHTML='<option value="">Loading themes...</option>';
-
-        if(themes&&themes.length>0) {
-            // Get the active theme from backend
-            let activeTheme=null;
-            try {
-                const pagesResponse=await fetch('?action=get_pages');
-                const pagesData=await pagesResponse.json();
-                if(pagesData.success) {
-                    activeTheme=pagesData.data.active_theme;
-                }
-            } catch(error) {
-                console.error('Failed to get active theme:',error);
+        // Get the active theme from backend
+        let activeTheme=null;
+        try {
+            const pagesResponse=await fetch('?action=get_pages');
+            const pagesData=await pagesResponse.json();
+            if(pagesData.success) {
+                activeTheme=pagesData.data.active_theme;
             }
+        } catch(error) {
+            console.error('Failed to get active theme:',error);
+        }
 
-            themeSelect.innerHTML='<option value="">Select a theme...</option>';
+        // Populate Page Editor theme select
+        if(pageThemeSelect) {
+            pageThemeSelect.innerHTML='<option value="">Select a theme...</option>';
             themes.forEach((theme) => {
                 const option=document.createElement('option');
                 option.value=theme;
                 option.textContent=theme;
-                // Auto-select active theme
                 if(activeTheme&&activeTheme===theme) {
                     option.selected=true;
                 }
-                themeSelect.appendChild(option);
+                pageThemeSelect.appendChild(option);
             });
 
             // If we have an active theme, load its pages
             if(activeTheme) {
                 this.loadThemePages(activeTheme);
             }
-        } else {
-            themeSelect.innerHTML='<option value="">No themes found</option>';
+        }
+
+        // Populate Deployment theme select
+        if(deploymentThemeSelect) {
+            deploymentThemeSelect.innerHTML='<option value="">Select a theme...</option>';
+            themes.forEach((theme) => {
+                const option=document.createElement('option');
+                option.value=theme;
+                option.textContent=theme;
+                if(activeTheme&&activeTheme===theme) {
+                    option.selected=true;
+                }
+                deploymentThemeSelect.appendChild(option);
+            });
         }
     }
 
@@ -2106,6 +2109,11 @@ class AdminInterface {
 
     async saveActiveTheme(theme) {
         try {
+            if(!theme) {
+                this.showAlert('No theme selected','error');
+                return;
+            }
+
             const response=await fetch('?action=save_active_theme',{
                 method: 'POST',
                 headers: {
@@ -2116,19 +2124,33 @@ class AdminInterface {
                 })
             });
 
+            // Check if response is OK and content-type is JSON
+            if(!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const contentType=response.headers.get('content-type');
+            if(!contentType||!contentType.includes('application/json')) {
+                const textResponse=await response.text();
+                console.error('Server returned non-JSON response:',textResponse);
+                throw new Error('Server returned an error. Check browser console for details.');
+            }
+
             const result=await response.json();
 
             if(result.success) {
                 console.log('Active theme saved successfully:',theme);
                 // Update the deployment theme select to reflect the change
                 this.updateDeploymentThemeSelect(theme);
+                // Show success message
+                this.showAlert('Theme saved successfully!','success');
             } else {
                 console.error('Failed to save active theme:',result.message);
-                this.showAlert('Failed to save theme selection','error');
+                this.showAlert(result.message||'Failed to save theme selection','error');
             }
         } catch(error) {
             console.error('Error saving active theme:',error);
-            this.showAlert('Failed to save theme selection','error');
+            this.showAlert('Error saving theme: '+error.message,'error');
         }
     }
 
@@ -2152,6 +2174,82 @@ class AdminInterface {
             // Trigger theme pages loading if the value actually changed
             if(pageThemeSelect.value===activeTheme) {
                 this.loadThemePages(activeTheme);
+            }
+        }
+    }
+
+    async refreshThemeList() {
+        try {
+            const refreshBtn=document.getElementById('refresh-theme-list-btn');
+            const icon=refreshBtn?.querySelector('i');
+
+            // Add spinning animation
+            if(icon) {
+                icon.classList.add('fa-spin');
+            }
+            if(refreshBtn) {
+                refreshBtn.disabled=true;
+            }
+
+            const response=await fetch('?action=refresh_theme_list',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if(!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const contentType=response.headers.get('content-type');
+            if(!contentType||!contentType.includes('application/json')) {
+                const textResponse=await response.text();
+                console.error('Server returned non-JSON response:',textResponse);
+                throw new Error('Server returned an error. Check browser console for details.');
+            }
+
+            const result=await response.json();
+
+            if(result.success&&result.data) {
+                // Update theme selector with new theme list
+                const themeSelect=document.getElementById('page-theme-select');
+                if(themeSelect&&result.data.themes&&result.data.themes.length>0) {
+                    themeSelect.innerHTML=result.data.themes.map(theme =>
+                        `<option value="${theme}" ${theme===result.data.active_theme? 'selected':''}>${theme}</option>`
+                    ).join('');
+
+                    // Load pages for active theme
+                    if(result.data.active_theme) {
+                        this.loadThemePages(result.data.active_theme);
+                    }
+                }
+
+                // Also update deployment theme select if it exists
+                const deploymentThemeSelect=document.getElementById('deployment-theme-select');
+                if(deploymentThemeSelect&&result.data.themes&&result.data.themes.length>0) {
+                    deploymentThemeSelect.innerHTML=result.data.themes.map(theme =>
+                        `<option value="${theme}" ${theme===result.data.active_theme? 'selected':''}>${theme}</option>`
+                    ).join('');
+                }
+
+                this.showAlert(result.message||'Theme list refreshed successfully!','success');
+            } else {
+                console.error('Failed to refresh theme list:',result.message);
+                this.showAlert(result.message||'Failed to refresh theme list','error');
+            }
+        } catch(error) {
+            console.error('Error refreshing theme list:',error);
+            this.showAlert('Error refreshing theme list: '+error.message,'error');
+        } finally {
+            // Remove spinning animation
+            const refreshBtn=document.getElementById('refresh-theme-list-btn');
+            const icon=refreshBtn?.querySelector('i');
+            if(icon) {
+                icon.classList.remove('fa-spin');
+            }
+            if(refreshBtn) {
+                refreshBtn.disabled=false;
             }
         }
     }
@@ -2269,33 +2367,47 @@ class AdminInterface {
             const response=await fetch('?action=get_pages');
             const data=await response.json();
 
-            if(data.success) {
+            if(data.success&&data.data) {
                 this.populatePageEditor(data.data);
+            } else {
+                console.error('Failed to load page editor:',data.message||'Unknown error');
+                this.showAlert('Failed to load page editor','error');
             }
         } catch(error) {
             console.error('Failed to load page editor:',error);
+            this.showAlert('Error loading page editor: '+error.message,'error');
         }
     }
 
     populatePageEditor(data) {
         // Populate theme selector
         const themeSelect=document.getElementById('page-theme-select');
-        if(themeSelect&&data.themes) {
+        if(themeSelect&&data.themes&&data.themes.length>0) {
             themeSelect.innerHTML=data.themes.map(theme =>
                 `<option value="${theme}" ${theme===data.active_theme? 'selected':''}>${theme}</option>`
             ).join('');
-        }
 
-        // Load pages for active theme
-        this.loadThemePages(data.active_theme);
+            // Load pages for active theme if available
+            if(data.active_theme) {
+                this.loadThemePages(data.active_theme);
+            }
+        } else {
+            console.error('No themes available');
+            this.showAlert('No themes found','warning');
+        }
     }
 
     async loadThemePages(theme) {
         try {
+            if(!theme) {
+                console.error('No theme specified for loading pages');
+                return;
+            }
+
             const response=await fetch(`?action=get_theme_pages&theme=${encodeURIComponent(theme)}`);
             const data=await response.json();
 
-            if(data.success) {
+            if(data.success&&data.data) {
                 this.renderPageTabs(data.data.pages,theme);
 
                 // Determine which page to load
@@ -2320,10 +2432,12 @@ class AdminInterface {
                     this.loadPageContent(theme,pageToLoad);
                 }
             } else {
-                console.error('Failed to load theme pages:',data.message);
+                console.error('Failed to load theme pages:',data.message||'Unknown error');
+                this.showAlert('Failed to load pages for '+theme,'error');
             }
         } catch(error) {
             console.error('Failed to load theme pages:',error);
+            this.showAlert('Error loading theme pages: '+error.message,'error');
         }
     }
 
@@ -2371,6 +2485,11 @@ class AdminInterface {
 
     async loadPageContent(theme,page) {
         try {
+            if(!theme||!page) {
+                console.error('Theme or page not specified');
+                return;
+            }
+
             // Update tab classes to ensure the selected tab has both 'active' and 'page-selected' classes
             const pageTabs=document.querySelectorAll('#page-tabs .tab-link');
             pageTabs.forEach(tab => {
@@ -2386,11 +2505,15 @@ class AdminInterface {
             const response=await fetch(`?action=get_page_content&theme=${encodeURIComponent(theme)}&page=${encodeURIComponent(page)}`);
             const data=await response.json();
 
-            if(data.success) {
+            if(data.success&&data.data) {
                 this.renderPageSections(data.data,theme,page);
+            } else {
+                console.error('Failed to load page content:',data.message||'Unknown error');
+                this.showAlert('Failed to load page content','error');
             }
         } catch(error) {
             console.error('Failed to load page content:',error);
+            this.showAlert('Error loading page: '+error.message,'error');
         }
     }
 
@@ -2485,42 +2608,24 @@ class AdminInterface {
             widgetsCount: pageData.widgets?.length||0
         });
 
-        // Render grids section (layout and backgrounds)
-        if(pageData.grids&&pageData.grids.length>0) {
-            console.log('Rendering grids section with',pageData.grids.length,'grids');
-            html+=`
-                <div class="card mb-6">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-th-large me-2"></i>
-                            Layout & Background Settings
-                        </h3>
-                        <p class="text-muted mb-0">Configure section backgrounds, colors, and spacing</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="grid-editor">
-                            ${pageData.grids.map((grid,index) => this.renderGridSection(grid,index)).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-            console.log('No grids to render or grids array is empty');
-        }
-
-        // Render widgets section (content)
+        // Render widgets section (content) - First
         if(pageData.widgets&&pageData.widgets.length>0) {
             console.log('Rendering widgets section with',pageData.widgets.length,'widgets');
             html+=`
-                <div class="card mb-6">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-edit me-2"></i>
-                            Content Widgets
-                        </h3>
-                        <p class="text-muted mb-0">Edit text content, images, and other widget elements</p>
+                <div class="card mb-6 collapsed">
+                    <div class="card-header accordion-header" style="cursor: pointer;" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="card-title mb-1">
+                                    <i class="fas fa-edit me-2"></i>
+                                    Content Widgets
+                                </h3>
+                                <p class="text-muted mb-0 small">Edit text content, images, and other widget elements</p>
+                            </div>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body accordion-content" style="display: none;">
                         <div class="widgets-editor">
                             ${pageData.widgets.map((widget,index) => this.renderWidgetSection(widget,index)).join('')}
                         </div>
@@ -2529,6 +2634,34 @@ class AdminInterface {
             `;
         } else {
             console.log('No widgets to render or widgets array is empty');
+        }
+
+        // Render grids section (layout/background) - Second
+        if(pageData.grids&&pageData.grids.length>0) {
+            console.log('Rendering grids section with',pageData.grids.length,'grids');
+            html+=`
+                <div class="card mb-6 collapsed">
+                    <div class="card-header accordion-header" style="cursor: pointer;" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="card-title mb-1">
+                                    <i class="fas fa-th-large me-2"></i>
+                                    Layout & Background Settings
+                                </h3>
+                                <p class="text-muted mb-0 small">Configure section backgrounds, colors, and spacing</p>
+                            </div>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                    </div>
+                    <div class="card-body accordion-content" style="display: none;">
+                        <div class="grid-editor">
+                            ${pageData.grids.map((grid,index) => this.renderGridSection(grid,index)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            console.log('No grids to render or grids array is empty');
         }
 
         console.log('Setting container innerHTML with html length:',html.length);
@@ -4070,6 +4203,44 @@ class AdminInterface {
         }
     }
 
+    /**
+     * Clean uploads: find unused image/video files in uploads and delete them (with confirmation)
+     */
+    async cleanUnusedUploads() {
+        const proceed=confirm('Are you sure you want to delete unused images/videos from the uploads folder? This action is irreversible.');
+        if(!proceed) return;
+
+        const btn=document.querySelector('#clean-uploads-btn');
+        const originalHtml=btn? btn.innerHTML:null;
+        try {
+            if(btn) {
+                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Cleaning...';
+                btn.disabled=true;
+            }
+
+            const response=await fetch('?action=clean_uploads&confirmed=true');
+            const data=await response.json();
+
+            if(data.success) {
+                const deletedCount=(data.data&&data.data.deleted)? data.data.deleted.length:0;
+                const toDeleteCount=(data.data&&data.data.to_delete)? data.data.to_delete.length:0;
+                this.showToast(`Clean complete. ${deletedCount} files deleted; ${toDeleteCount} files matched as unused.`,'success');
+                console.log('Clean uploads result',data);
+            } else {
+                console.error('Failed to clean uploads',data);
+                this.showToast('Failed to clean uploads. Check console for more details.','error');
+            }
+        } catch(err) {
+            console.error('Clean uploads error',err);
+            this.showToast('Error while cleaning uploads','error');
+        } finally {
+            if(btn) {
+                btn.disabled=false;
+                if(originalHtml) btn.innerHTML=originalHtml;
+            }
+        }
+    }
+
     // Debug function to check what's wrong with the run ID
     forceCheckRunId() {
         console.log('🔧 DEBUG: Checking GitHub run ID issues...');
@@ -5231,9 +5402,9 @@ class AdminInterface {
         const logoUploadText=document.getElementById('logo-upload-text');
         const logoActions=document.getElementById('logo-actions');
 
-        // Validate file size (2MB max)
-        if(file.size>2*1024*1024) {
-            this.showAlert('Logo file size must be less than 2MB','error');
+        // Validate file size (10MB max)
+        if(file.size>10*1024*1024) {
+            this.showAlert('Logo file size must be less than 10MB','error');
             return;
         }
 
@@ -7077,8 +7248,13 @@ class AdminInterface {
                                     <textarea class="form-textarea content-comment-input" rows="4">${this.escapeHtml(item.client_comment||'')}</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Image URL (optional)</label>
-                                    <input type="url" class="form-input content-image-input" value="${this.escapeHtml(item.client_img?.url||'')}">
+                                    <label class="form-label">Image (optional)</label>
+                                    <input type="url" class="form-input content-image-input" value="${this.escapeHtml(item.client_img||'')}" placeholder="https://example.com/image.jpg">
+                                    <div class="image-upload-section" style="margin-top: 10px;">
+                                        <input type="file" class="form-input content-image-file" accept="image/*" style="margin-bottom: 5px;">
+                                        <button type="button" class="btn btn-outline-primary btn-sm upload-content-image-btn"><i class="fas fa-upload"></i> Upload Image</button>
+                                        ${item.client_img? `<div class="current-image" style="margin-top: 10px;"><img src="${this.escapeHtml(item.client_img)}" alt="Current image" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;"></div>`:''}
+                                    </div>
                                 </div>
                                 <div class="flex gap-2">
                                     <button type="button" class="btn btn-primary btn-sm save-content-btn">
@@ -7186,6 +7362,7 @@ class AdminInterface {
                         <div class="content-item-header">
                             <div class="content-item-display">
                                 <h4 class="content-title">${this.escapeHtml(item.title)}</h4>
+                                ${item.image? `<span class="badge bg-primary"><i class="fas fa-image"></i> Has Image</span>`:''}
                             </div>
                             <div class="content-item-actions">
                                 <button type="button" class="btn btn-outline-secondary btn-sm edit-content-btn">
@@ -7210,6 +7387,16 @@ class AdminInterface {
                                 <div class="form-group">
                                     <label class="form-label">Content</label>
                                     <textarea class="form-textarea content-text-input" rows="4">${this.escapeHtml(item.content)}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Image (optional)</label>
+                                    <input type="url" class="form-input content-image-input" value="${this.escapeHtml(item.image||'')}" placeholder="https://example.com/image.jpg">
+                                    <div class="image-upload-section" style="margin-top: 10px;">
+                                        <input type="file" class="form-input content-image-file" accept="image/*" style="margin-bottom: 5px;">
+                                        <button type="button" class="btn btn-outline-primary btn-sm upload-content-image-btn"><i class="fas fa-upload"></i> Upload Image</button>
+                                        ${item.image? `<div class="current-image" style="margin-top: 10px;"><img src="${this.escapeHtml(item.image)}" alt="Current image" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;"></div>`:''}
+                                    </div>
+                                    <small class="text-muted">Leave empty if no image is needed. Image will only display if URL is provided.</small>
                                 </div>
                                 <div class="flex gap-2">
                                     <button type="button" class="btn btn-primary btn-sm save-content-btn">
@@ -7260,6 +7447,13 @@ class AdminInterface {
                 btn.addEventListener('click',() => this.uploadSlideImage(index));
             });
         }
+
+        // Upload content image buttons (for all other content types)
+        if(type!=='sliders') {
+            listContainer.querySelectorAll('.upload-content-image-btn').forEach((btn,index) => {
+                btn.addEventListener('click',() => this.uploadContentImage(type,index));
+            });
+        }
     }
 
     editContentItem(type,index) {
@@ -7299,9 +7493,9 @@ class AdminInterface {
             return;
         }
 
-        // Validate file size (max 5MB)
-        if(file.size>5*1024*1024) {
-            this.showAlert('Image file size must be less than 5MB','error');
+        // Validate file size (max 10MB)
+        if(file.size>10*1024*1024) {
+            this.showAlert('Image file size must be less than 10MB','error');
             return;
         }
 
@@ -7350,6 +7544,80 @@ class AdminInterface {
         }
     }
 
+    async uploadContentImage(type,index) {
+        const item=document.querySelector(`#${type}-list .content-item[data-index="${index}"]`);
+        if(!item) return;
+
+        const fileInput=item.querySelector('.content-image-file');
+        const imageUrlInput=item.querySelector('.content-image-input');
+        const uploadBtn=item.querySelector('.upload-content-image-btn');
+
+        if(!fileInput.files.length) {
+            this.showAlert('Please select an image file first','error');
+            return;
+        }
+
+        const file=fileInput.files[0];
+
+        // Validate file type
+        if(!file.type.startsWith('image/')) {
+            this.showAlert('Please select a valid image file','error');
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if(file.size>10*1024*1024) {
+            this.showAlert('Image file size must be less than 10MB','error');
+            return;
+        }
+
+        try {
+            uploadBtn.disabled=true;
+            uploadBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+            const formData=new FormData();
+            formData.append('image',file);
+            // Use different folders based on content type
+            const folder=type==='testimonials'? 'testimonials':type;
+            formData.append('folder',folder);
+
+            const response=await fetch('?action=upload_image',{
+                method: 'POST',
+                body: formData
+            });
+
+            const result=await response.json();
+
+            if(!result.success) {
+                throw new Error(result.message||'Failed to upload image');
+            }
+
+            // Update the URL input with the uploaded image path
+            imageUrlInput.value=result.data.url;
+
+            // Update the preview
+            const currentImageDiv=item.querySelector('.current-image');
+            if(currentImageDiv) {
+                currentImageDiv.innerHTML=`<img src="${result.data.url}" alt="Current image" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;">`;
+            } else {
+                const imageUploadSection=item.querySelector('.image-upload-section');
+                imageUploadSection.insertAdjacentHTML('beforeend',`<div class="current-image" style="margin-top: 10px;"><img src="${result.data.url}" alt="Current image" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;"></div>`);
+            }
+
+            // Clear the file input
+            fileInput.value='';
+
+            this.showAlert('Image uploaded successfully','success');
+
+        } catch(error) {
+            console.error('Error uploading image:',error);
+            this.showAlert('Failed to upload image: '+error.message,'error');
+        } finally {
+            uploadBtn.disabled=false;
+            uploadBtn.innerHTML='<i class="fas fa-upload"></i> Upload Image';
+        }
+    }
+
     async saveContentItem(type,index) {
         const item=document.querySelector(`#${type}-list .content-item[data-index="${index}"]`);
         if(!item) return;
@@ -7380,9 +7648,7 @@ class AdminInterface {
                     client_name: nameInput.value.trim(),
                     client_position: positionInput.value.trim(),
                     client_comment: commentInput.value.trim(),
-                    client_img: {
-                        url: imageInput.value.trim()
-                    }
+                    client_img: imageInput.value.trim()
                 };
 
                 await this.saveContents(type,contents);
@@ -7443,6 +7709,7 @@ class AdminInterface {
             // Handle standard content types
             const titleInput=item.querySelector('.content-title-input');
             const contentInput=item.querySelector('.content-text-input');
+            const imageInput=item.querySelector('.content-image-input');
 
             if(!titleInput.value.trim()||!contentInput.value.trim()) {
                 this.showAlert('Title and content are required','error');
@@ -7461,7 +7728,8 @@ class AdminInterface {
                 const contents=result.data||[];
                 contents[index]={
                     title: titleInput.value.trim(),
-                    content: contentInput.value.trim()
+                    content: contentInput.value.trim(),
+                    image: imageInput.value.trim()
                 };
 
                 await this.saveContents(type,contents);
@@ -7510,9 +7778,7 @@ class AdminInterface {
                 client_name: '',
                 client_position: '',
                 client_comment: '',
-                client_img: {
-                    url: ''
-                }
+                client_img: ''
             };
         } else if(type==='sliders') {
             // Create a basic slider structure
@@ -7563,7 +7829,8 @@ class AdminInterface {
         } else {
             newItem={
                 title: '',
-                content: ''
+                content: '',
+                image: ''
             };
         }
 
@@ -8248,8 +8515,9 @@ function toggleSwitch(checkboxId) {
     // Toggle checkbox state
     checkbox.checked=!checkbox.checked;
 
-    // Trigger change event for form processing
-    checkbox.dispatchEvent(new Event('change'));
+    // Trigger both input and change events (bubbling) so document-level listeners pick up changes
+    checkbox.dispatchEvent(new Event('input',{bubbles: true}));
+    checkbox.dispatchEvent(new Event('change',{bubbles: true}));
 
     // Add visual feedback
     const toggleSwitch=checkbox.nextElementSibling;
@@ -8274,8 +8542,10 @@ function initializeToggleSwitches() {
     });
 
     // Set up label click handlers
+    // Prevent the native label toggle (which would double-toggle when combined with our handler)
     document.querySelectorAll('.toggle-label').forEach(label => {
         label.addEventListener('click',(e) => {
+            e.preventDefault(); // avoid native label toggling so we only toggle once via toggleSwitch
             const checkboxId=label.getAttribute('for');
             if(checkboxId) {
                 toggleSwitch(checkboxId);
