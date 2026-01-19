@@ -1,0 +1,628 @@
+{
+    "widgets": [
+        {
+            "features": [
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "materialicons-sowm-regular-person_2",
+                    "icon_title": "",
+                    "icon_color": "#000000",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<p><p>Campaign</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p></p>",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": ""
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "materialicons-sowm-regular-flag",
+                    "icon_title": "",
+                    "icon_color": "#000000",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<p><p>Mission</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p></p>",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": ""
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "materialicons-sowm-regular-cases",
+                    "icon_title": "",
+                    "icon_color": "#000000",
+                    "icon_image": "",
+                    "icon_image_fallback": "",
+                    "icon_image_size": "full",
+                    "title": "",
+                    "text": "<p><p>Projects</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p></p>",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "",
+                    "more_url": ""
+                }
+            ],
+            "fonts": {
+                "title_options": {
+                    "tag": "h5",
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "text_options": {
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "more_text_options": {
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "so_field_container_state": "closed"
+            },
+            "container_shape": "",
+            "container_size": "40px",
+            "container_size_unit": "px",
+            "icon_size": "40px",
+            "icon_size_unit": "px",
+            "per_row": 3,
+            "feature_spacing": "0% 0%",
+            "feature_spacing_mobile": "0px 0px",
+            "responsive": true,
+            "_sow_form_id": "8406081568e3944363ad2949067130",
+            "_sow_form_timestamp": "1759745635639",
+            "icon_size_custom": "",
+            "center_items": "",
+            "more_text_bottom_align": "",
+            "title_link": "",
+            "icon_link": "",
+            "link_feature": "",
+            "new_window": "",
+            "so_sidebar_emulator_id": "sow-features-710000",
+            "option_name": "widget_sow-features",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Features_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "02802097-3bce-45f9-b0e8-ea84a45c2404",
+                "style": {
+                    "class": "icon-block",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": 0,
+            "image_fallback": "https://i.postimg.cc/JnrRPHyM/custom-img-008-copyright.jpg",
+            "size": "full",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "default",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "284825668a5b909ac55f348537282",
+            "_sow_form_timestamp": "1755862160791",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-710001",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 0,
+                "id": 1,
+                "widget_id": "a35affdb-4798-4dd7-b4ea-e3a117cd9e84",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            },
+            "size_mode": "custom"
+        },
+        {
+            "title": "",
+            "text": "<h2>We empower<br>communities</h2><p>Reform is dedicated to enhancing civic engagement by connecting citizens with their representatives. Our innovative strategies ensure that every voice is heard in the political landscape.</p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "68683959868a5b91635f70080875799",
+            "_sow_form_timestamp": "1756321930756",
+            "so_sidebar_emulator_id": "sow-editor-710002",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 2,
+                "widget_id": "538d324f-e9fa-47b6-a897-52ce37f666d9",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>Innovation drives change</p><p>Reform champions community empowerment via advocacy and governance. We link citizens with their representatives to enhance transparency and civic participation. By educating and mobilizing voters, we ensure every voice resonates.</p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "107622699868af594670ef0361790801",
+            "_sow_form_timestamp": "1756322133190",
+            "so_sidebar_emulator_id": "sow-editor-710003",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 3,
+                "widget_id": "e820b31c-d4b2-4e85-a0d2-1d6d63dd918c",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"665\"]</h1><p>Activists</p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "61275129568a5d64c4bb55994451081",
+            "_sow_form_timestamp": "1759745973938",
+            "so_sidebar_emulator_id": "sow-editor-710004",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 4,
+                "widget_id": "246950d9-499b-4236-a855-772e600c4c3e",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"20350\"]</h1><p>Dollars donations</p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "85778534468a5d6679bdc6226830764",
+            "_sow_form_timestamp": "1759745989924",
+            "so_sidebar_emulator_id": "sow-editor-710005",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 1,
+                "id": 5,
+                "widget_id": "3a4313ce-111a-4367-918e-4c3fb710184a",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>[counter number=\"250\"]</h1><p>Campaign towns</p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "116593508968a5d669b4a8c401606142",
+            "_sow_form_timestamp": "1759746004053",
+            "so_sidebar_emulator_id": "sow-editor-710006",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 2,
+                "id": 6,
+                "widget_id": "e9a083af-b44a-449f-886a-abfcc53a7662",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h3>Frequently asked questions</h3><ol><li><strong>Question number one?</strong><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. moon. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon.</li><li><strong>Question number two?</strong><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. moon. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon.</li><li><strong>Question number three?</strong><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. moon. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon.</li></ol>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "117853140668e399261c64b257689603",
+            "_sow_form_timestamp": "1759746968622",
+            "so_sidebar_emulator_id": "sow-editor-710007",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 7,
+                "widget_id": "2db12f6b-2278-4441-a053-96873a5b230e",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>Headline Campaing</p><p>Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. moon. Nim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon.</p><ul><li>­&nbsp;Ad mel utinam insolensr lorem ipsum</li><li>Ei vocent expetendi dolor sit</li><li>Dolorem expetenda</li><li>Mel utinam insolensr lorem ipsum</li></ul>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "43813587468e3987f02a50001960870",
+            "_sow_form_timestamp": "1759746201102",
+            "so_sidebar_emulator_id": "sow-editor-710008",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 0,
+                "id": 8,
+                "widget_id": "7b9469f2-4c1f-40ba-8189-c0be81709165",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": 0,
+            "image_fallback": "https://i.postimg.cc/Vv5Ckjbg/about2.jpg",
+            "size": "full",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "default",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "22963149168e3986c670c7452253149",
+            "_sow_form_timestamp": "",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-710009",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 1,
+                "id": 9,
+                "widget_id": "4e91523a-c1d8-4b93-8891-876fc0a933b9",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            },
+            "size_mode": "custom"
+        },
+        {
+            "title": "",
+            "text": "<h2>CLICK HERE TO DONATE</h2><p>[button text=\"Donate\" url=\"#\" style=\"primary\" target=\"_self\"]</p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "209216763568af6502cf745967017843",
+            "_sow_form_timestamp": "1759746633885",
+            "so_sidebar_emulator_id": "sow-editor-710010",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 5,
+                "cell": 1,
+                "id": 10,
+                "widget_id": "5ff67053-722f-4dfc-8f72-ba5b9947c3fa",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 1,
+            "style": {
+                "padding": "6% 0% 3% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "3% 0% 6% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "6%",
+                "row_stretch": "full",
+                "cell_alignment": "stretch"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "6% 0% 6% 0%",
+                "background": "#2c3e50",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start"
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "6% 0% 3% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "cell_alignment": "flex-start",
+                "mobile_bottom_margin": "0px",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "3% 0% 6% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "6%",
+                "row_stretch": "full",
+                "collapse_order": "right-top",
+                "cell_alignment": "center"
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "6% 0% 6% 0%",
+                "background": "#c0392b",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "mobile_bottom_margin": "0px",
+                "mobile_cell_margin": "0px"
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 0,
+            "weight": 0.5,
+            "style": {
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "auto"
+            }
+        },
+        {
+            "grid": 1,
+            "index": 1,
+            "weight": 0.5,
+            "style": {
+                "cell_css": "display:flex;\nflex-direction:column;\njustify-content:space-between;",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "stretch"
+            }
+        },
+        {
+            "grid": 2,
+            "index": 0,
+            "weight": 0.3333333333333333,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 1,
+            "weight": 0.3333333333333333,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 2,
+            "weight": 0.3333333333333333,
+            "style": []
+        },
+        {
+            "grid": 3,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 0,
+            "weight": 0.5,
+            "style": {
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "auto"
+            }
+        },
+        {
+            "grid": 4,
+            "index": 1,
+            "weight": 0.5,
+            "style": {
+                "cell_css": "display:flex;\nflex-direction:column;\njustify-content:space-between;",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "vertical_alignment": "stretch"
+            }
+        },
+        {
+            "grid": 5,
+            "index": 0,
+            "weight": 0.2,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 1,
+            "weight": 0.6,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 2,
+            "weight": 0.2,
+            "style": []
+        }
+    ],
+    "name": "About The Candidate",
+    "id": "about-the-candidate"
+}

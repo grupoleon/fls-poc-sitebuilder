@@ -1,0 +1,286 @@
+#!/bin/bash
+
+# Change to script's directory to ensure relative paths work
+cd "$(dirname "$0")"
+
+readonly DEFAULT_PORT=8000
+# Use the local PHP router script (filesystem path), not a URL with query string.
+# Keep the route separately for browser opening if needed.
+readonly ROUTER_FILE="router.php"
+
+PORT=${1:-$DEFAULT_PORT}
+URL="http://localhost:$PORT"
+PLATFORM=""
+
+die() { 
+    printf '%s\n' "$1" >&2
+    exit "${2:-1}"
+}
+
+detect_platform() {
+    local uname_result
+    uname_result="$(uname -s)"
+    
+    case "$uname_result" in
+        Darwin)
+            PLATFORM="macos"
+            ;;
+        Linux*)
+            if grep -qi microsoft /proc/version || [ -n "${WSL_DISTRO_NAME-}" ]; then
+                PLATFORM="wsl"
+            else
+                PLATFORM="linux"
+            fi
+            ;;
+        *BSD*)
+            PLATFORM="bsd"
+            ;;
+        MINGW*|MSYS*|CYGWIN*|Windows_NT)
+            PLATFORM="windows"
+            ;;
+        *)
+            PLATFORM="unknown"
+            ;;
+    esac
+}
+
+check_prerequisites() {
+    command -v php >/dev/null || die "PHP could not be found. Please install PHP to run the web admin."
+    
+    if [ ! -f "$ROUTER_FILE" ]; then
+        die "Router file '$ROUTER_FILE' not found in current directory."
+    fi
+    
+    if [ ! -f "php/web-admin.php" ]; then
+        die "Web admin file 'php/web-admin.php' not found in current directory."
+    fi
+}
+
+is_port_in_use() {
+    local port="$1"
+    
+    case "$PLATFORM" in
+        macos|linux|bsd)
+            if command -v lsof >/dev/null 2>&1; then
+                lsof -iTCP:"$port" -sTCP:LISTEN -t >/dev/null 2>&1
+            elif command -v ss >/dev/null 2>&1; then
+                ss -ltn "( sport = :$port )" >/dev/null 2>&1
+            else
+                netstat -an 2>/dev/null | grep -E "LISTEN|LISTENING" | grep -q ":$port"
+            fi
+            ;;
+        windows|wsl)
+            netstat -an 2>/dev/null | grep -E "LISTENING" | grep -q ":$port"
+            ;;
+        *)
+            netstat -an 2>/dev/null | grep -E "LISTEN|LISTENING" | grep -q ":$port"
+            ;;
+    esac
+}
+
+find_available_port() {
+    local start_port="$1"
+    local max_attempts=10
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        local test_port=$((start_port + attempt))
+        if ! is_port_in_use "$test_port"; then
+            PORT="$test_port"
+            return 0
+        fi
+        attempt=$((attempt + 1))
+    done
+    
+    die "Could not find an available port after $max_attempts attempts starting from $start_port."
+}
+
+validate_port() {
+    if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+        die "Invalid port number: $PORT. Please use a number between 1 and 65535."
+    fi
+    
+    if is_port_in_use "$PORT"; then
+        if [ $# -eq 0 ]; then
+            # No port specified by user, find an available one
+            printf "Port $PORT is in use. Finding an available port...\n"
+            find_available_port "$PORT"
+            printf "Using port $PORT instead.\n"
+        else
+            # User specified a port, don't auto-change it
+            die "Port $PORT is already in use. Please choose another port."
+        fi
+    fi
+}
+
+get_browser_config() {
+    local app="$1"
+    
+    case "$app" in
+        "Safari")
+            echo "set current tab of w to t:make new document with properties {URL:targetURL}"
+            ;;
+        *)
+            echo "set active tab index of w to (index of t):make new tab at end of tabs of front window|set URL of active tab of front window to targetURL"
+            ;;
+    esac
+}
+
+focus_browser_macos() {
+    local app="$1"
+    local config
+    local activate_cmd
+    local new_tab_cmd
+    
+    config=$(get_browser_config "$app")
+    activate_cmd="${config%%:*}"
+    new_tab_cmd="${config##*:}"
+    
+    if [[ "$new_tab_cmd" == *"|"* ]]; then
+        local new_window_cmd="${new_tab_cmd%%|*}"
+        local set_url_cmd="${new_tab_cmd##*|}"
+        new_tab_cmd="$new_window_cmd
+        $set_url_cmd"
+    fi
+    
+    local script_result
+    script_result=$(osascript 2>/dev/null <<APPLESCRIPT
+tell application "$app"
+    set targetURL to "$URL"
+    set found to false
+    repeat with w in windows
+        repeat with t in tabs of w
+            try
+                set currentURL to URL of t
+                if currentURL is targetURL or currentURL is (targetURL & "/") or (targetURL & "/") is currentURL then
+                    set found to true
+                    $activate_cmd
+                    set index of w to 1
+                    activate
+                    exit repeat
+                end if
+            end try
+        end repeat
+        if found then exit repeat
+    end repeat
+    if not found then
+        $new_tab_cmd
+        activate
+        return "new_tab"
+    else
+        return "existing_tab"
+    end if
+end tell
+APPLESCRIPT
+    )
+    
+    if [ "$script_result" = "existing_tab" ]; then
+        printf 'Kinsta Scripts Web Admin is already open in %s.\n' "$app"
+        return 0
+    elif [ "$script_result" = "new_tab" ]; then
+        printf 'Opening Kinsta Scripts Web Admin in %s.\n' "$app"
+        return 0
+    fi
+    return 1
+}
+
+#######################################
+# Check if a browser process is running on macOS
+# Arguments:
+#   Process name to check
+# Returns:
+#   0 if running, 1 if not running
+#######################################
+is_browser_running() {
+    local process_name="$1"
+    pgrep -x "$process_name" >/dev/null 2>&1
+}
+
+try_focus_existing_browser() {
+    local browsers=(
+        "Google Chrome:Google Chrome"
+        "Brave Browser:Brave Browser" 
+        "Opera:Opera"
+        "Safari:Safari"
+    )
+    
+    for browser_info in "${browsers[@]}"; do
+        local process_name="${browser_info%%:*}"
+        local app_name="${browser_info##*:}"
+        
+        if is_browser_running "$process_name"; then
+            focus_browser_macos "$app_name" && return 0
+        fi
+    done
+    
+    if is_browser_running "Firefox"; then
+        printf 'Firefox is running. Please open the following URL in Firefox:\n%s\n' "$URL"
+        return 0
+    fi
+    
+    return 1
+}
+
+open_in_default_browser() {
+    local url="$1"
+    local fallback_msg="Please open the following URL in your browser:\n%s\n"
+    
+    case "$PLATFORM" in
+        macos)
+            open "$url" >/dev/null 2>&1 || printf "$fallback_msg" "$url"
+            ;;
+        wsl)
+            cmd.exe /C start "" "$url" >/dev/null 2>&1 || printf "$fallback_msg" "$url"
+            ;;
+        windows)
+            if command -v cygstart >/dev/null 2>&1; then
+                cygstart "$url" >/dev/null 2>&1 || printf "$fallback_msg" "$url"
+            elif command -v cmd.exe >/dev/null 2>&1; then
+                cmd.exe /C start "" "$url" >/dev/null 2>&1 || printf "$fallback_msg" "$url"
+            else
+                printf "$fallback_msg" "$url"
+            fi
+            ;;
+        linux|bsd)
+            if command -v xdg-open >/dev/null 2>&1; then
+                xdg-open "$url" >/dev/null 2>&1 || printf "$fallback_msg" "$url"
+            elif command -v sensible-browser >/dev/null 2>&1; then
+                sensible-browser "$url" >/dev/null 2>&1 || printf "$fallback_msg" "$url"
+            else
+                printf "$fallback_msg" "$url"
+            fi
+            ;;
+        *)
+            printf "$fallback_msg" "$url"
+            ;;
+    esac
+}
+
+handle_browser_opening() {
+    URL="http://localhost:$PORT"
+    printf 'Starting Kinsta Scripts Web Admin...\nURL: %s\nPress Ctrl+C to stop the server\n\n' "$URL"
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        if ! try_focus_existing_browser; then
+            (sleep 2 && open_in_default_browser "$URL") &
+        fi
+    else
+        (sleep 2 && open_in_default_browser "$URL") &
+    fi
+}
+
+start_server() {
+    exec php -S "localhost:$PORT" "$ROUTER_FILE"
+}
+
+main() {
+    detect_platform
+    check_prerequisites
+    validate_port "$@"
+    handle_browser_opening
+    start_server
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+fi

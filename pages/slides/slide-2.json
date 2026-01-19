@@ -1,0 +1,62 @@
+{
+    "title": "Slide B",
+    "image_url": "uploads\/images\/slides\/slide_1760626523_68f1075b50e70.jpg",
+    "widgets": [
+        {
+            "title": "",
+            "text": "<h1>Slide B<\/h1>\n<p>Slide B Content<\/p>\n<p>[button text=\"Learn More\" url=\"#\" style=\"primary\" target=\"_self\"]<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "33239199768e402fb33e3d568582298",
+            "_sow_form_timestamp": "1760626525173",
+            "so_sidebar_emulator_id": "sow-editor-3510000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "e2af986d-6c6f-4467-bcbe-b9d2d8c86fde",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 2,
+            "style": {
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": "",
+                "bottom_margin": "0px",
+                "gutter": "0px",
+                "cell_alignment": "flex-start"
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 0.5,
+            "style": []
+        },
+        {
+            "grid": 0,
+            "index": 1,
+            "weight": 0.5,
+            "style": []
+        }
+    ],
+    "id": "slide-2"
+}

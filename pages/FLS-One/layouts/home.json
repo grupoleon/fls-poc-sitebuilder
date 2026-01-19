@@ -1,0 +1,756 @@
+{
+    "widgets": [
+        {
+            "title": "",
+            "text": "<h1>A&nbsp;voice&nbsp;\u2028for<br>every citizen TEST Content<\/h1><p>Transparent leadership. Stronger communities.<\/p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "201240584268a5a519dddf6793343482",
+            "_sow_form_timestamp": "1756326099272",
+            "so_sidebar_emulator_id": "sow-editor-710000",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 0,
+                "cell": 0,
+                "id": 0,
+                "widget_id": "89c2623b-a073-4557-a68e-af924c33bae6",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "font_color": "#ffffff",
+                    "link_color": "#ffffff"
+                }
+            }
+        },
+        {
+            "image": 0,
+            "image_fallback": "http:\/\/localhost:8000\/uploads\/images\/img_1760710115_68f24de36fbf1.jpg",
+            "size": "1536x1536",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "center",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "168217394168a5dc449ad46857745968",
+            "_sow_form_timestamp": "1755779639267",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-710001",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 0,
+                "id": 1,
+                "widget_id": "e14a5a75-706c-4a14-9b26-4bb8769f5e29",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            },
+            "size_mode": "custom"
+        },
+        {
+            "title": "",
+            "text": "<p>Empowering communities<\/p><h2>Driving change<br>through advocacy TEST CONTENTs<\/h2><p>Reform is a leading political campaign organization dedicated to empowering communities through effective governance and advocacy.<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "125345529768a5dc74af87c693936004",
+            "_sow_form_timestamp": "1756326278933",
+            "so_sidebar_emulator_id": "sow-editor-710002",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 2,
+                "widget_id": "544a091b-4e1b-4980-969e-fcf9c788ef62",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "image": 0,
+            "image_fallback": "http:\/\/localhost:8000\/uploads\/images\/img_1758744981_68d4519501ab5.jpg",
+            "size": "1536x1536",
+            "size_width": "",
+            "size_height": "",
+            "size_external": "custom_size",
+            "size_external_width": "",
+            "size_external_height": "",
+            "align": "center",
+            "title_align": "default",
+            "title": "",
+            "title_position": "hidden",
+            "alt": "",
+            "url": "",
+            "bound": true,
+            "rel": "",
+            "image_shape": {
+                "shape": "",
+                "repeat": "no-repeat",
+                "size": "",
+                "size_unit": "px",
+                "alignment": "center",
+                "so_field_container_state": "open",
+                "enable": ""
+            },
+            "_sow_form_id": "187687840468a5dd35e4d3a586331075",
+            "_sow_form_timestamp": "1755779678320",
+            "link_title": "",
+            "new_window": "",
+            "full_width": "",
+            "so_sidebar_emulator_id": "sow-image-710003",
+            "option_name": "widget_sow-image",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Image_Widget",
+                "raw": false,
+                "grid": 1,
+                "cell": 1,
+                "id": 3,
+                "widget_id": "f6d0956c-fc47-4556-9050-4585f089a5b8",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            },
+            "size_mode": "custom"
+        },
+        {
+            "title": "",
+            "text": "<p><strong>Empowered Leadership<\/strong><\/p><h2>Earning trust<br>through service<\/h2>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "185309764468a5decf097aa214636118",
+            "_sow_form_timestamp": "1756326968234",
+            "so_sidebar_emulator_id": "sow-editor-710004",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 4,
+                "widget_id": "661955e2-8e18-4c01-b589-ed02c7288e2b",
+                "style": {
+                    "class": "animation slide-up",
+                    "padding": "0% 0% 4% 0%",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "features": [
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "",
+                    "icon_title": "",
+                    "icon_color": "#fff",
+                    "icon_image": "https:\/\/via.placeholder.com\/400x400\/4ECDC4\/ffffff?text=Campaign+Plans",
+                    "icon_image_fallback": "http:\/\/localhost:8000\/uploads\/images\/img_1760710130_68f24df2cf959.jpg",
+                    "icon_image_size": "full",
+                    "title": "Campaign Plans",
+                    "text": "<p><p> <\/p><p> <\/p><p> <\/p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod<\/p><p> <\/p><p> <\/p><p> <\/p><\/p>",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "Read more",
+                    "more_url": "#"
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "",
+                    "icon_title": "",
+                    "icon_color": "#fff",
+                    "icon_image": "https:\/\/via.placeholder.com\/400x400\/45B7D1\/ffffff?text=Voter+Engagement",
+                    "icon_image_fallback": "http:\/\/localhost:8000\/uploads\/images\/img_1760710139_68f24dfb0dca4.jpg",
+                    "icon_image_size": "full",
+                    "title": "Voter engagement",
+                    "text": "<p><p> <\/p><p> <\/p><p> <\/p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod<\/p><p> <\/p><p> <\/p><p> <\/p><\/p>",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "Read more",
+                    "more_url": "#"
+                },
+                {
+                    "container_color": "#404040",
+                    "container_position": "top",
+                    "icon": "",
+                    "icon_title": "",
+                    "icon_color": "#fff",
+                    "icon_image": "https:\/\/via.placeholder.com\/400x400\/FFA07A\/ffffff?text=Our+Services",
+                    "icon_image_fallback": "http:\/\/localhost:8000\/uploads\/images\/img_1760710153_68f24e0910901.jpg",
+                    "icon_image_size": "full",
+                    "title": "Our services",
+                    "text": "<p><p> <\/p><p> <\/p><p> <\/p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod<\/p><p> <\/p><p> <\/p><p> <\/p><\/p>",
+                    "text_selected_editor": "tinymce",
+                    "more_text": "Read more",
+                    "more_url": "#"
+                }
+            ],
+            "fonts": {
+                "title_options": {
+                    "tag": "h5",
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "text_options": {
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "more_text_options": {
+                    "font": "default",
+                    "size": "",
+                    "size_unit": "px",
+                    "color": "",
+                    "so_field_container_state": "closed"
+                },
+                "so_field_container_state": "closed"
+            },
+            "container_shape": "",
+            "container_size": "100%",
+            "container_size_unit": "%",
+            "icon_size": "0px",
+            "icon_size_unit": "px",
+            "icon_size_custom": true,
+            "per_row": "3",
+            "feature_spacing": "30px 30px",
+            "feature_spacing_mobile": "0px 30px",
+            "responsive": true,
+            "link_feature": true,
+            "_sow_form_id": "98944623568a713b6c739e835344156",
+            "_sow_form_timestamp": "1755901477282",
+            "center_items": "",
+            "more_text_bottom_align": "",
+            "title_link": "",
+            "icon_link": "",
+            "new_window": "",
+            "so_sidebar_emulator_id": "sow-features-710005",
+            "option_name": "widget_sow-features",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Features_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 5,
+                "widget_id": "b4dd634e-8ae4-47e4-8402-268ed29f9a61",
+                "style": {
+                    "class": "services-block boxed align-left",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p>[button text=\"Explore Our Services\" url=\"#\" style=\"primary\" target=\"_self\"]<\/p><p>[button text=\"Explore Our Services\" url=\"#\" style=\"primary\" target=\"_self\"]<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "202564970168af6a77906c9034683431",
+            "_sow_form_timestamp": "1756326528838",
+            "so_sidebar_emulator_id": "sow-editor-710006",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 2,
+                "cell": 0,
+                "id": 6,
+                "widget_id": "700c5589-5a66-48c4-9004-cb13aa16c2a2",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "113729703968af6c7b432c0653306459",
+            "_sow_form_timestamp": "1756327058721",
+            "so_sidebar_emulator_id": "sow-editor-710007",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 3,
+                "cell": 0,
+                "id": 7,
+                "widget_id": "4a5ee02c-39d4-47d8-bcef-c700b4fd32b8",
+                "style": {
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<p><strong>Empowering communities<\/strong><\/p><h2>Updates from reform<\/h2>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "175012497968a5e3b6aea2e060087753",
+            "_sow_form_timestamp": "1756327165597",
+            "so_sidebar_emulator_id": "sow-editor-710008",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 0,
+                "id": 8,
+                "widget_id": "b1e46be3-f6b6-4a4c-b9ea-38019ddceeb7",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "115939896668a60c8751e35845570484",
+            "_sow_form_timestamp": "",
+            "so_sidebar_emulator_id": "sow-editor-710009",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 4,
+                "cell": 0,
+                "id": 9,
+                "widget_id": "702bdcca-ab7e-49f4-884b-ce4f5594e85f",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h3>Empower your community<br>for a brighter future<\/h3><p><a href=\"#\">Join Us<\/a><\/p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "44262004968a5e41e83ab7616646646",
+            "_sow_form_timestamp": "1756327217093",
+            "so_sidebar_emulator_id": "sow-editor-710010",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 5,
+                "cell": 1,
+                "id": 10,
+                "widget_id": "dff0c028-902f-489a-aee5-2a964e14a3ff",
+                "style": {
+                    "class": "animation slide-up",
+                    "padding": "30px 30px 30px 30px",
+                    "background": "#ffffff",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px",
+                    "border_radius": "20px 20px 20px 20px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>&nbsp;<\/h1><p>Campaigns Launched<\/p>",
+            "text_selected_editor": "tmce",
+            "autop": true,
+            "_sow_form_id": "61275129568a5d64c4bb55994451081",
+            "_sow_form_timestamp": "1755698874183",
+            "so_sidebar_emulator_id": "sow-editor-710011",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 0,
+                "id": 11,
+                "widget_id": "92aa9276-65cd-407d-9118-c488fc1dad02",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>&nbsp;<\/h1><p>Engaged Citizens<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "85778534468a5d6679bdc6226830764",
+            "_sow_form_timestamp": "1755698869728",
+            "so_sidebar_emulator_id": "sow-editor-710012",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 1,
+                "id": 12,
+                "widget_id": "b547b8c7-7656-4bfb-8007-2dc97630f9fa",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>&nbsp;<\/h1><p>Years Strong<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "116593508968a5d669b4a8c401606142",
+            "_sow_form_timestamp": "1755698861861",
+            "so_sidebar_emulator_id": "sow-editor-710013",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 2,
+                "id": 13,
+                "widget_id": "69b67f55-476e-42e9-a759-25aa7afb9683",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        },
+        {
+            "title": "",
+            "text": "<h1>&nbsp;<\/h1><p>Issues addressed<\/p>",
+            "text_selected_editor": "tinymce",
+            "autop": true,
+            "_sow_form_id": "135590817868a5d66b65c28501122526",
+            "_sow_form_timestamp": "1755698852840",
+            "so_sidebar_emulator_id": "sow-editor-710014",
+            "option_name": "widget_sow-editor",
+            "panels_info": {
+                "class": "SiteOrigin_Widget_Editor_Widget",
+                "raw": false,
+                "grid": 6,
+                "cell": 3,
+                "id": 14,
+                "widget_id": "38e7af1d-915b-4148-9f12-ddea97904d9b",
+                "style": {
+                    "class": "animation slide-up",
+                    "background_image_attachment": false,
+                    "background_display": "tile",
+                    "background_image_size": "full",
+                    "background_image_opacity": "100",
+                    "border_thickness": "1px"
+                }
+            }
+        }
+    ],
+    "grids": [
+        {
+            "cells": 1,
+            "style": {
+                "row_css": "box-sizing:border-box;",
+                "padding": "15vh 0vh 15vh 0vh",
+                "mobile_padding": "50vh 0vh 15vh 0vh",
+                "background": "#000000",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "http:\/\/localhost:8000\/uploads\/images\/img_1760716901_68f2686555a14.jpeg",
+                "background_display": "cover",
+                "background_image_size": "full",
+                "background_image_opacity": "78",
+                "border_thickness": "1px",
+                "full_height": true,
+                "bottom_margin": "0px",
+                "gutter": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-end",
+                "mobile_bottom_margin": "0px",
+                "mobile_cell_margin": "0px"
+            }
+        },
+        {
+            "cells": 2,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background": "#f4f4f4",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": false,
+                "bottom_margin": "0px",
+                "gutter": "8%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "background_image_attachment_fallback": "uploads\/images\/img_1760716955_68f2689be3b65.jpg",
+                "mobile_padding": ""
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background": "#f4f4f4",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": false,
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "background_image_attachment_fallback": "uploads\/images\/img_1760716967_68f268a779324.jpeg",
+                "mobile_padding": "",
+                "gutter": ""
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "50px 0px 50px 0px",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": false,
+                "bottom_margin": "0px",
+                "row_stretch": "full-width-stretch",
+                "cell_alignment": "flex-start",
+                "background_image_attachment_fallback": "uploads\/images\/img_1760716976_68f268b013a78.jpg",
+                "background": "#ffffff",
+                "mobile_padding": "",
+                "gutter": ""
+            }
+        },
+        {
+            "cells": 1,
+            "style": {
+                "padding": "8% 0% 8% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": false,
+                "bottom_margin": "0px",
+                "gutter": "6%",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "background_image_attachment_fallback": "uploads\/images\/img_1760716984_68f268b82bea9.jpg",
+                "background": "#ffffff",
+                "mobile_padding": ""
+            }
+        },
+        {
+            "cells": 3,
+            "style": {
+                "padding": "16% 0% 16% 0%",
+                "background": "#000000",
+                "background_image_attachment": false,
+                "background_image_attachment_fallback": "uploads\/images\/img_1760716999_68f268c76945c.jpg",
+                "background_display": "cover",
+                "background_image_size": "full",
+                "background_image_opacity": "75",
+                "border_thickness": "1px",
+                "full_height": false,
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "mobile_bottom_margin": "0px",
+                "mobile_cell_margin": "0px",
+                "mobile_padding": "",
+                "gutter": ""
+            }
+        },
+        {
+            "cells": 4,
+            "style": {
+                "padding": "6% 0% 6% 0%",
+                "background_image_attachment": false,
+                "background_display": "tile",
+                "background_image_size": "full",
+                "background_image_opacity": "100",
+                "border_thickness": "1px",
+                "full_height": false,
+                "bottom_margin": "0px",
+                "row_stretch": "full",
+                "cell_alignment": "flex-start",
+                "background_image_attachment_fallback": "",
+                "background": "#ffffff",
+                "mobile_padding": "",
+                "gutter": ""
+            }
+        }
+    ],
+    "grid_cells": [
+        {
+            "grid": 0,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 0,
+            "weight": 0.45934105720492396,
+            "style": []
+        },
+        {
+            "grid": 1,
+            "index": 1,
+            "weight": 0.5406589427950761,
+            "style": []
+        },
+        {
+            "grid": 2,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 3,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 4,
+            "index": 0,
+            "weight": 1,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 0,
+            "weight": 0.2,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 1,
+            "weight": 0.6,
+            "style": []
+        },
+        {
+            "grid": 5,
+            "index": 2,
+            "weight": 0.2,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 0,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 1,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 2,
+            "weight": 0.25,
+            "style": []
+        },
+        {
+            "grid": 6,
+            "index": 3,
+            "weight": 0.25,
+            "style": []
+        }
+    ],
+    "name": "Home",
+    "id": "home"
+}

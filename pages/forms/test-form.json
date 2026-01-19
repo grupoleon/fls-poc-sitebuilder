@@ -1,0 +1,51 @@
+{
+    "fields": [
+        {
+            "id": "textarea-2996",
+            "element_id": "textarea-2996",
+            "form_id": "wrapper-1274-4168",
+            "parent_group": "",
+            "type": "textarea",
+            "options": [],
+            "cols": "12",
+            "conditions": [],
+            "wrapper_id": "wrapper-1274-4168",
+            "input_type": "line",
+            "limit_type": "characters",
+            "field_label": "Dummy Textarea",
+            "placeholder": "Dummy Textarea",
+            "required": "0",
+            "custom-class": ""
+        },
+        {
+            "id": "captcha-2897",
+            "element_id": "captcha-2897",
+            "form_id": "wrapper-5131-2233",
+            "parent_group": "",
+            "type": "captcha",
+            "options": [],
+            "cols": "12",
+            "conditions": [],
+            "wrapper_id": "wrapper-5131-2233",
+            "captcha_provider": "recaptcha",
+            "captcha_alignment": "left",
+            "captcha_type": "v3_recaptcha",
+            "hcaptcha_type": "hc_checkbox",
+            "score_threshold": "0.5",
+            "captcha_badge": "bottomright",
+            "hc_invisible_notice": "This site is protected by hCaptcha and its <a href=\"https:\/\/hcaptcha.com\/privacy\">Privacy Policy<\/a> and <a href=\"https:\/\/hcaptcha.com\/terms\">Terms of Service<\/a> apply.",
+            "recaptcha_error_message": "reCAPTCHA verification failed. Please try again.",
+            "hcaptcha_error_message": "hCaptcha verification failed. Please try again."
+        }
+    ],
+    "settings": {
+        "formName": "test-form",
+        "form-type": "default",
+        "submission-behaviour": "behaviour-thankyou",
+        "thankyou-message": "Thank you for your submission!",
+        "submitData": {
+            "custom-submit-text": "SUBMIT",
+            "custom-invalid-form-message": "Error: Your form is not valid, please fix the errors!"
+        }
+    }
+}
