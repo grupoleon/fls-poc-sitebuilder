@@ -5,7 +5,7 @@
     "admin_user": "frontline",
     "admin_password": "secure123",
     "region": "us-central1",
-    "company": "41d66480-c263-4ded-b73d-975768952cb0",
+    "company": "",
     "wp_language": "en_US",
     "install_mode": "new",
     "is_multisite": false,
