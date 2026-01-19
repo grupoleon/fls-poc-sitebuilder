@@ -8,6 +8,7 @@ NIXPACKS_PHP_FALLBACK_PATH = "/router.php"
 
 [phases.setup]
 # Ensure the local web helper is executable inside the image
+nixPkgs = ["...", "jq"]
 cmds = ["chmod +x ./web"]
 
 [start]

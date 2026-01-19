@@ -5,6 +5,16 @@ set -euo pipefail
 # Load logging utilities
 source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
 
+# Preflight: ensure required command-line dependencies are present
+required_deps=(jq curl openssl)
+for dep in "${required_deps[@]}"; do
+    if ! command -v "$dep" >/dev/null 2>&1; then
+        log_error "Missing required dependency: $dep"
+        log_error "Install it or add it to your build config (e.g. add 'nixPkgs = ["...", \"$dep\"]' to nixpacks.toml)"
+        exit 127
+    fi
+done
+
 log_step_start "Site Creation"
 
 # Clean up from previous runs
