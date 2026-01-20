@@ -35,8 +35,17 @@ class DeploymentManager
             }
         }
 
+        // Find a reliable PHP CLI binary (we must avoid selecting php-fpm)
+        $phpBinary = $this->findPhpCliBinary();
+
+        if (! $phpBinary) {
+            // Be explicit: background tasks require the php CLI. Fail early with a clear message so users fix their environment.
+            throw new Exception("No PHP CLI binary found. Please install PHP CLI and ensure 'php' (SAPI=cli) is available in PATH or at a standard location (/opt/homebrew/bin/php, /usr/local/bin/php, /usr/bin/php).");
+        }
+
         $command = "cd " . escapeshellarg($this->scriptDir) . " && ";
-        $command .= "php " . escapeshellarg($backgroundScript);
+        // Use an explicit path to the php binary so background execution doesn't depend on PATH
+        $command .= escapeshellarg($phpBinary) . " " . escapeshellarg($backgroundScript);
 
         if ($steps && is_array($steps)) {
             $command .= " --steps " . escapeshellarg(implode(',', $steps));
@@ -48,7 +57,10 @@ class DeploymentManager
         error_log("Executing deployment command: " . $command);
 
         // Create a simple shell script to ensure proper background execution
-        $shellScript  = $this->scriptDir . '/tmp/deploy_runner.sh';
+        $shellScript = $this->scriptDir . '/tmp/deploy_runner.sh';
+        // Log which PHP binary will be used for background runners (helpful for debugging)
+        error_log("DeploymentManager: Selected PHP binary for background runner: " . $phpBinary);
+
         $shellContent = "#!/bin/bash\n" . $command . "\n";
 
         // Ensure tmp directory exists
@@ -231,6 +243,60 @@ class DeploymentManager
             'command' => $command,
             'script'  => $shellScript,
         ];
+    }
+
+    /**
+     * Find a usable PHP CLI binary on the system and verify it is SAPI=cli.
+     * Returns the absolute path to the php CLI or null if none found.
+     *
+     * This makes it safer for the web UI to generate background runner scripts that won't
+     * accidentally call php-fpm or another non-CLI binary which prints usage/help text.
+     */
+    private function findPhpCliBinary()
+    {
+        $candidates = [];
+
+        // If PHP_BINARY is defined (the current binary used by this process), add it first
+        if (defined('PHP_BINARY') && PHP_BINARY) {
+            $candidates[] = PHP_BINARY;
+        }
+
+        // If there's a 'php' on PATH, prefer that (but we'll verify SAPI below)
+        $whichPhp = trim(@shell_exec('command -v php 2>/dev/null') ?: '');
+        if ($whichPhp) {
+            array_unshift($candidates, $whichPhp);
+        }
+
+        // Common locations to try as a fallback
+        $candidates = array_merge($candidates, [
+            '/opt/homebrew/bin/php',
+            '/usr/local/bin/php',
+            '/usr/local/opt/php/bin/php',
+            '/usr/bin/php',
+            '/bin/php',
+        ]);
+
+        // Normalize and remove empties/duplicates
+        $candidates = array_values(array_unique(array_filter($candidates)));
+
+        foreach ($candidates as $candidate) {
+            if (! is_executable($candidate)) {
+                continue;
+            }
+
+            // Verify the candidate is a CLI sapi by asking it to print its SAPI
+            $cmd = escapeshellcmd($candidate) . ' -r ' . escapeshellarg('echo PHP_SAPI;') . ' 2>&1';
+            $out = [];
+            $ret = 1;
+            @exec($cmd, $out, $ret);
+            $sapi = trim(implode("\n", $out));
+
+            if (strtolower($sapi) === 'cli') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -690,7 +756,12 @@ class DeploymentManager
                         $htmlUrl    = $runData['html_url'] ?? null;
                         $createdAt  = $runData['created_at'] ?? null;
 
-                        return $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $monitoringRunId, true);
+                        // Include repository owner/repo info so the UI can build fallback links if needed
+                        $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $monitoringRunId, true);
+                        $result['owner'] = $owner;
+                        $result['repo']  = $repo;
+
+                        return $result;
                     }
                 }
 
@@ -743,7 +814,11 @@ class DeploymentManager
                     $htmlUrl    = $run['html_url'] ?? null;
                     $createdAt  = $run['created_at'] ?? null;
 
-                    return $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], true);
+                    $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], true);
+                    $result['owner'] = $owner;
+                    $result['repo']  = $repo;
+
+                    return $result;
                 }
 
                 // If no specific run ID, look for recent runs
@@ -756,7 +831,11 @@ class DeploymentManager
                     // Store this run ID for future monitoring
                     file_put_contents($runIdFile, $run['id']);
 
-                    return $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], false);
+                    $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], false);
+                    $result['owner'] = $owner;
+                    $result['repo']  = $repo;
+
+                    return $result;
                 }
             }
 
@@ -769,6 +848,8 @@ class DeploymentManager
                 'run_id' => null,
                 'github_status' => null,
                 'github_conclusion' => null,
+                'owner' => $owner,
+                'repo' => $repo,
             ];
 
         } catch (Exception $e) {

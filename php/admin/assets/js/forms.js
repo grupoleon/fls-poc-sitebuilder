@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded',function() {
     let editingFormIndex=null;
     let editingForm=null;
     let loadingOverlay=null;
+    let formPlaceholders=[]; // Current form's placeholders
 
     // Loading state functions
     function showLoading(message='Loading...') {
@@ -296,6 +297,23 @@ document.addEventListener('DOMContentLoaded',function() {
             editingForm.settings.submitData['custom-submit-text']:'SUBMIT';
         document.getElementById('submit-button-text').value=submitButtonText;
 
+        // Load placeholders from forms-config.json
+        const formId=forms[idx].id;
+        formPlaceholders=[];
+
+        fetch('/config/forms-config.json?t='+Date.now())
+            .then(res => res.json())
+            .then(formsConfig => {
+                if(formsConfig[formId]&&formsConfig[formId].placeholders) {
+                    formPlaceholders=formsConfig[formId].placeholders;
+                }
+                renderPlaceholders();
+            })
+            .catch(err => {
+                console.error('Error loading placeholders:',err);
+                renderPlaceholders();
+            });
+
         document.getElementById('form-editor-title').textContent='Edit Form';
         renderFormElements();
         formEditorEl.style.display='block';
@@ -349,6 +367,8 @@ document.addEventListener('DOMContentLoaded',function() {
         };
         formNameInput.value='';
         document.getElementById('submit-button-text').value='SUBMIT';
+        formPlaceholders=[];
+        renderPlaceholders();
         document.getElementById('form-editor-title').textContent='Create New Form';
         renderFormElements();
         formEditorEl.style.display='block';
@@ -602,6 +622,143 @@ document.addEventListener('DOMContentLoaded',function() {
         });
     }
 
+    // Placeholder Management Functions
+    const placeholderInput=document.getElementById('placeholder-input');
+    const addPlaceholderBtn=document.getElementById('add-placeholder-btn');
+    const placeholdersListEl=document.getElementById('placeholders-list');
+
+    // Check if elements exist
+    if(!placeholderInput||!addPlaceholderBtn||!placeholdersListEl) {
+        console.error('Placeholder elements not found in DOM');
+    }
+
+    // Load all existing placeholders from all forms (for validation)
+    async function getAllExistingPlaceholders() {
+        const allPlaceholders=new Map(); // Map placeholder to form name
+
+        // Read forms-config.json to get all form placeholders
+        try {
+            const response=await fetch('/config/forms-config.json?t='+Date.now());
+            const formsConfig=await response.json();
+
+            for(const [formId,formData] of Object.entries(formsConfig)) {
+                if(formData.placeholders) {
+                    formData.placeholders.forEach(placeholder => {
+                        allPlaceholders.set(placeholder,formId);
+                    });
+                }
+            }
+        } catch(err) {
+            console.error('Error loading placeholders:',err);
+        }
+
+        return allPlaceholders;
+    }
+
+    // Normalize placeholder format - auto-add brackets if missing and slugify
+    function normalizePlaceholder(input) {
+        let normalized=input.trim();
+
+        // Remove any existing brackets first
+        normalized=normalized.replace(/^\[|\]$/g,'');
+
+        // Slugify: convert to lowercase, replace spaces/special chars with hyphens
+        normalized=normalized
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g,'-')  // Replace non-alphanumeric (except hyphens) with hyphens
+            .replace(/^-+|-+$/g,'')       // Remove leading/trailing hyphens
+            .replace(/-+/g,'-');          // Replace multiple consecutive hyphens with single hyphen
+
+        // Add brackets
+        return `[${normalized}]`;
+    }
+
+    // Validate placeholder format (after normalization)
+    function isValidPlaceholder(placeholder) {
+        // Must be in format [placeholder-name] with valid characters
+        return /^\[[\w-]+\]$/.test(placeholder);
+    }
+
+    // Render placeholders list
+    function renderPlaceholders() {
+        if(!placeholdersListEl) return;
+
+        placeholdersListEl.innerHTML='';
+        formPlaceholders.forEach((placeholder,idx) => {
+            const tag=document.createElement('div');
+            tag.className='placeholder-tag';
+            tag.innerHTML=`
+                <span>${placeholder}</span>
+                <span class="remove-placeholder" data-idx="${idx}" title="Remove placeholder">×</span>
+            `;
+            placeholdersListEl.appendChild(tag);
+        });
+    }
+
+    // Add placeholder
+    if(addPlaceholderBtn) {
+        addPlaceholderBtn.addEventListener('click',async function() {
+            const rawInput=placeholderInput.value.trim();
+
+            if(!rawInput) {
+                showError('Please enter a placeholder');
+                return;
+            }
+
+            // Normalize the placeholder (auto-add brackets)
+            const placeholder=normalizePlaceholder(rawInput);
+
+            if(!isValidPlaceholder(placeholder)) {
+                showError('Placeholder must contain only letters, numbers, and hyphens (e.g., contact-form)');
+                return;
+            }
+
+            // Check if already exists in current form
+            if(formPlaceholders.includes(placeholder)) {
+                showError('This placeholder is already added to this form');
+                return;
+            }
+
+            // Check if placeholder exists in other forms
+            const allPlaceholders=await getAllExistingPlaceholders();
+            const currentFormKey=editingFormIndex!==null? forms[editingFormIndex].id.replace(/-/g,'_')+'_form':null;
+
+            for(const [existingPlaceholder,formKey] of allPlaceholders.entries()) {
+                if(existingPlaceholder===placeholder&&formKey!==currentFormKey) {
+                    showError(`Placeholder "${placeholder}" is already assigned to ${formKey}`);
+                    return;
+                }
+            }
+
+            // Add placeholder to list
+            formPlaceholders.push(placeholder);
+            renderPlaceholders();
+            placeholderInput.value='';
+            hideError();
+        });
+    }
+
+    // Remove placeholder
+    if(placeholdersListEl) {
+        placeholdersListEl.addEventListener('click',function(e) {
+            if(e.target.classList.contains('remove-placeholder')) {
+                const idx=parseInt(e.target.dataset.idx);
+                formPlaceholders.splice(idx,1);
+                renderPlaceholders();
+            }
+        });
+    }
+
+    // Allow Enter key to add placeholder
+    if(placeholderInput&&addPlaceholderBtn) {
+        placeholderInput.addEventListener('keypress',function(e) {
+            if(e.key==='Enter') {
+                e.preventDefault();
+                addPlaceholderBtn.click();
+            }
+        });
+    }
+
     // Save form
     formSaveBtn.addEventListener('click',function() {
         const name=formNameInput.value.trim();
@@ -648,23 +805,51 @@ document.addEventListener('DOMContentLoaded',function() {
             updatedForms.push(updatedForm);
         }
 
-        // Save all forms using the standard API
-        fetch('?action=save_other_contents',{
+        // Save form JSON files
+        const saveFormPromise=fetch('?action=save_other_contents',{
             method: 'POST',
             body: JSON.stringify({
                 type: 'forms',
                 contents: updatedForms
             }),
             headers: {'Content-Type': 'application/json'}
-        })
+        });
+
+        // Save placeholders to forms-config.json
+        const savePlaceholdersPromise=fetch('/config/forms-config.json?t='+Date.now())
             .then(res => res.json())
-            .then(data => {
+            .then(formsConfig => {
+                // Ensure the form entry exists
+                if(!formsConfig[formId]) {
+                    formsConfig[formId]={};
+                }
+                formsConfig[formId].placeholders=formPlaceholders;
+
+                // Save the updated forms-config.json
+                return fetch('?action=save_forms_config',{
+                    method: 'POST',
+                    body: JSON.stringify(formsConfig),
+                    headers: {'Content-Type': 'application/json'}
+                });
+            })
+            .then(res => res.json());
+
+        // Wait for both saves to complete
+        Promise.all([saveFormPromise,savePlaceholdersPromise])
+            .then(([formData,configData]) => {
                 hideLoading();
                 formSaveBtn.disabled=false;
                 formSaveBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Form';
 
-                if(data.success) {
-                    showSuccess('Form saved successfully!');
+                console.log('Form save response:',formData);
+                console.log('Placeholders save response:',configData);
+
+                // Check if both operations succeeded (handle both explicit success and no response as success)
+                const formSuccess=!formData||(formData&&formData.success!==false);
+                const placeholdersSuccess=!configData||(configData&&configData.success!==false);
+
+                if(formSuccess&&placeholdersSuccess) {
+                    showSuccess('Form and placeholders saved successfully!');
                     loadForms();
                     // Reload dynamic forms in integration settings if adminInterface exists
                     if(window.adminInterface&&typeof window.adminInterface.loadDynamicForms==='function') {
@@ -674,7 +859,17 @@ document.addEventListener('DOMContentLoaded',function() {
                         formEditorEl.style.display='none';
                     },1500);
                 } else {
-                    showError('Failed to save form: '+(data.message||data.error||'Unknown error'));
+                    // Determine which part failed
+                    let errorMsg='Unknown error';
+                    if(!formSuccess&&!placeholdersSuccess) {
+                        errorMsg='Failed to save form and placeholders';
+                    } else if(!formSuccess) {
+                        errorMsg='Failed to save form: '+(formData?.error||formData?.message||'Unknown error');
+                    } else if(!placeholdersSuccess) {
+                        errorMsg='Failed to save placeholders: '+(configData?.error||configData?.message||'Unknown error');
+                    }
+                    console.error('Save error:',errorMsg,{formData,configData});
+                    showError(errorMsg);
                 }
             })
             .catch(err => {
@@ -682,7 +877,7 @@ document.addEventListener('DOMContentLoaded',function() {
                 formSaveBtn.disabled=false;
                 formSaveBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Form';
                 console.error('Error saving form:',err);
-                showError('Failed to save form');
+                showError('Failed to save form: '+err.message);
             });
     });
 

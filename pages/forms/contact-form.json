@@ -123,7 +123,7 @@
             "pagination-header-design": "show",
             "pagination-header": "nav"
         },
-        "formName": "Contact Us",
+        "formName": "contact-form",
         "version": "1.45.1",
         "form-border-style": "none",
         "form-padding": "",

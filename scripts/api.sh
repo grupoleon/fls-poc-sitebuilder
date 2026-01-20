@@ -94,45 +94,71 @@ api_request() {
     curl_cmd="$curl_cmd \"$url\""
     log_debug "Curl command: $curl_cmd" "API"
     
-    response=$(curl -w "HTTPSTATUS:%{http_code}" "${curl_opts[@]}" "$url")
-    local curl_exit_code=$?
+    # Retry logic with exponential backoff for rate limiting (429) and server errors (5xx)
+    local max_retries=3
+    local retry_count=0
+    local base_delay=5
+    local response response_body http_code curl_exit_code
     
-    http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
-    response_body=$(echo "$response" | sed -E 's/HTTPSTATUS:[0-9]*$//')
+    while [[ $retry_count -le $max_retries ]]; do
+        response=$(curl -w "HTTPSTATUS:%{http_code}" "${curl_opts[@]}" "$url")
+        curl_exit_code=$?
+        
+        http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+        response_body=$(echo "$response" | sed -E 's/HTTPSTATUS:[0-9]*$//')
 
-    if [[ $curl_exit_code -ne 0 ]]; then
-        if [[ $curl_exit_code -eq 6 ]]; then
-            # For DNS failures, try with modified curl settings first
-            if [[ "$service" == "kinsta" ]]; then
-                {
-                    log_warning "DNS resolution failed for $url, retrying with enhanced options..." "API"
-                    log_debug "Retry with DNS resolve: $url" "API"
-                } >&2
-                
-                local curl_opts_retry=("${curl_opts[@]}")
-                curl_opts_retry+=(--resolve "api.kinsta.com:443:172.64.147.50")
-                curl_opts_retry+=(--connect-timeout 30)
-                curl_opts_retry+=(--max-time 60)
-                
-                response=$(curl -w "HTTPSTATUS:%{http_code}" "${curl_opts_retry[@]}" "$url")
-                curl_exit_code=$?
-                
-                http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
-                response_body=$(echo "$response" | sed -E 's/HTTPSTATUS:[0-9]*$//')
+        # Handle curl execution failures
+        if [[ $curl_exit_code -ne 0 ]]; then
+            if [[ $curl_exit_code -eq 6 ]]; then
+                # For DNS failures, try with modified curl settings first
+                if [[ "$service" == "kinsta" ]]; then
+                    {
+                        log_warning "DNS resolution failed for $url, retrying with enhanced options..." "API"
+                        log_debug "Retry with DNS resolve: $url" "API"
+                    } >&2
+                    
+                    local curl_opts_retry=("${curl_opts[@]}")
+                    curl_opts_retry+=(--resolve "api.kinsta.com:443:172.64.147.50")
+                    curl_opts_retry+=(--connect-timeout 30)
+                    curl_opts_retry+=(--max-time 60)
+                    
+                    response=$(curl -w "HTTPSTATUS:%{http_code}" "${curl_opts_retry[@]}" "$url")
+                    curl_exit_code=$?
+                    
+                    http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+                    response_body=$(echo "$response" | sed -E 's/HTTPSTATUS:[0-9]*$//')
 
-                if [[ $curl_exit_code -ne 0 ]]; then
-                    log_error "API request failed even with DNS resolve. Exit code: $curl_exit_code" "API" >&2
+                    if [[ $curl_exit_code -ne 0 ]]; then
+                        log_error "API request failed even with DNS resolve. Exit code: $curl_exit_code" "API" >&2
+                        exit 1
+                    fi
+                else
+                    log_error "DNS resolution failed for $url. Exit code: $curl_exit_code" "API" >&2
                     exit 1
                 fi
             else
-                log_error "DNS resolution failed for $url. Exit code: $curl_exit_code" "API" >&2
+                log_error "API request failed: $url (Exit code: $curl_exit_code)" "API"
                 exit 1
             fi
-        else
-            log_error "API request failed: $url (Exit code: $curl_exit_code)" "API"
-            exit 1
         fi
-    fi
+        
+        # Check if we got a rate limit (429) or server error (5xx) response
+        if [[ "$http_code" == "429" ]] || [[ "$http_code" =~ ^5[0-9]{2}$ ]]; then
+            if [[ $retry_count -lt $max_retries ]]; then
+                local delay=$((base_delay * (2 ** retry_count)))
+                log_warning "Received $http_code response, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                sleep "$delay"
+                ((retry_count++))
+                continue
+            else
+                log_error "Max retries reached for $url after receiving $http_code" "API"
+                break
+            fi
+        fi
+        
+        # Success or non-retryable error - break out of retry loop
+        break
+    done
     
     # Log the API request and response
     local operation="$service-$(echo $endpoint | tr '/' '-')"

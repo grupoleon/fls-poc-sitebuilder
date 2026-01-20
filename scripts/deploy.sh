@@ -42,7 +42,13 @@ read_config() {
 GITHUB_OWNER="$(read_config '.org')"
 GITHUB_REPO="$(read_config '.repo')"
 WORKFLOW_ID="deploy.yml"
-BRANCH="content_automation"
+BRANCH="$(read_config '.branch')"
+
+# Fallback to default branch if not set in config
+if [[ -z "$BRANCH" || "$BRANCH" == "null" ]]; then
+    BRANCH="content_automation"
+    print_warning "Branch not configured in git.json, using default: $BRANCH"
+fi
 
 KINSTA_HOST="$(read_config '.host')"
 KINSTA_USER="$(read_config '.user')"
@@ -672,12 +678,14 @@ capture_and_store_run_id() {
         
         if [[ $time_diff -le 120 ]]; then
             # This looks like our run, store it
+            mkdir -p tmp
             echo "$run_id" > tmp/github_run_id.txt
             print_success "Captured workflow run ID: $run_id"
             print_info "Monitoring this specific run for GitHub Actions status"
         else
             print_warning "Latest run seems too old ($time_diff seconds), might not be the one we just triggered"
             # Store it anyway, but with a warning
+            mkdir -p tmp
             echo "$run_id" > tmp/github_run_id.txt
         fi
     else

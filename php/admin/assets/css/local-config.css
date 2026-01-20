@@ -1,0 +1,275 @@
+/* ===== LOCAL CONFIG STYLES ===== */
+.config-sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.config-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.config-card-header {
+    background: #f9fafb;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.config-card-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.config-card-header i.fa-chevron-right {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.config-card-body {
+    padding: 1.25rem;
+}
+
+.config-info-row {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.config-info-row:last-child {
+    border-bottom: none;
+}
+
+.config-info-label {
+    min-width: 100px;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.config-info-label i {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.config-info-value {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    color: #1f2937;
+}
+
+.config-info-badge {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.config-actions-row {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f3f4f6;
+}
+
+.config-manual-override {
+    margin-bottom: 1rem;
+}
+
+.config-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.config-input-group .form-input {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+}
+
+.config-button-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Debug Settings */
+.debug-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.debug-setting-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.debug-setting-icon {
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+.debug-setting-header h4 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #111827;
+}
+
+.debug-setting-description {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Toggle Switch */
+.toggle-switch-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #d1d5db;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-input:checked+.toggle-slider {
+    background-color: #3b82f6;
+}
+
+.toggle-input:checked+.toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Configuration Help Section */
+.config-help-section {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.config-help-toggle {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: 600;
+    color: #374151;
+    transition: background 0.2s;
+}
+
+.config-help-toggle:hover {
+    background: #f3f4f6;
+}
+
+.config-help-toggle i.fa-chevron-down {
+    transition: transform 0.3s;
+}
+
+.config-help-section.expanded .config-help-toggle i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.config-help-content {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    color: #4b5563;
+}
+
+.config-help-section.expanded .config-help-content {
+    display: block;
+}
+
+.config-help-content h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.config-help-content h5 {
+    margin: 1rem 0 0.5rem 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.config-help-content p {
+    margin: 0 0 0.75rem 0;
+    line-height: 1.6;
+}
+
+.config-help-content ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.config-help-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .config-sections-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .config-button-group {
+        flex-direction: column;
+    }
+
+    .config-button-group .btn {
+        width: 100%;
+    }
+}

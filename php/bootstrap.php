@@ -126,6 +126,29 @@ function handleRequest()
                 }
                 break;
 
+            case 'save_forms_config':
+                $input = json_decode(file_get_contents('php://input'), true);
+
+                if (! $input) {
+                    echo json_encode(['success' => false, 'error' => 'Invalid JSON data']);
+                    break;
+                }
+
+                try {
+                    $formsConfigPath = __DIR__ . '/../config/forms-config.json';
+                    $result          = file_put_contents($formsConfigPath, json_encode($input, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+                    if ($result === false) {
+                        throw new Exception('Failed to write forms-config.json');
+                    }
+
+                    echo json_encode(['success' => true, 'message' => 'Form placeholders saved successfully']);
+                } catch (Exception $e) {
+                    error_log("Forms config save error: " . $e->getMessage());
+                    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+                }
+                break;
+
             case 'save_active_theme':
                 $input = json_decode(file_get_contents('php://input'), true);
                 $theme = $input['theme'] ?? '';
@@ -534,6 +557,199 @@ function handleRequest()
                 }
                 break;
 
+            case 'check_site_exists':
+                // Check if a site with the given title exists in Kinsta
+                $input     = json_decode(file_get_contents('php://input'), true);
+                $siteTitle = $input['site_title'] ?? '';
+
+                if (empty($siteTitle)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Site title is required',
+                    ]);
+                    break;
+                }
+
+                try {
+                    $existsResult = checkIfSiteExistsInKinsta($siteTitle);
+                    echo json_encode(['success' => true, 'data' => $existsResult]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to check site existence: ' . $e->getMessage(),
+                    ]);
+                }
+                break;
+
+            case 'delete_kinsta_site':
+                // Delete a site from Kinsta (with safety checks)
+                $input  = json_decode(file_get_contents('php://input'), true);
+                $siteId = $input['site_id'] ?? '';
+
+                if (empty($siteId)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Site ID is required',
+                    ]);
+                    break;
+                }
+
+                try {
+                    $deleteResult = deleteKinstaSite($siteId);
+                    echo json_encode(['success' => true, 'data' => $deleteResult, 'message' => 'Site deletion initiated successfully']);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to delete site: ' . $e->getMessage(),
+                    ]);
+                }
+                break;
+
+            case 'list_config_files':
+                try {
+                    $configDir = dirname(__DIR__) . '/config';
+                    $files     = [];
+
+                    if (is_dir($configDir)) {
+                        $items = scandir($configDir);
+                        foreach ($items as $item) {
+                            if (pathinfo($item, PATHINFO_EXTENSION) === 'json') {
+                                $filePath = $configDir . '/' . $item;
+                                $files[]  = [
+                                    'name'     => $item,
+                                    'size'     => filesize($filePath),
+                                    'modified' => filemtime($filePath),
+                                ];
+                            }
+                        }
+                    }
+
+                    echo json_encode(['success' => true, 'files' => $files]);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'get_raw_config':
+                try {
+                    $filename = $_GET['file'] ?? '';
+
+                    if (empty($filename)) {
+                        throw new Exception('File name is required');
+                    }
+
+                    // Validate filename to prevent directory traversal
+                    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                        throw new Exception('Invalid file name');
+                    }
+
+                    // Only allow .json files
+                    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                        throw new Exception('Only JSON files are allowed');
+                    }
+
+                    $configDir = dirname(__DIR__) . '/config';
+                    $filePath  = $configDir . '/' . $filename;
+
+                    if (! file_exists($filePath)) {
+                        throw new Exception('File not found');
+                    }
+
+                    $content  = file_get_contents($filePath);
+                    $metadata = [
+                        'name'     => $filename,
+                        'size'     => filesize($filePath),
+                        'lines'    => substr_count($content, "\n") + 1,
+                        'modified' => filemtime($filePath),
+                    ];
+
+                    echo json_encode([
+                        'success'  => true,
+                        'content'  => $content,
+                        'metadata' => $metadata,
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'import_config':
+                try {
+                    // Check if file was uploaded
+                    if (! isset($_FILES['config_file'])) {
+                        throw new Exception('No file uploaded');
+                    }
+
+                    $file = $_FILES['config_file'];
+
+                    // Check for upload errors
+                    if ($file['error'] !== UPLOAD_ERR_OK) {
+                        throw new Exception('File upload error: ' . $file['error']);
+                    }
+
+                    // Validate file extension
+                    $filename = basename($file['name']);
+                    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                        throw new Exception('Only JSON files are allowed');
+                    }
+
+                    // Validate filename to prevent directory traversal
+                    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                        throw new Exception('Invalid file name');
+                    }
+
+                    // Read and validate JSON content
+                    $content = file_get_contents($file['tmp_name']);
+                    if ($content === false) {
+                        throw new Exception('Failed to read uploaded file');
+                    }
+
+                    // Validate JSON structure
+                    $jsonData = json_decode($content, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new Exception('Invalid JSON format: ' . json_last_error_msg());
+                    }
+
+                    // Validate the config based on its type
+                    $configType = pathinfo($filename, PATHINFO_FILENAME);
+                    if (! validateImportedConfig($configType, $jsonData)) {
+                        throw new Exception('Configuration validation failed. Please check the structure matches the expected format.');
+                    }
+
+                    // Save to config directory
+                    $configDir  = dirname(__DIR__) . '/config';
+                    $targetPath = $configDir . '/' . $filename;
+
+                    // Backup existing file if it exists
+                    if (file_exists($targetPath)) {
+                        $backupPath = $targetPath . '.backup.' . date('YmdHis');
+                        copy($targetPath, $backupPath);
+                    }
+
+                    // Write the file with pretty formatting
+                    $result = file_put_contents(
+                        $targetPath,
+                        json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+                    );
+
+                    if ($result === false) {
+                        throw new Exception('Failed to save config file');
+                    }
+
+                    echo json_encode([
+                        'success' => true,
+                        'message' => "Configuration file '{$filename}' imported successfully",
+                        'file' => $filename,
+                    ]);
+
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+                break;
+
             default:
                 throw new Exception('Invalid action: ' . $action);
         }
@@ -543,6 +759,40 @@ function handleRequest()
             'success' => false,
             'message' => $e->getMessage(),
         ]);
+    }
+}
+
+/**
+ * Validate imported configuration based on type
+ */
+function validateImportedConfig($configType, $data)
+{
+    // Validate based on config type
+    switch ($configType) {
+        case 'config':
+        case 'local-config':
+            // Main config should have basic structure
+            return is_array($data);
+
+        case 'git':
+            // Git config should have org and repo
+            return isset($data['org']) && isset($data['repo']);
+
+        case 'site':
+            // Site config validation
+            return is_array($data);
+
+        case 'theme-config':
+            // Theme config should have active_theme
+            return isset($data['active_theme']);
+
+        case 'forms-config':
+            // Forms config validation
+            return is_array($data);
+
+        default:
+            // For unknown types, just validate it's valid JSON (array or object)
+            return is_array($data);
     }
 }
 
@@ -627,57 +877,103 @@ function resetSystem()
 }
 
 /**
+ * Get Kinsta API token from configuration
+ * Checks multiple locations for backward compatibility
+ */
+function getKinstaToken()
+{
+    global $configManager;
+
+    $siteConfig = $configManager->getConfig('site');
+    $mainConfig = $configManager->getConfig('main');
+
+    // 1) site config top-level
+    if (! empty($siteConfig) && isset($siteConfig['kinsta_token']) && $siteConfig['kinsta_token']) {
+        return $siteConfig['kinsta_token'];
+    }
+
+    // 2) main config under ['site']['kinsta_token']
+    if (! empty($mainConfig) && isset($mainConfig['site']['kinsta_token']) && $mainConfig['site']['kinsta_token']) {
+        return $mainConfig['site']['kinsta_token'];
+    }
+
+    // 3) main config direct key (legacy)
+    if (! empty($mainConfig) && isset($mainConfig['kinsta_token']) && $mainConfig['kinsta_token']) {
+        return $mainConfig['kinsta_token'];
+    }
+
+    // 4) try alternate 'config' key
+    $alt = $configManager->getConfig('config');
+    if (! empty($alt) && isset($alt['site']['kinsta_token']) && $alt['site']['kinsta_token']) {
+        return $alt['site']['kinsta_token'];
+    }
+
+    // 5) final fallback: read config file directly from filesystem
+    $configFilePath = dirname(__DIR__) . '/config/config.json';
+    if (file_exists($configFilePath)) {
+        $raw  = @file_get_contents($configFilePath);
+        $json = @json_decode($raw, true);
+        if (isset($json['site']['kinsta_token']) && $json['site']['kinsta_token']) {
+            return $json['site']['kinsta_token'];
+        }
+    }
+
+    throw new Exception('Kinsta API token not configured');
+}
+
+/**
+ * Make a request to the Kinsta API
+ *
+ * @param string $url API endpoint URL
+ * @param string $method HTTP method (GET, POST, DELETE)
+ * @param string|null $kinstaToken Optional token (will be retrieved if not provided)
+ * @param int $timeout Timeout in seconds
+ * @return array Response data with 'body', 'http_code', and 'error'
+ */
+function makeKinstaApiRequest($url, $method = 'GET', $kinstaToken = null, $timeout = 30)
+{
+    if ($kinstaToken === null) {
+        $kinstaToken = getKinstaToken();
+    }
+
+    $headers = [
+        'Authorization: Bearer ' . $kinstaToken,
+        'Content-Type: application/json',
+        'Accept: application/json',
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+    if ($method !== 'GET') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    }
+
+    $response  = curl_exec($ch);
+    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+
+    curl_close($ch);
+
+    return [
+        'body'      => $response,
+        'http_code' => $httpCode,
+        'error'     => $curlError,
+    ];
+}
+
+/**
  * Get site information from Kinsta API
  */
 function getSiteInfoFromKinsta()
 {
-    global $configManager;
+    global $deploymentManager;
 
-    // Get site config - prefer dedicated site config, but fall back to main config (config.json)
-    $siteConfig = $configManager->getConfig('site');
-    $mainConfig = $configManager->getConfig('main');
-
-    // token may be stored in several places depending on older/newer config formats
-    $kinstaToken = '';
-    // 1) site config top-level
-    if (! empty($siteConfig) && isset($siteConfig['kinsta_token']) && $siteConfig['kinsta_token']) {
-        $kinstaToken = $siteConfig['kinsta_token'];
-        error_log('Kinsta token loaded from site config');
-    }
-    // 2) main config under ['site']['kinsta_token']
-    if (empty($kinstaToken) && ! empty($mainConfig) && isset($mainConfig['site']['kinsta_token']) && $mainConfig['site']['kinsta_token']) {
-        $kinstaToken = $mainConfig['site']['kinsta_token'];
-        error_log('Kinsta token loaded from main.config -> site.kinsta_token');
-    }
-    // 3) main config direct key (legacy)
-    if (empty($kinstaToken) && ! empty($mainConfig) && isset($mainConfig['kinsta_token']) && $mainConfig['kinsta_token']) {
-        $kinstaToken = $mainConfig['kinsta_token'];
-        error_log('Kinsta token loaded from main.config -> kinsta_token');
-    }
-    // 4) try alternate 'config' key (some code uses getConfig('config'))
-    if (empty($kinstaToken)) {
-        $alt = $configManager->getConfig('config');
-        if (! empty($alt) && isset($alt['site']['kinsta_token']) && $alt['site']['kinsta_token']) {
-            $kinstaToken = $alt['site']['kinsta_token'];
-            error_log('Kinsta token loaded from config (alternate)');
-        }
-    }
-    // 5) final fallback: read config file directly from filesystem
-    if (empty($kinstaToken)) {
-        $configFilePath = dirname(__DIR__) . '/config/config.json';
-        if (file_exists($configFilePath)) {
-            $raw  = @file_get_contents($configFilePath);
-            $json = @json_decode($raw, true);
-            if (isset($json['site']['kinsta_token']) && $json['site']['kinsta_token']) {
-                $kinstaToken = $json['site']['kinsta_token'];
-                error_log('Kinsta token loaded from filesystem config.json');
-            }
-        }
-    }
-
-    if (empty($kinstaToken)) {
-        throw new Exception('Kinsta API token not configured');
-    }
+    $kinstaToken = getKinstaToken();
 
     // Try to get site ID from deployment status or temp files
     $siteId = null;
@@ -689,19 +985,16 @@ function getSiteInfoFromKinsta()
     }
 
     // Fallback: try to get site id from deployment manager status if temp file missing
-    if (empty($siteId)) {
+    if (empty($siteId) && $deploymentManager) {
         error_log('site_id.txt not found - attempting to read from deployment manager');
-        global $deploymentManager;
-        if ($deploymentManager) {
-            try {
-                $status = $deploymentManager->getDeploymentStatus();
-                if (! empty($status['site_id'])) {
-                    $siteId = $status['site_id'];
-                    error_log('site_id obtained from deployment manager: ' . $siteId);
-                }
-            } catch (Exception $e) {
-                error_log('Error fetching deployment status for site_id fallback: ' . $e->getMessage());
+        try {
+            $status = $deploymentManager->getDeploymentStatus();
+            if (! empty($status['site_id'])) {
+                $siteId = $status['site_id'];
+                error_log('site_id obtained from deployment manager: ' . $siteId);
             }
+        } catch (Exception $e) {
+            error_log('Error fetching deployment status for site_id fallback: ' . $e->getMessage());
         }
     }
 
@@ -710,36 +1003,18 @@ function getSiteInfoFromKinsta()
     }
 
     // Make API call to get site info
-    $url = "https://api.kinsta.com/v2/sites/{$siteId}";
+    $url    = "https://api.kinsta.com/v2/sites/{$siteId}";
+    $result = makeKinstaApiRequest($url, 'GET', $kinstaToken);
 
-    $headers = [
-        'Authorization: Bearer ' . $kinstaToken,
-        'Content-Type: application/json',
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-    if (curl_error($ch)) {
-        $error = curl_error($ch);
-        curl_close($ch);
-        throw new Exception("Kinsta API request failed: {$error}");
+    if ($result['error']) {
+        throw new Exception("Kinsta API request failed: {$result['error']}");
     }
 
-    curl_close($ch);
-
-    if ($httpCode !== 200) {
-        throw new Exception("Kinsta API returned error code: {$httpCode}");
+    if ($result['http_code'] !== 200) {
+        throw new Exception("Kinsta API returned error code: {$result['http_code']}");
     }
 
-    $data = json_decode($response, true);
+    $data = json_decode($result['body'], true);
 
     if (! $data || ! isset($data['site'])) {
         throw new Exception('Invalid response from Kinsta API');
@@ -752,6 +1027,172 @@ function getSiteInfoFromKinsta()
         'status'       => $data['site']['status'] ?? '',
         'name'         => $data['site']['name'] ?? '',
         'display_name' => $data['site']['display_name'] ?? '',
+    ];
+}
+
+/**
+ * Check if a site with the given title exists in Kinsta
+ */
+function checkIfSiteExistsInKinsta($siteTitle)
+{
+    global $configManager;
+
+    $kinstaToken = getKinstaToken();
+
+    // Get company ID from config
+    $siteConfig = $configManager->getConfig('site');
+    $companyId  = $siteConfig['company'] ?? null;
+
+    if (empty($companyId)) {
+        throw new Exception("Company ID not configured. Please set it in site configuration.");
+    }
+
+    // Make API call to list all sites - company parameter is required
+    $url    = "https://api.kinsta.com/v2/sites?company={$companyId}";
+    $result = makeKinstaApiRequest($url, 'GET', $kinstaToken);
+
+    if ($result['error']) {
+        throw new Exception("Kinsta API request failed: {$result['error']}");
+    }
+
+    if ($result['http_code'] !== 200) {
+        throw new Exception("Kinsta API returned error code: {$result['http_code']}");
+    }
+
+    $data = json_decode($result['body'], true);
+
+    // Support multiple response formats: company.sites, sites, or top-level array
+    if (isset($data['company']['sites']) && is_array($data['company']['sites'])) {
+        $sites = $data['company']['sites'];
+    } elseif (isset($data['sites']) && is_array($data['sites'])) {
+        $sites = $data['sites'];
+    } elseif (is_array($data) && array_values($data) === $data) {
+        $sites = $data;
+    } else {
+        throw new Exception('Invalid response from Kinsta API');
+    }
+
+    // Check if any site matches the title (case-insensitive)
+    // Kinsta saves site titles as slugs, so we need to check both the original title and its slug
+    $exists                = false;
+    $matchingSites         = [];
+    $normalizedSearchTitle = strtolower(trim($siteTitle));
+
+    // Convert site title to slug format (same as Kinsta does)
+    $slugifiedSearchTitle = strtolower(trim($siteTitle));
+    $slugifiedSearchTitle = preg_replace('/\s+/', '-', $slugifiedSearchTitle);    // Replace spaces with hyphens
+    $slugifiedSearchTitle = preg_replace('/[^\w\-]/', '', $slugifiedSearchTitle); // Remove non-word chars except hyphens
+    $slugifiedSearchTitle = preg_replace('/\-\-+/', '-', $slugifiedSearchTitle);  // Replace multiple hyphens with single
+    $slugifiedSearchTitle = trim($slugifiedSearchTitle, '-');                     // Trim hyphens from start/end
+
+    foreach ($sites as $site) {
+        $siteName        = strtolower(trim($site['name'] ?? ''));
+        $siteDisplayName = strtolower(trim($site['display_name'] ?? ''));
+
+        // Check if the site name or display name matches either the original title or its slug
+        if ($siteName === $normalizedSearchTitle ||
+            $siteDisplayName === $normalizedSearchTitle ||
+            $siteName === $slugifiedSearchTitle ||
+            $siteDisplayName === $slugifiedSearchTitle) {
+            $exists          = true;
+            $matchingSites[] = [
+                'id'           => $site['id'] ?? '',
+                'name'         => $site['name'] ?? '',
+                'display_name' => $site['display_name'] ?? '',
+            ];
+        }
+    }
+
+    return [
+        'exists'         => $exists,
+        'site_title'     => $siteTitle,
+        'matching_sites' => $matchingSites,
+    ];
+}
+
+/**
+ * Delete a site from Kinsta
+ * CRITICAL: This permanently deletes a site and all its data
+ */
+function deleteKinstaSite($siteId)
+{
+    // Validate site ID format
+    if (empty($siteId) || ! is_string($siteId)) {
+        throw new Exception('Invalid site ID provided');
+    }
+
+    $kinstaToken = getKinstaToken();
+
+    // First, verify the site exists before attempting deletion
+    $verifyUrl    = "https://api.kinsta.com/v2/sites/{$siteId}";
+    $verifyResult = makeKinstaApiRequest($verifyUrl, 'GET', $kinstaToken);
+
+    if ($verifyResult['error']) {
+        throw new Exception("Failed to verify site before deletion: {$verifyResult['error']}");
+    }
+
+    if ($verifyResult['http_code'] !== 200) {
+        throw new Exception("Site not found or inaccessible (HTTP {$verifyResult['http_code']})");
+    }
+
+    $siteData = json_decode($verifyResult['body'], true);
+    if (! $siteData || ! isset($siteData['site'])) {
+        throw new Exception('Invalid response when verifying site');
+    }
+
+    // Log the deletion attempt
+    error_log("CRITICAL: Attempting to delete Kinsta site {$siteId} - " . ($siteData['site']['name'] ?? 'unknown'));
+
+    // Company ID verification: ensure the site belongs to the configured company
+    global $configManager;
+
+    $siteConfig          = $configManager->getConfig('site');
+    $configuredCompanyId = $siteConfig['company'] ?? null;
+
+    if (empty($configuredCompanyId)) {
+        throw new Exception('Company ID not configured. Cannot verify ownership before deletion.');
+    }
+
+    // Get site's company ID from the site data
+    $siteCompanyId = $siteData['site']['company_id'] ?? null;
+
+    if (empty($siteCompanyId)) {
+        throw new Exception('Site company_id missing from Kinsta response. Cannot verify ownership.');
+    }
+
+    // Compare company IDs directly (no API calls needed)
+    if (trim($configuredCompanyId) !== trim($siteCompanyId)) {
+        error_log("Company ID mismatch - Configured: {$configuredCompanyId}, Site: {$siteCompanyId}");
+        throw new Exception("Site belongs to company '{$siteCompanyId}' but configured company is '{$configuredCompanyId}'. Deletion aborted for safety.");
+    }
+
+    error_log("Company ID verified: {$siteCompanyId} matches configured company");
+
+    // Make API call to delete the site
+    $deleteUrl    = "https://api.kinsta.com/v2/sites/{$siteId}";
+    $deleteResult = makeKinstaApiRequest($deleteUrl, 'DELETE', $kinstaToken, 60);
+
+    if ($deleteResult['error']) {
+        throw new Exception("Kinsta API deletion request failed: {$deleteResult['error']}");
+    }
+
+    // Kinsta DELETE may return 204 (No Content) on success or 200 with operation info
+    if ($deleteResult['http_code'] !== 200 && $deleteResult['http_code'] !== 204 && $deleteResult['http_code'] !== 202) {
+        $errorData = json_decode($deleteResult['body'], true);
+        $errorMsg  = $errorData['message'] ?? "HTTP {$deleteResult['http_code']}";
+        throw new Exception("Failed to delete site: {$errorMsg}");
+    }
+
+    $data = json_decode($deleteResult['body'], true);
+
+    error_log("SUCCESS: Kinsta site {$siteId} deletion initiated");
+
+    return [
+        'site_id'      => $siteId,
+        'status'       => 'deletion_initiated',
+        'http_code'    => $deleteResult['http_code'],
+        'operation_id' => $data['operation_id'] ?? null,
+        'message'      => 'Site deletion has been initiated. It may take a few moments to complete.',
     ];
 }
 

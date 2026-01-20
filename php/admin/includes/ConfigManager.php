@@ -27,6 +27,7 @@ class ConfigManager
             'site'  => 'site.json',
         ];
 
+        // Load all configuration from JSON files
         foreach ($configFiles as $key => $file) {
             $filePath = $this->configDir . '/' . $file;
             if (file_exists($filePath)) {
@@ -65,6 +66,7 @@ class ConfigManager
         }
 
         $this->configs[$type] = $data;
+
         return $this->saveConfig($type);
     }
 
@@ -231,7 +233,7 @@ class ConfigManager
     }
 
     /**
-     * Get all available themes
+     * Validate configuration data
      */
     public function getAvailableThemes()
     {

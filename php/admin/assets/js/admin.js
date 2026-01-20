@@ -1,37 +1,53 @@
+// Global debug mode flag
+let DEBUG_MODE=localStorage.getItem('consoleLoggingEnabled')!=='false';
+
 /**
- * Modern Admin Panel JavaScript
- * 
- * ENHANCED DEPLOYMENT TIMING SYSTEM
- * 
- * This system provides comprehensive timing tracking for deployment processes:
- * 
- * FEATURES:
- * - Button click time tracking in IST
- * - Real-time duration display for each step (independent step timing)
- * - Step start/end times with precise IST timestamps
- * - Total deployment duration calculation (overall time in main section)
- * - Backend timing synchronization
- * - Font Awesome icons throughout (no emojis)
- * - Clean interface without animations for deployment summary
- * 
- * USAGE:
- * - All times are automatically converted and displayed in IST
- * - Real-time timers update every second during active steps
- * - Step durations stop counting when step completes/fails
- * - Main deployment section shows overall time, steps show individual duration
- * - Test functions available: testTimingDisplay(), testPopup(), testGitHubCompletion()
- * 
- * CONSOLE COMMANDS FOR TESTING:
- * - window.adminInterface.testTimingDisplay() - Test timing display
- * - window.adminInterface.testPopup() - Test popup functionality
- * - window.adminInterface.testGitHubCompletion('completed') - Test completion popup
+ * Centralized logging function
+ * All console logging should go through this function
+ * @param {string|object} msg - Message to log
+ * @param {string} type - Log type: 'log', 'info', 'warn', 'error'
  */
+function debugLog(msg,type='info') {
+    if(!DEBUG_MODE) return;
+
+    const timestamp=new Date().toLocaleTimeString('en-IN',{
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    const prefix=`[${timestamp}]`;
+
+    switch(type) {
+        case 'error':
+            console.error(prefix,msg);
+            break;
+        case 'warn':
+            console.warn(prefix,msg);
+            break;
+        case 'info':
+            console.info(prefix,msg);
+            break;
+        case 'log':
+        default:
+            console.log(prefix,msg);
+            break;
+    }
+}
+
+/**
+ * Set debug mode globally
+ * @param {boolean} enabled - Enable or disable console logging
+ */
+function setDebugMode(enabled) {
+    DEBUG_MODE=enabled;
+    localStorage.setItem('consoleLoggingEnabled',enabled? 'true':'false');
+    debugLog(`Console logging ${enabled? 'ENABLED':'DISABLED'}`,'info');
+}
 
 class AdminInterface {
     constructor() {
-        // Debug flag - set to false in production to disable console logging
-        this.DEBUG_MODE=true;
-
         this.currentTab=localStorage.getItem('activeTab')||'deployment';
         this.currentSubTab=localStorage.getItem('activeSubTab')||'';
         this.deploymentPollInterval=null;
@@ -63,20 +79,6 @@ class AdminInterface {
         this.logPollInterval=null;
 
         this.init();
-    }
-
-    // Debug logging method - controlled by DEBUG_MODE flag
-    debugLog(...args) {
-        if(this.DEBUG_MODE) {
-            console.log(...args);
-        }
-    }
-
-    // Toggle debug mode - call window.adminInterface.toggleDebug() in console
-    toggleDebug() {
-        this.DEBUG_MODE=!this.DEBUG_MODE;
-        console.log(`Debug mode ${this.DEBUG_MODE? 'ENABLED':'DISABLED'}`);
-        return this.DEBUG_MODE;
     }
 
     // Enhanced timing utility functions
@@ -115,13 +117,13 @@ class AdminInterface {
     }
 
     startStepTimer(stepId,customStartTime=null) {
-        console.log(`startStepTimer called for: ${stepId}`);
+        debugLog(`startStepTimer called for: ${stepId}`);
         const startTime=customStartTime||new Date();
         this.stepStartTimes.set(stepId,startTime);
 
         // Clear any existing timer for this step
         if(this.realTimeTimers.has(stepId)) {
-            console.log(`Clearing existing timer for: ${stepId}`);
+            debugLog(`Clearing existing timer for: ${stepId}`);
             clearInterval(this.realTimeTimers.get(stepId));
         }
 
@@ -131,17 +133,17 @@ class AdminInterface {
         },1000);
 
         this.realTimeTimers.set(stepId,timerId);
-        console.log(`Timer started for: ${stepId}, timerId: ${timerId}`);
+        debugLog(`Timer started for: ${stepId}, timerId: ${timerId}`);
     }
 
     stopStepTimer(stepId) {
-        console.log(`stopStepTimer called for: ${stepId}`);
+        debugLog(`stopStepTimer called for: ${stepId}`);
         if(this.realTimeTimers.has(stepId)) {
             clearInterval(this.realTimeTimers.get(stepId));
             this.realTimeTimers.delete(stepId);
-            console.log(`Timer stopped and removed for: ${stepId}`);
+            debugLog(`Timer stopped and removed for: ${stepId}`);
         } else {
-            console.log(`No active timer found for: ${stepId}`);
+            debugLog(`No active timer found for: ${stepId}`);
         }
 
         if(this.stepStartTimes.has(stepId)) {
@@ -179,7 +181,7 @@ class AdminInterface {
             // Additional check - if step is marked as completed, stop the timer
             const stepStatus=stepCard.getAttribute('data-status');
             if(stepStatus==='completed'||stepStatus==='failed') {
-                console.log(`Step ${stepId} detected as ${stepStatus}, stopping timer`);
+                debugLog(`Step ${stepId} detected as ${stepStatus}, stopping timer`);
                 this.stopStepTimer(stepId);
                 return;
             }
@@ -230,14 +232,14 @@ class AdminInterface {
                 (status.status==='running'&&index<currentStepIndex)||
                 (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].end_time)) {
                 if(this.realTimeTimers.has(step.id)) {
-                    console.log(`Stopping timer for completed step: ${step.id}`);
+                    debugLog(`Stopping timer for completed step: ${step.id}`);
                     this.stopStepTimer(step.id);
                 }
             }
             // Also stop timer if step failed
             else if(step.id===currentStep&&status.status==='failed') {
                 if(this.realTimeTimers.has(step.id)) {
-                    console.log(`Stopping timer for failed step: ${step.id}`);
+                    debugLog(`Stopping timer for failed step: ${step.id}`);
                     this.stopStepTimer(step.id);
                 }
             }
@@ -272,7 +274,7 @@ class AdminInterface {
     setupEventListeners() {
         // Navigation
         document.addEventListener('click',(e) => {
-            this.debugLog('Click detected on:',e.target,'classes:',e.target.className);
+            debugLog('Click detected on:',e.target,'classes:',e.target.className);
 
             if(e.target.classList.contains('nav-link')) {
                 e.preventDefault();
@@ -281,20 +283,20 @@ class AdminInterface {
 
             // Tab switching (subtabs only)
             if(e.target.classList.contains('tab-link')&&e.target.hasAttribute('data-subtab')) {
-                this.debugLog('Subtab clicked:',e.target.dataset.subtab);
+                debugLog('Subtab clicked:',e.target.dataset.subtab);
                 e.preventDefault();
                 this.switchSubTab(e.target.dataset.subtab);
             }
 
             // Content tab switching
             if(e.target.hasAttribute('data-content-tab')) {
-                this.debugLog('Content tab clicked:',e.target,'tab:',e.target.dataset.contentTab);
+                debugLog('Content tab clicked:',e.target,'tab:',e.target.dataset.contentTab);
                 e.preventDefault();
                 this.switchContentTab(e.target.dataset.contentTab);
             } else if(e.target.closest('[data-content-tab]')) {
                 // Handle clicks on child elements (like icons)
                 const tabElement=e.target.closest('[data-content-tab]');
-                this.debugLog('Content tab child clicked:',e.target,'parent tab:',tabElement.dataset.contentTab);
+                debugLog('Content tab child clicked:',e.target,'parent tab:',tabElement.dataset.contentTab);
                 e.preventDefault();
                 this.switchContentTab(tabElement.dataset.contentTab);
             }
@@ -422,8 +424,36 @@ class AdminInterface {
             // Site title in deployment tab
             if(e.target.id==='deployment-site-title') {
                 this.handleSiteTitleChange(e);
+                // Also debounce the existence check on input
+                this.debouncedCheckSiteExistence(e.target.value.trim());
             }
         });
+
+        // Change event for site title - check immediately when value changes
+        document.addEventListener('change',(e) => {
+            if(e.target.id==='deployment-site-title') {
+                const siteTitle=e.target.value.trim();
+                if(siteTitle) {
+                    this.checkSiteExistence(siteTitle);
+                }
+            }
+
+            // Company ID input changed - clear any previous validation state (validation removed)
+            if(e.target.id==='company-id-input') {
+                this.clearCompanyValidation();
+                this.updateKinstaTokenLink();
+            }
+        });
+
+        // Blur event for site title - check for conflicts when user leaves the field
+        document.addEventListener('blur',(e) => {
+            if(e.target.id==='deployment-site-title') {
+                const siteTitle=e.target.value.trim();
+                if(siteTitle) {
+                    this.checkSiteExistence(siteTitle);
+                }
+            }
+        },true);
 
         // Click handlers (toggle switches now handled by initializeToggleSwitches())
         document.addEventListener('click',(e) => {
@@ -565,20 +595,20 @@ class AdminInterface {
         const regularContainer=document.getElementById('deployment-status-list');
         const toggleBtn=document.getElementById('toggle-compact-view');
 
-        console.log('Toggle button clicked',{compactContainer,regularContainer,toggleBtn});
+        debugLog('Toggle button clicked',{compactContainer,regularContainer,toggleBtn});
 
         // Check computed style instead of inline style
         const compactStyle=window.getComputedStyle(compactContainer);
         const isCompactHidden=compactStyle.display==='none';
 
-        console.log('Current compact view state:',{compactDisplay: compactStyle.display,isCompactHidden});
+        debugLog('Current compact view state:',{compactDisplay: compactStyle.display,isCompactHidden});
 
         if(isCompactHidden) {
-            console.log('Showing compact view');
+            debugLog('Showing compact view');
             this.showCompactView();
             localStorage.setItem('compactViewEnabled','true');
         } else {
-            console.log('Hiding compact view');
+            debugLog('Hiding compact view');
             this.hideCompactView();
             localStorage.setItem('compactViewEnabled','false');
         }
@@ -589,16 +619,16 @@ class AdminInterface {
         const regularContainer=document.getElementById('deployment-status-list');
         const toggleBtn=document.getElementById('toggle-compact-view');
 
-        console.log('showCompactView called',{compactContainer,regularContainer,toggleBtn});
+        debugLog('showCompactView called',{compactContainer,regularContainer,toggleBtn});
 
         if(compactContainer&&regularContainer&&toggleBtn) {
             compactContainer.style.display='block';
             regularContainer.style.display='none';
             toggleBtn.innerHTML='<i class="fas fa-list-ul"></i>';
             toggleBtn.title='Show Detailed View';
-            console.log('Compact view shown successfully');
+            debugLog('Compact view shown successfully');
         } else {
-            console.error('Failed to show compact view - missing elements');
+            debugLog('Failed to show compact view - missing elements', 'error');
         }
     }
 
@@ -607,22 +637,22 @@ class AdminInterface {
         const regularContainer=document.getElementById('deployment-status-list');
         const toggleBtn=document.getElementById('toggle-compact-view');
 
-        console.log('hideCompactView called',{compactContainer,regularContainer,toggleBtn});
+        debugLog('hideCompactView called',{compactContainer,regularContainer,toggleBtn});
 
         if(compactContainer&&regularContainer&&toggleBtn) {
             compactContainer.style.display='none';
             regularContainer.style.display='block';
             toggleBtn.innerHTML='<i class="fas fa-th"></i>';
             toggleBtn.title='Show Compact View';
-            console.log('Compact view hidden successfully');
+            debugLog('Compact view hidden successfully');
         } else {
-            console.error('Failed to hide compact view - missing elements');
+            debugLog('Failed to hide compact view - missing elements', 'error');
         }
     }
 
     // Deployment state management - Hide section instead of overlay
     setDeploymentInProgress(inProgress) {
-        this.debugLog(`setDeploymentInProgress called with: ${inProgress}`);
+        debugLog(`setDeploymentInProgress called with: ${inProgress}`);
 
         const quickDeployCard=document.getElementById('quick-deploy-card');
         const progressNotice=document.getElementById('deployment-progress-notice');
@@ -633,11 +663,11 @@ class AdminInterface {
             if(inProgress) {
                 // Hide the entire quick deploy section
                 quickDeployCard.style.display='none';
-                this.debugLog('Hidden deployment form');
+                debugLog('Hidden deployment form');
             } else {
                 // Show the quick deploy section
                 quickDeployCard.style.display='block';
-                this.debugLog('Shown deployment form');
+                debugLog('Shown deployment form');
             }
         }
 
@@ -684,28 +714,28 @@ class AdminInterface {
 
         if(deploymentStatusCard) {
             deploymentStatusCard.style.display=inProgress? 'block':'none';
-            this.debugLog(`${inProgress? 'Shown':'Hidden'} deployment status card`);
+            debugLog(`${inProgress? 'Shown':'Hidden'} deployment status card`);
         }
 
         if(deploymentLogsCard) {
             deploymentLogsCard.style.display=inProgress? 'block':'none';
-            this.debugLog(`${inProgress? 'Shown':'Hidden'} deployment logs card`);
+            debugLog(`${inProgress? 'Shown':'Hidden'} deployment logs card`);
         }
 
         if(manualControlsCard) {
             manualControlsCard.style.display=inProgress? 'block':'none';
-            this.debugLog(`${inProgress? 'Shown':'Hidden'} manual controls card`);
+            debugLog(`${inProgress? 'Shown':'Hidden'} manual controls card`);
         }
     }
 
     updateCompactStepStatus(stepId,status,label=null) {
-        console.log(`updateCompactStepStatus called for ${stepId} with status ${status}`);
+        debugLog(`updateCompactStepStatus called for ${stepId} with status ${status}`);
 
         const compactStep=document.querySelector(`.compact-step[data-step="${stepId}"]`);
-        console.log(`Found compact step element for ${stepId}:`,compactStep);
+        debugLog(`Found compact step element for ${stepId}:`,compactStep);
 
         if(!compactStep) {
-            console.warn(`No compact step element found for stepId: ${stepId}`);
+            debugLog(`No compact step element found for stepId: ${stepId}`, 'warn');
             return;
         }
 
@@ -714,7 +744,7 @@ class AdminInterface {
 
         // Add new status class
         compactStep.classList.add(status);
-        console.log(`Added status class '${status}' to step ${stepId}`);
+        debugLog(`Added status class '${status}' to step ${stepId}`);
 
         // Update status text
         const statusElement=compactStep.querySelector('.step-status');
@@ -726,9 +756,9 @@ class AdminInterface {
                 'error': 'error'
             };
             statusElement.textContent=statusText[status]||status;
-            console.log(`Updated status text for ${stepId} to: ${statusText[status]||status}`);
+            debugLog(`Updated status text for ${stepId} to: ${statusText[status]||status}`);
         } else {
-            console.warn(`No status element found in step ${stepId}`);
+            debugLog(`No status element found in step ${stepId}`, 'warn');
         }
 
         // Update label if provided
@@ -736,9 +766,9 @@ class AdminInterface {
             const labelElement=compactStep.querySelector('.step-label');
             if(labelElement) {
                 labelElement.textContent=label;
-                console.log(`Updated label for ${stepId} to: ${label}`);
+                debugLog(`Updated label for ${stepId} to: ${label}`);
             } else {
-                console.warn(`No label element found in step ${stepId}`);
+                debugLog(`No label element found in step ${stepId}`, 'warn');
             }
         }
 
@@ -876,7 +906,7 @@ class AdminInterface {
     }
 
     updateCompactViewStatus(status) {
-        console.log('updateCompactViewStatus called with status:',status);
+        debugLog('updateCompactViewStatus called with status:',status);
 
         const deploymentSteps=[
             {id: 'create-site',name: 'Setup Kinsta'},
@@ -888,11 +918,11 @@ class AdminInterface {
         const currentStep=status.current_step||'config';
         const currentStepIndex=deploymentSteps.findIndex(s => s.id===currentStep);
 
-        console.log('Current step:',currentStep,'Current step index:',currentStepIndex);
+        debugLog('Current step:',currentStep,'Current step index:',currentStepIndex);
 
         // If deployment is idle, completed, or failed, handle appropriately
         if(status.status==='idle'||status.status==='completed') {
-            console.log('Deployment is not running, resetting all steps to pending');
+            debugLog('Deployment is not running, resetting all steps to pending');
             deploymentSteps.forEach((step) => {
                 this.updateCompactStepStatus(step.id,'pending',step.name);
             });
@@ -905,7 +935,7 @@ class AdminInterface {
             if(this.githubActionsPollInterval) {
                 clearTimeout(this.githubActionsPollInterval);
                 this.githubActionsPollInterval=null;
-                console.log('Stopped GitHub Actions polling due to idle deployment');
+                debugLog('Stopped GitHub Actions polling due to idle deployment');
             }
 
             // Update connectors after all steps are updated
@@ -915,7 +945,7 @@ class AdminInterface {
 
         // Handle failed deployments - show which step failed
         if(status.status==='failed'||status.status==='error') {
-            console.log('Deployment failed, showing failed step');
+            debugLog('Deployment failed, showing failed step');
             deploymentSteps.forEach((step,index) => {
                 let stepStatus='pending';
 
@@ -927,7 +957,7 @@ class AdminInterface {
                     stepStatus='pending';
                 }
 
-                console.log(`Failed deployment - Step ${step.id} (index ${index}): status = ${stepStatus}`);
+                debugLog(`Failed deployment - Step ${step.id} (index ${index}): status = ${stepStatus}`);
                 this.updateCompactStepStatus(step.id,stepStatus,step.name);
             });
 
@@ -939,7 +969,7 @@ class AdminInterface {
             if(this.githubActionsPollInterval) {
                 clearTimeout(this.githubActionsPollInterval);
                 this.githubActionsPollInterval=null;
-                console.log('Stopped GitHub Actions polling due to failed deployment');
+                debugLog('Stopped GitHub Actions polling due to failed deployment');
             }
 
             // Update connectors after all steps are updated
@@ -958,7 +988,7 @@ class AdminInterface {
                 stepStatus='error';
             }
 
-            console.log(`Step ${step.id} (index ${index}): status = ${stepStatus}`);
+            debugLog(`Step ${step.id} (index ${index}): status = ${stepStatus}`);
             this.updateCompactStepStatus(step.id,stepStatus,step.name);
         });
 
@@ -997,7 +1027,7 @@ class AdminInterface {
     makeImageUploadClickable(upload) {
         // Check if upload is valid
         if(!upload) {
-            console.error('Cannot make null upload clickable');
+            debugLog('Cannot make null upload clickable', 'error');
             return;
         }
 
@@ -1037,11 +1067,11 @@ class AdminInterface {
 
     async checkAndFixGitHubActionsStatus() {
         try {
-            console.log('Checking and fixing GitHub Actions status...');
+            debugLog('Checking and fixing GitHub Actions status...');
 
             // Don't check if system was recently reset
             if(this.systemRecentlyReset) {
-                console.log('System recently reset, skipping GitHub Actions check');
+                debugLog('System recently reset, skipping GitHub Actions check');
                 return;
             }
 
@@ -1050,13 +1080,13 @@ class AdminInterface {
             const deployData=await deployResponse.json();
 
             if(deployData.success&&deployData.data.current_step==='github-actions') {
-                console.log('Current step is github-actions, checking GitHub status...');
+                debugLog('Current step is github-actions, checking GitHub status...');
 
                 // Force check GitHub Actions status
                 await this.pollGitHubActionsStatus();
             }
         } catch(error) {
-            console.error('Error checking GitHub Actions status:',error);
+            debugLog('Error checking GitHub Actions status:',error, 'error');
         }
     }
 
@@ -1106,7 +1136,7 @@ class AdminInterface {
                 this.loadDeploymentStatus();
                 // Force check GitHub Actions status once after loading deployment tab
                 setTimeout(() => {
-                    console.log('🔍 Force checking GitHub Actions status on deployment tab load...');
+                    debugLog('🔍 Force checking GitHub Actions status on deployment tab load...');
                     this.pollGitHubActionsStatus();
                 },2000);
                 break;
@@ -1118,7 +1148,7 @@ class AdminInterface {
         const parentTab=document.querySelector('.tab-content.active');
 
         if(!parentTab) {
-            console.warn('No active parent tab found');
+            debugLog('No active parent tab found', 'warn');
             return;
         }
 
@@ -1150,7 +1180,7 @@ class AdminInterface {
 
         // Check if we're switching to integrations tab and have pending markers
         if(subtabName==='integrations-config'&&this.pendingMarkers) {
-            console.log('Integrations tab activated, loading pending markers');
+            debugLog('Integrations tab activated, loading pending markers');
             // Small delay to ensure DOM is ready
             setTimeout(() => {
                 this.loadMapMarkers(this.pendingMarkers);
@@ -1167,7 +1197,7 @@ class AdminInterface {
                 this.updateDashboardData(data.data);
             }
         } catch(error) {
-            console.error('Failed to load dashboard:',error);
+            debugLog('Failed to load dashboard:',error, 'error');
         }
     }
 
@@ -1272,26 +1302,336 @@ class AdminInterface {
                 this.populateConfigForms(data.data);
                 // Load page options for forms and maps dropdowns
                 await this.loadPageOptionsForForms();
+                // Load Git data from GitHub (orgs, repos, branches)
+                await this.loadGitOrganizations();
             }
         } catch(error) {
-            console.error('Failed to load configuration:',error);
+            debugLog('Failed to load configuration:',error, 'error');
+        }
+    }
+
+    async loadGitOrganizations() {
+        const orgSelect=document.getElementById('git-org-select');
+        if(!orgSelect) return;
+
+        const gitConfig=this.currentConfig?.git;
+        if(!gitConfig||!gitConfig.token) {
+            orgSelect.innerHTML='<option value="">Configure GitHub token first</option>';
+            return;
+        }
+
+        try {
+            orgSelect.innerHTML='<option value="">Loading organizations...</option>';
+
+            // Fetch user info to get username
+            const userResponse=await fetch('https://api.github.com/user',{
+                headers: {
+                    'Authorization': `Bearer ${gitConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if(!userResponse.ok) {
+                throw new Error(`GitHub API error: ${userResponse.status}`);
+            }
+
+            const user=await userResponse.json();
+
+            // Fetch organizations
+            const orgsResponse=await fetch('https://api.github.com/user/orgs',{
+                headers: {
+                    'Authorization': `Bearer ${gitConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if(!orgsResponse.ok) {
+                throw new Error(`GitHub API error: ${orgsResponse.status}`);
+            }
+
+            const orgs=await orgsResponse.json();
+            const currentOrg=gitConfig.org||'';
+
+            // Build options: user account + organizations
+            const options=[
+                {login: user.login,type: 'User'},
+                ...orgs.map(org => ({login: org.login,type: 'Organization'}))
+            ];
+
+            orgSelect.innerHTML=options.map(item =>
+                `<option value="${item.login}" data-type="${item.type}" ${item.login===currentOrg? 'selected':''}>
+                    ${item.login} ${item.type==='User'? '(Personal)':'(Org)'}
+                </option>`
+            ).join('');
+
+            debugLog(`Loaded ${options.length} organizations from GitHub`);
+
+            // Load repos for current org and set up change listener
+            if(currentOrg) {
+                await this.loadGitRepositories();
+            }
+
+            // Add change listener to load repos when org changes
+            orgSelect.removeEventListener('change',this.handleOrgChange);
+            this.handleOrgChange=async () => {
+                await this.loadGitRepositories();
+                // Clear branch selection when org changes
+                const branchSelect=document.getElementById('git-branch-select');
+                if(branchSelect) {
+                    branchSelect.innerHTML='<option value="">Select repository first...</option>';
+                }
+            };
+            orgSelect.addEventListener('change',this.handleOrgChange);
+
+        } catch(error) {
+            debugLog('Failed to load Git organizations:',error, 'error');
+            orgSelect.innerHTML='<option value="">Failed to load organizations</option>';
+            // Add manual entry option
+            if(gitConfig.org) {
+                orgSelect.innerHTML+=`<option value="${gitConfig.org}" selected>${gitConfig.org}</option>`;
+            }
+        }
+    }
+
+    async loadGitRepositories() {
+        const repoSelect=document.getElementById('git-repo-select');
+        const orgSelect=document.getElementById('git-org-select');
+        if(!repoSelect||!orgSelect) return;
+
+        const selectedOrg=orgSelect.value;
+        if(!selectedOrg) {
+            repoSelect.innerHTML='<option value="">Select organization first...</option>';
+            return;
+        }
+
+        const gitConfig=this.currentConfig?.git;
+        if(!gitConfig||!gitConfig.token) {
+            repoSelect.innerHTML='<option value="">Configure GitHub token first</option>';
+            return;
+        }
+
+        try {
+            repoSelect.innerHTML='<option value="">Loading repositories...</option>';
+
+            // Check if selected org is a User or Organization
+            const selectedOption=orgSelect.options[orgSelect.selectedIndex];
+            const orgType=selectedOption?.getAttribute('data-type')||'Organization';
+
+            // Use appropriate endpoint based on type
+            let apiUrl;
+            let isAuthenticatedUser=false;
+
+            if(orgType==='User') {
+                // Personal account - use /user/repos (authenticated user) which includes private repos
+                apiUrl=`https://api.github.com/user/repos?per_page=100&sort=updated&affiliation=owner`;
+                isAuthenticatedUser=true;
+            } else {
+                // Organization - use /orgs/{org}/repos
+                apiUrl=`https://api.github.com/orgs/${selectedOrg}/repos?per_page=100&sort=updated`;
+            }
+
+            debugLog(`Fetching repos for ${selectedOrg} (${orgType}) from: ${apiUrl}`);
+
+            const response=await fetch(apiUrl,{
+                headers: {
+                    'Authorization': `Bearer ${gitConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if(!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+
+            const repos=await response.json();
+            const currentRepo=gitConfig.repo||'';
+
+            if(repos.length===0) {
+                repoSelect.innerHTML='<option value="">No repositories found</option>';
+                return;
+            }
+
+            repoSelect.innerHTML=repos.map(repo =>
+                `<option value="${repo.name}" ${repo.name===currentRepo? 'selected':''}>
+                    ${repo.name}${repo.private? ' 🔒':''}
+                </option>`
+            ).join('');
+
+            debugLog(`Loaded ${repos.length} repositories for ${selectedOrg}`);
+
+            // Add change listener to load branches when repo changes
+            repoSelect.removeEventListener('change',this.handleRepoChange);
+            this.handleRepoChange=async () => {
+                await this.loadGitBranches();
+            };
+            repoSelect.addEventListener('change',this.handleRepoChange);
+
+            // Manually trigger change event to load branches for the currently selected repo
+            // This is needed because programmatically setting innerHTML doesn't trigger change event
+            const selectedRepoValue=repoSelect.value;
+            if(selectedRepoValue) {
+                debugLog(`Triggering branch load for selected repo: ${selectedRepoValue}`);
+                // Dispatch change event to trigger the handler
+                repoSelect.dispatchEvent(new Event('change'));
+            }
+
+        } catch(error) {
+            debugLog('Failed to load Git repositories:',error, 'error');
+            repoSelect.innerHTML='<option value="">Failed to load repositories</option>';
+            // Add manual entry option
+            if(gitConfig.repo) {
+                repoSelect.innerHTML+=`<option value="${gitConfig.repo}" selected>${gitConfig.repo}</option>`;
+            }
+        }
+    }
+
+    async loadGitBranches() {
+        const branchSelect=document.getElementById('git-branch-select');
+        const orgSelect=document.getElementById('git-org-select');
+        const repoSelect=document.getElementById('git-repo-select');
+        if(!branchSelect) return;
+
+        // Get current selections from dropdowns (or fallback to config)
+        const gitConfig=this.currentConfig?.git;
+        const org=orgSelect?.value||gitConfig?.org;
+        const repo=repoSelect?.value||gitConfig?.repo;
+        const token=gitConfig?.token;
+
+        if(!org||!repo||!token) {
+            branchSelect.innerHTML='<option value="">Select org and repo first</option>';
+            return;
+        }
+
+        try {
+            branchSelect.innerHTML='<option value="">Loading branches...</option>';
+
+            const response=await fetch(`https://api.github.com/repos/${org}/${repo}/branches`,{
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if(!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+
+            const branches=await response.json();
+            const currentBranch=gitConfig?.branch||'content_automation';
+
+            // Populate dropdown with branches
+            branchSelect.innerHTML=branches.map(branch =>
+                `<option value="${branch.name}" ${branch.name===currentBranch? 'selected':''}>
+                    ${branch.name}
+                </option>`
+            ).join('');
+
+            debugLog(`Loaded ${branches.length} branches from GitHub`);
+        } catch(error) {
+            debugLog('Failed to load Git branches:',error, 'error');
+            branchSelect.innerHTML=`
+                <option value="">Failed to load branches</option>
+                <option value="content_automation">content_automation (default)</option>
+                <option value="main">main</option>
+                <option value="master">master</option>
+            `;
+            // Select current branch if available
+            if(gitConfig?.branch) {
+                const option=Array.from(branchSelect.options).find(opt => opt.value===gitConfig.branch);
+                if(!option) {
+                    branchSelect.innerHTML+=`<option value="${gitConfig.branch}" selected>${gitConfig.branch}</option>`;
+                } else {
+                    branchSelect.value=gitConfig.branch;
+                }
+            }
+        }
+    }
+
+    async refreshGitOrgs() {
+        const orgSelect=document.getElementById('git-org-select');
+        if(!orgSelect) return;
+
+        const currentValue=orgSelect.value;
+        orgSelect.innerHTML='<option value="">Refreshing organizations...</option>';
+
+        // Reload configuration to get latest git settings
+        try {
+            const response=await fetch('?action=get_configs');
+            const data=await response.json();
+            if(data.success) {
+                this.currentConfig=data.data;
+            }
+        } catch(error) {
+            debugLog('Failed to reload config:',error, 'error');
+        }
+
+        // Load orgs from GitHub
+        await this.loadGitOrganizations();
+
+        // Try to restore previous selection if it still exists
+        if(currentValue&&Array.from(orgSelect.options).some(opt => opt.value===currentValue)) {
+            orgSelect.value=currentValue;
+        }
+    }
+
+    async refreshGitRepos() {
+        const repoSelect=document.getElementById('git-repo-select');
+        if(!repoSelect) return;
+
+        const currentValue=repoSelect.value;
+        repoSelect.innerHTML='<option value="">Refreshing repositories...</option>';
+
+        // Load repos from GitHub
+        await this.loadGitRepositories();
+
+        // Try to restore previous selection if it still exists
+        if(currentValue&&Array.from(repoSelect.options).some(opt => opt.value===currentValue)) {
+            repoSelect.value=currentValue;
+        }
+    }
+
+    async refreshGitBranches() {
+        // Show loading indicator
+        const branchSelect=document.getElementById('git-branch-select');
+        if(!branchSelect) return;
+
+        const currentValue=branchSelect.value;
+        branchSelect.innerHTML='<option value="">Refreshing branches...</option>';
+
+        // Reload configuration to get latest git settings
+        try {
+            const response=await fetch('?action=get_configs');
+            const data=await response.json();
+            if(data.success) {
+                this.currentConfig=data.data;
+            }
+        } catch(error) {
+            debugLog('Failed to reload config:',error, 'error');
+        }
+
+        // Load branches from GitHub
+        await this.loadGitBranches();
+
+        // Try to restore previous selection if it still exists
+        if(currentValue&&Array.from(branchSelect.options).some(opt => opt.value===currentValue)) {
+            branchSelect.value=currentValue;
         }
     }
 
     async loadThemes() {
         try {
-            console.log('Loading themes...');
+            debugLog('Loading themes...');
             const response=await fetch('?action=get_themes');
             const data=await response.json();
-            console.log('Themes API response:',data);
+            debugLog('Themes API response:',data);
 
             if(data.success) {
                 await this.populateThemeSelect(data.data);
             } else {
-                console.error('Theme loading failed:',data.message);
+                debugLog('Theme loading failed:',data.message, 'error');
             }
         } catch(error) {
-            console.error('Failed to load themes:',error);
+            debugLog('Failed to load themes:',error, 'error');
         }
     }
 
@@ -1314,7 +1654,7 @@ class AdminInterface {
                 activeTheme=pagesData.data.active_theme;
             }
         } catch(error) {
-            console.error('Failed to get active theme:',error);
+            debugLog('Failed to get active theme:',error, 'error');
         }
 
         // Populate Page Editor theme select
@@ -1381,13 +1721,13 @@ class AdminInterface {
             }
 
             if(!activeTheme) {
-                console.warn('No theme found to load page options');
+                debugLog('No theme found to load page options', 'warn');
                 return;
             }
 
             await this.updatePageOptionsForTheme(activeTheme);
         } catch(error) {
-            console.error('Failed to load page options for forms:',error);
+            debugLog('Failed to load page options for forms:',error, 'error');
         }
     }
 
@@ -1459,10 +1799,10 @@ class AdminInterface {
                 // Also update dynamic forms if they exist
                 await this.loadDynamicForms(pagesData.data.pages);
             } else {
-                console.error('Failed to load page options for theme:',theme,pagesData.message);
+                debugLog('Failed to load page options for theme:',theme,pagesData.message, 'error');
             }
         } catch(error) {
-            console.error('Failed to update page options for theme:',theme,error);
+            debugLog('Failed to update page options for theme:',theme,error, 'error');
         }
     }
 
@@ -1506,7 +1846,7 @@ class AdminInterface {
                         }
                     }
                 } catch(error) {
-                    console.error('Failed to fetch pages for forms:',error);
+                    debugLog('Failed to fetch pages for forms:',error, 'error');
                 }
             }
 
@@ -1560,7 +1900,7 @@ class AdminInterface {
             // Re-populate config values if they exist
             this.populateConfigForms(this.currentConfig);
         } catch(error) {
-            console.error('Failed to load dynamic forms:',error);
+            debugLog('Failed to load dynamic forms:',error, 'error');
             const container=document.getElementById('dynamic-forms-container');
             if(container) {
                 container.innerHTML=`<div class="text-center py-4 text-red-500">
@@ -1601,6 +1941,10 @@ class AdminInterface {
                         const siteTitleInput=document.getElementById('deployment-site-title');
                         if(siteTitleInput) {
                             siteTitleInput.value=configData.data.site.site_title||'';
+                            // Check if this site already exists in Kinsta on page load
+                            if(configData.data.site.site_title) {
+                                this.checkSiteExistence(configData.data.site.site_title);
+                            }
                         }
                     }
                 }
@@ -1635,22 +1979,22 @@ class AdminInterface {
                         }
                     }
                 } catch(themeError) {
-                    console.error('Failed to load themes for deployment:',themeError);
+                    debugLog('Failed to load themes for deployment:',themeError, 'error');
                 }
                 // Resume monitoring/log tailing if the deployment is currently running
                 if(data.data&&data.data.status==='running') {
-                    console.log('Detected running deployment on load - resuming monitoring');
+                    debugLog('Detected running deployment on load - resuming monitoring');
                     // Ensure we resume log polling using persisted lastLogReadTime
                     this.startDeploymentMonitoring();
                 }
             }
         } catch(error) {
-            console.error('Failed to load deployment status:',error);
+            debugLog('Failed to load deployment status:',error, 'error');
         }
     }
 
     updateDeploymentStatusDisplay(status) {
-        this.debugLog('Updating deployment status:',status);
+        debugLog('Updating deployment status:',status);
 
         // Update deployment state management
         // Keep deployment form hidden after completion - only show it on manual reset/reload
@@ -1659,14 +2003,14 @@ class AdminInterface {
             (status.status!=='idle'&&status.status!=='completed'&&status.status!=='failed'&&status.status!=='cancelled');
         const hasDeploymentCompleted=status.status==='completed'||status.status==='failed'||status.status==='cancelled';
 
-        this.debugLog(`Deployment state analysis: status="${status.status}", current_step="${status.current_step}", isRunning=${isDeploymentRunning}, hasCompleted=${hasDeploymentCompleted}`);
+        debugLog(`Deployment state analysis: status="${status.status}", current_step="${status.current_step}", isRunning=${isDeploymentRunning}, hasCompleted=${hasDeploymentCompleted}`);
 
         // Show form ONLY if deployment is truly idle (status='idle' and no current_step)
         // Hide form if deployment is running/pending OR has completed
         const shouldShowForm=!isDeploymentRunning&&!hasDeploymentCompleted&&status.status==='idle';
 
         this.setDeploymentInProgress(!shouldShowForm);
-        this.debugLog(`Should show form: ${shouldShowForm}, Setting deployment in progress: ${!shouldShowForm}`);
+        debugLog(`Should show form: ${shouldShowForm}, Setting deployment in progress: ${!shouldShowForm}`);
 
         // Update compact view based on current status
         this.updateCompactViewStatus(status);
@@ -1679,10 +2023,10 @@ class AdminInterface {
 
         const statusContainer=document.getElementById('deployment-status-list');
         if(!statusContainer) {
-            console.log('Status container not found');
+            debugLog('Status container not found');
             return;
         }
-        console.log('Status container found, updating display');
+        debugLog('Status container found, updating display');
 
         // Define deployment steps with descriptions (matching actual backend steps)
         const deploymentSteps=[
@@ -1748,7 +2092,7 @@ class AdminInterface {
                         (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].end_time);
 
                     if(!this.stepStartTimes.has(step.id)&&!isStepCompleted) {
-                        console.log(`Starting timer for GitHub Actions step: ${step.id}`);
+                        debugLog(`Starting timer for GitHub Actions step: ${step.id}`);
                         // Use backend start time if available for accurate individual step timing
                         let stepStartTime=null;
                         if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].start_time) {
@@ -1756,7 +2100,7 @@ class AdminInterface {
                         }
                         this.startStepTimer(step.id,stepStartTime);
                     } else if(isStepCompleted) {
-                        console.log(`GitHub Actions step ${step.id} is completed, not starting timer`);
+                        debugLog(`GitHub Actions step ${step.id} is completed, not starting timer`);
                     }
                 } else if(this.githubActionsManuallyUpdated) {
                     // Skip updating this step - it's being managed by updateGitHubActionsDisplay
@@ -1802,7 +2146,7 @@ class AdminInterface {
 
                 // Stop timer and show duration if available
                 if(this.realTimeTimers.has(step.id)) {
-                    console.log(`Stopping timer for completed step: ${step.id}`);
+                    debugLog(`Stopping timer for completed step: ${step.id}`);
                     this.stopStepTimer(step.id);
                 }
                 if(!timingInfo&&this.stepDurations.has(step.id)) {
@@ -1845,7 +2189,7 @@ class AdminInterface {
                     (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].end_time);
 
                 if(!this.stepStartTimes.has(step.id)&&!isStepCompleted) {
-                    console.log(`Starting timer for step: ${step.id}`);
+                    debugLog(`Starting timer for step: ${step.id}`);
                     // Use backend start time if available for accurate individual step timing
                     let stepStartTime=null;
                     if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].start_time) {
@@ -1853,7 +2197,7 @@ class AdminInterface {
                     }
                     this.startStepTimer(step.id,stepStartTime);
                 } else if(isStepCompleted) {
-                    console.log(`Step ${step.id} is completed, not starting timer`);
+                    debugLog(`Step ${step.id} is completed, not starting timer`);
                 }
             } else if(step.id===currentStep&&status.status==='failed') {
                 stepStatus='failed';
@@ -2010,7 +2354,7 @@ class AdminInterface {
     }
 
     populateConfigForms(configs) {
-        console.log('Config data loaded:',configs);
+        debugLog('Config data loaded:',configs);
 
         // Populate git config
         if(configs.git) {
@@ -2020,11 +2364,14 @@ class AdminInterface {
         // Populate site config
         if(configs.site) {
             this.populateForm('site-config-form',configs.site);
+            // Company ID validation removed; do not call server-side validation endpoint
+            // Update Kinsta token link after config is populated
+            setTimeout(() => this.updateKinstaTokenLink(),100);
         }
 
         // Get the main config data (could be configs.main or just configs if it's already the main config)
         const mainConfig=configs.main||configs;
-        console.log('Main config data:',mainConfig);
+        debugLog('Main config data:',mainConfig);
 
         // Populate all forms with main config data using data-path attributes
         const allForms=document.querySelectorAll('form[id$="-config-form"]');
@@ -2032,7 +2379,7 @@ class AdminInterface {
             const inputs=form.querySelectorAll('[data-path]');
             inputs.forEach(input => {
                 const path=input.dataset.path;
-                console.log('Looking for path:',path,'in configs:',configs);
+                debugLog('Looking for path:',path,'in configs:',configs);
 
                 // Try multiple sources for the value
                 let value=this.getNestedValue(mainConfig,path);
@@ -2046,7 +2393,7 @@ class AdminInterface {
                     value=this.getNestedValue(configs,path);
                 }
 
-                console.log('Found value for',path,':',value);
+                debugLog('Found value for',path,':',value);
 
                 if(value!==undefined&&value!==null) {
                     if(input.type==='checkbox') {
@@ -2132,24 +2479,24 @@ class AdminInterface {
             const contentType=response.headers.get('content-type');
             if(!contentType||!contentType.includes('application/json')) {
                 const textResponse=await response.text();
-                console.error('Server returned non-JSON response:',textResponse);
+                debugLog('Server returned non-JSON response:',textResponse, 'error');
                 throw new Error('Server returned an error. Check browser console for details.');
             }
 
             const result=await response.json();
 
             if(result.success) {
-                console.log('Active theme saved successfully:',theme);
+                debugLog('Active theme saved successfully:',theme);
                 // Update the deployment theme select to reflect the change
                 this.updateDeploymentThemeSelect(theme);
                 // Show success message
                 this.showAlert('Theme saved successfully!','success');
             } else {
-                console.error('Failed to save active theme:',result.message);
+                debugLog('Failed to save active theme:',result.message, 'error');
                 this.showAlert(result.message||'Failed to save theme selection','error');
             }
         } catch(error) {
-            console.error('Error saving active theme:',error);
+            debugLog('Error saving active theme:',error, 'error');
             this.showAlert('Error saving theme: '+error.message,'error');
         }
     }
@@ -2205,7 +2552,7 @@ class AdminInterface {
             const contentType=response.headers.get('content-type');
             if(!contentType||!contentType.includes('application/json')) {
                 const textResponse=await response.text();
-                console.error('Server returned non-JSON response:',textResponse);
+                debugLog('Server returned non-JSON response:',textResponse, 'error');
                 throw new Error('Server returned an error. Check browser console for details.');
             }
 
@@ -2235,11 +2582,11 @@ class AdminInterface {
 
                 this.showAlert(result.message||'Theme list refreshed successfully!','success');
             } else {
-                console.error('Failed to refresh theme list:',result.message);
+                debugLog('Failed to refresh theme list:',result.message, 'error');
                 this.showAlert(result.message||'Failed to refresh theme list','error');
             }
         } catch(error) {
-            console.error('Error refreshing theme list:',error);
+            debugLog('Error refreshing theme list:',error, 'error');
             this.showAlert('Error refreshing theme list: '+error.message,'error');
         } finally {
             // Remove spinning animation
@@ -2269,7 +2616,7 @@ class AdminInterface {
 
         // Build nested config object
         const inputs=form.querySelectorAll('input, select, textarea');
-        console.log('Found inputs:',inputs.length);
+        debugLog('Found inputs:',inputs.length);
 
         inputs.forEach(input => {
             const path=input.dataset.path;
@@ -2282,10 +2629,10 @@ class AdminInterface {
                     value=Number(value);
                 }
 
-                console.log(`Setting ${path} = ${value}`);
+                debugLog(`Setting ${path} = ${value}`);
                 this.setNestedValue(config,path,value);
             } else {
-                console.log('Input without data-path:',input);
+                debugLog('Input without data-path:',input);
             }
         });
 
@@ -2313,14 +2660,14 @@ class AdminInterface {
 
         // Collect dynamic component data relevant to this config type
         const dynamicData=this.collectDynamicConfigData(configType);
-        console.log('DEBUG: Dynamic data collected for',configType,':',dynamicData);
+        debugLog('DEBUG: Dynamic data collected for',configType,':',dynamicData);
         Object.keys(dynamicData).forEach(path => {
             this.setNestedValue(config,path,dynamicData[path]);
         });
 
-        console.log('DEBUG: Saving config type:',configType);
-        console.log('DEBUG: Final config data being sent:',config);
-        console.log('DEBUG: Config data JSON:',JSON.stringify(config,null,2));
+        debugLog('DEBUG: Saving config type:',configType);
+        debugLog('DEBUG: Final config data being sent:',config);
+        debugLog('DEBUG: Config data JSON:',JSON.stringify(config,null,2));
 
         try {
             const response=await fetch('?action=save_config',{
@@ -2335,7 +2682,7 @@ class AdminInterface {
             });
 
             const result=await response.json();
-            console.log('Server response:',result);
+            debugLog('Server response:',result);
 
             if(result.success) {
                 this.showAlert('Configuration saved successfully!','success');
@@ -2357,7 +2704,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to save configuration','error');
             }
         } catch(error) {
-            console.error('Failed to save configuration:',error);
+            debugLog('Failed to save configuration:',error, 'error');
             this.showAlert('Failed to save configuration','error');
         }
     }
@@ -2370,11 +2717,11 @@ class AdminInterface {
             if(data.success&&data.data) {
                 this.populatePageEditor(data.data);
             } else {
-                console.error('Failed to load page editor:',data.message||'Unknown error');
+                debugLog('Failed to load page editor:',data.message||'Unknown error', 'error');
                 this.showAlert('Failed to load page editor','error');
             }
         } catch(error) {
-            console.error('Failed to load page editor:',error);
+            debugLog('Failed to load page editor:',error, 'error');
             this.showAlert('Error loading page editor: '+error.message,'error');
         }
     }
@@ -2392,7 +2739,7 @@ class AdminInterface {
                 this.loadThemePages(data.active_theme);
             }
         } else {
-            console.error('No themes available');
+            debugLog('No themes available', 'error');
             this.showAlert('No themes found','warning');
         }
     }
@@ -2400,7 +2747,7 @@ class AdminInterface {
     async loadThemePages(theme) {
         try {
             if(!theme) {
-                console.error('No theme specified for loading pages');
+                debugLog('No theme specified for loading pages', 'error');
                 return;
             }
 
@@ -2432,11 +2779,11 @@ class AdminInterface {
                     this.loadPageContent(theme,pageToLoad);
                 }
             } else {
-                console.error('Failed to load theme pages:',data.message||'Unknown error');
+                debugLog('Failed to load theme pages:',data.message||'Unknown error', 'error');
                 this.showAlert('Failed to load pages for '+theme,'error');
             }
         } catch(error) {
-            console.error('Failed to load theme pages:',error);
+            debugLog('Failed to load theme pages:',error, 'error');
             this.showAlert('Error loading theme pages: '+error.message,'error');
         }
     }
@@ -2486,7 +2833,7 @@ class AdminInterface {
     async loadPageContent(theme,page) {
         try {
             if(!theme||!page) {
-                console.error('Theme or page not specified');
+                debugLog('Theme or page not specified', 'error');
                 return;
             }
 
@@ -2508,11 +2855,11 @@ class AdminInterface {
             if(data.success&&data.data) {
                 this.renderPageSections(data.data,theme,page);
             } else {
-                console.error('Failed to load page content:',data.message||'Unknown error');
+                debugLog('Failed to load page content:',data.message||'Unknown error', 'error');
                 this.showAlert('Failed to load page content','error');
             }
         } catch(error) {
-            console.error('Failed to load page content:',error);
+            debugLog('Failed to load page content:',error, 'error');
             this.showAlert('Error loading page: '+error.message,'error');
         }
     }
@@ -2531,7 +2878,7 @@ class AdminInterface {
         this.currentPageData=pageData;
 
         // Debug: Log the page data structure
-        console.log('Page data structure:',{
+        debugLog('Page data structure:',{
             hasWidgets: !!pageData.widgets,
             widgetsLength: pageData.widgets?.length||0,
             hasGrids: !!pageData.grids,
@@ -2543,15 +2890,15 @@ class AdminInterface {
         // Handle both old format (sections) and new format (widgets/grids)
         if(pageData.widgets||pageData.grids) {
             // New format with widgets and/or grids
-            console.log('Rendering widgets and grids format');
+            debugLog('Rendering widgets and grids format');
             this.renderWidgetsAndGrids(pageData,theme,page);
         } else if(pageData.sections&&pageData.sections.length>0) {
             // Old format with sections
-            console.log('Rendering legacy sections format');
+            debugLog('Rendering legacy sections format');
             this.renderLegacySections(pageData,theme,page);
         } else {
             // No content available
-            console.log('Rendering empty state');
+            debugLog('Rendering empty state');
             this.renderEmptyState(page);
         }
 
@@ -2565,12 +2912,12 @@ class AdminInterface {
                 const existingImg=upload.querySelector('.image-preview');
                 if(existingImg&&existingImg.src&&!existingImg.src.startsWith('data:')) {
                     const uploadKey=input.dataset.section+'.'+input.dataset.field;
-                    console.log(`Loading existing image for key ${uploadKey}:`,existingImg.src);
+                    debugLog(`Loading existing image for key ${uploadKey}:`,existingImg.src);
                     this.imageUploads.set(uploadKey,existingImg.src);
                 }
             }
         });
-        console.log('Final imageUploads Map after loading:',Array.from(this.imageUploads.entries()));
+        debugLog('Final imageUploads Map after loading:',Array.from(this.imageUploads.entries()));
 
         // Make all image uploads clickable
         document.querySelectorAll('.image-upload').forEach(upload => {
@@ -2603,14 +2950,14 @@ class AdminInterface {
         const container=document.getElementById('page-sections');
         let html='';
 
-        console.log('renderWidgetsAndGrids called with:',{
+        debugLog('renderWidgetsAndGrids called with:',{
             gridsCount: pageData.grids?.length||0,
             widgetsCount: pageData.widgets?.length||0
         });
 
         // Render widgets section (content) - First
         if(pageData.widgets&&pageData.widgets.length>0) {
-            console.log('Rendering widgets section with',pageData.widgets.length,'widgets');
+            debugLog('Rendering widgets section with',pageData.widgets.length,'widgets');
             html+=`
                 <div class="card mb-6 collapsed">
                     <div class="card-header accordion-header" style="cursor: pointer;" onclick="this.parentElement.classList.toggle('collapsed')">
@@ -2633,12 +2980,12 @@ class AdminInterface {
                 </div>
             `;
         } else {
-            console.log('No widgets to render or widgets array is empty');
+            debugLog('No widgets to render or widgets array is empty');
         }
 
         // Render grids section (layout/background) - Second
         if(pageData.grids&&pageData.grids.length>0) {
-            console.log('Rendering grids section with',pageData.grids.length,'grids');
+            debugLog('Rendering grids section with',pageData.grids.length,'grids');
             html+=`
                 <div class="card mb-6 collapsed">
                     <div class="card-header accordion-header" style="cursor: pointer;" onclick="this.parentElement.classList.toggle('collapsed')">
@@ -2661,10 +3008,10 @@ class AdminInterface {
                 </div>
             `;
         } else {
-            console.log('No grids to render or grids array is empty');
+            debugLog('No grids to render or grids array is empty');
         }
 
-        console.log('Setting container innerHTML with html length:',html.length);
+        debugLog('Setting container innerHTML with html length:',html.length);
         container.innerHTML=html;
     }
 
@@ -3349,7 +3696,7 @@ class AdminInterface {
     initializeCKEditor() {
         // Check if ClassicEditor is available
         if(typeof ClassicEditor==='undefined') {
-            console.warn('CKEditor ClassicEditor not available, falling back to plain textareas');
+            debugLog('CKEditor ClassicEditor not available, falling back to plain textareas', 'warn');
             return;
         }
 
@@ -3455,10 +3802,10 @@ class AdminInterface {
                     }
                 });
 
-                console.log('CKEditor initialized for',textarea.id);
+                debugLog('CKEditor initialized for',textarea.id);
 
             } catch(error) {
-                console.error('Error initializing CKEditor for',textarea.id,error);
+                debugLog('Error initializing CKEditor for',textarea.id,error, 'error');
                 // Show the textarea as fallback
                 textarea.style.display='block';
             }
@@ -3480,7 +3827,7 @@ class AdminInterface {
                     editor.destroy();
                 }
             } catch(error) {
-                console.error('Error destroying CKEditor instance:',id,error);
+                debugLog('Error destroying CKEditor instance:',id,error, 'error');
             }
         }
         this.ckEditorInstances.clear();
@@ -3502,7 +3849,7 @@ class AdminInterface {
         // Store reference to upload container before starting FileReader
         const upload=input.closest('.image-upload');
         if(!upload) {
-            console.error('Could not find parent .image-upload element');
+            debugLog('Could not find parent .image-upload element', 'error');
             return;
         }
 
@@ -3546,7 +3893,7 @@ class AdminInterface {
         // Store reference to upload container
         const upload=input.closest('.image-upload');
         if(!upload) {
-            console.error('Could not find parent .image-upload element for file input');
+            debugLog('Could not find parent .image-upload element for file input', 'error');
         }
 
         try {
@@ -3563,7 +3910,7 @@ class AdminInterface {
             if(result.success) {
                 // Update the image field with the uploaded image URL
                 const uploadKey=input.dataset.section+'.'+input.dataset.field;
-                console.log(`Image upload successful. Storing URL for key ${uploadKey}:`,result.data.url);
+                debugLog(`Image upload successful. Storing URL for key ${uploadKey}:`,result.data.url);
                 this.imageUploads.set(uploadKey,result.data.url);
 
                 // Update the preview image with the actual URL instead of the data URL
@@ -3571,7 +3918,7 @@ class AdminInterface {
                     const previewImg=upload.querySelector('.image-preview');
                     if(previewImg) {
                         previewImg.src=result.data.url;
-                        console.log(`Updated preview image src to:`,result.data.url);
+                        debugLog(`Updated preview image src to:`,result.data.url);
                     }
                 }
 
@@ -3580,7 +3927,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to upload image','error');
             }
         } catch(error) {
-            console.error('Failed to upload image:',error);
+            debugLog('Failed to upload image:',error, 'error');
             this.showAlert('Failed to upload image','error');
         } finally {
             // Ensure any 'uploading' class is removed
@@ -3643,7 +3990,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to save page content','error');
             }
         } catch(error) {
-            console.error('Failed to save page content:',error);
+            debugLog('Failed to save page content:',error, 'error');
             this.showAlert('Failed to save page content','error');
         }
     }
@@ -3731,12 +4078,12 @@ class AdminInterface {
         if(input.type==='file') {
             // Use uploaded image URL if available, regardless of whether files are selected
             const uploadKey=input.dataset.section+'.'+input.dataset.field;
-            console.log(`Checking file input for field: ${input.dataset.field}, uploadKey: ${uploadKey}`);
-            console.log('Available imageUploads:',Array.from(this.imageUploads.entries()));
+            debugLog(`Checking file input for field: ${input.dataset.field}, uploadKey: ${uploadKey}`);
+            debugLog('Available imageUploads:',Array.from(this.imageUploads.entries()));
 
             if(this.imageUploads.has(uploadKey)) {
                 value=this.imageUploads.get(uploadKey);
-                console.log(`Found uploaded image for ${uploadKey}:`,value);
+                debugLog(`Found uploaded image for ${uploadKey}:`,value);
             }
             // If no uploaded image is available and no file is selected, keep existing value or set empty
             else if(!input.files[0]) {
@@ -3746,10 +4093,10 @@ class AdminInterface {
                     const existingImg=upload.querySelector('.image-preview');
                     if(existingImg&&existingImg.src&&!existingImg.src.startsWith('data:')) {
                         value=existingImg.src;
-                        console.log(`Extracted image URL from preview for ${uploadKey}:`,value);
+                        debugLog(`Extracted image URL from preview for ${uploadKey}:`,value);
                     } else {
                         value=''; // No image selected or uploaded
-                        console.log(`No valid image found for ${uploadKey}, setting empty`);
+                        debugLog(`No valid image found for ${uploadKey}, setting empty`);
                     }
                 }
             }
@@ -3765,6 +4112,127 @@ class AdminInterface {
     }
 
     async handleDeployment(action,step=null) {
+        // Check if user wants to delete existing site first
+        const deleteCheckbox=document.getElementById('delete-existing-site-checkbox');
+        const shouldDeleteExisting=deleteCheckbox&&deleteCheckbox.checked;
+
+        if(shouldDeleteExisting&&this.existingSiteIds&&this.existingSiteIds.length>0) {
+            // Ensure a company ID is configured (presence check only) before allowing deletion
+            const companyInput=document.getElementById('company-id-input');
+            const configuredCompanyId=(companyInput&&companyInput.value&&companyInput.value.trim())? companyInput.value.trim():(this.siteConfig?.company||'');
+            if(!configuredCompanyId) {
+                this.showAlert('Company ID is not set. Please configure the Kinsta Company ID in site settings before deleting existing sites.','error');
+                return;
+            }
+            // Show confirmation dialog
+            const siteTitleInput=document.getElementById('deployment-site-title');
+            const siteTitle=siteTitleInput? siteTitleInput.value:'the existing site';
+
+            const confirmed=confirm(
+                `⚠️ CRITICAL WARNING ⚠️\n\n`+
+                `You are about to PERMANENTLY DELETE the existing site "${siteTitle}" from Kinsta.\n\n`+
+                `This will:\n`+
+                `• Delete all website data\n`+
+                `• Remove all files and databases\n`+
+                `• Cannot be undone\n\n`+
+                `Are you absolutely sure you want to proceed?`
+            );
+
+            if(!confirmed) {
+                this.showAlert('Deployment cancelled','info');
+                return;
+            }
+
+            // Second confirmation with detailed site preview
+            let confirmationMessage=`╔═══════════════════════════════════════════════════════════╗\n`;
+            confirmationMessage+=`║   FINAL CONFIRMATION - PERMANENT SITE DELETION           ║\n`;
+            confirmationMessage+=`╚═══════════════════════════════════════════════════════════╝\n\n`;
+
+            // Get company ID and name from config and current validation display
+            const companyId=this.siteConfig?.company||'Unknown';
+            const companyNameElement=document.getElementById('company-name-text');
+            const companyName=companyNameElement?.textContent||null;
+
+            if(companyName&&companyName!=='Unable to validate Company ID'&&companyName!=='Invalid Company ID') {
+                confirmationMessage+=`Company: ${companyName}\n`;
+                confirmationMessage+=`Company ID: ${companyId}\n\n`;
+            } else {
+                confirmationMessage+=`Company ID: ${companyId}\n\n`;
+            }
+
+            confirmationMessage+=`You are about to PERMANENTLY DELETE:\n\n`;
+
+            // Add details for each site that will be deleted
+            if(this.existingSiteDetails&&this.existingSiteDetails.length>0) {
+                this.existingSiteDetails.forEach((site,index) => {
+                    confirmationMessage+=`┌─────────────────────────────────────────────────────────┐\n`;
+                    confirmationMessage+=`│ Site #${index+1}\n`;
+                    confirmationMessage+=`├─────────────────────────────────────────────────────────┤\n`;
+                    confirmationMessage+=`│ Site ID:       ${site.id||'N/A'}\n`;
+                    confirmationMessage+=`│ Name:          ${site.name||'N/A'}\n`;
+                    confirmationMessage+=`│ Display Name:  ${site.display_name||'N/A'}\n`;
+                    confirmationMessage+=`└─────────────────────────────────────────────────────────┘\n\n`;
+                });
+            } else {
+                confirmationMessage+=`┌─────────────────────────────────────────────────────────┐\n`;
+                confirmationMessage+=`│ Site: "${siteTitle}"\n`;
+                confirmationMessage+=`└─────────────────────────────────────────────────────────┘\n\n`;
+            }
+
+            confirmationMessage+=`⚠️  THIS ACTION CANNOT BE UNDONE!\n`;
+            confirmationMessage+=`⚠️  ALL DATA WILL BE PERMANENTLY LOST!\n\n`;
+            confirmationMessage+=`─────────────────────────────────────────────────────────────\n`;
+            confirmationMessage+=`Click OK to proceed with PERMANENT DELETION\n`;
+            confirmationMessage+=`Click Cancel to abort deployment\n`;
+            confirmationMessage+=`─────────────────────────────────────────────────────────────`;
+
+            const doubleConfirmed=confirm(confirmationMessage);
+
+            if(!doubleConfirmed) {
+                this.showAlert('Deployment cancelled','info');
+                return;
+            }
+
+            // Proceed with deletion
+            try {
+                this.showAlert('Deleting existing site from Kinsta...','warning');
+
+                for(const siteId of this.existingSiteIds) {
+                    const deleteResponse=await fetch('?action=delete_kinsta_site',{
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            site_id: siteId
+                        })
+                    });
+
+                    const deleteResult=await deleteResponse.json();
+
+                    if(!deleteResult.success) {
+                        throw new Error(deleteResult.message||'Failed to delete existing site');
+                    }
+
+                    this.showAlert(`Site ${siteId} deleted successfully. Now starting deployment...`,'success');
+                }
+
+                // Clear the checkbox and hide the option after successful deletion
+                if(deleteCheckbox) deleteCheckbox.checked=false;
+                const deleteOption=document.getElementById('delete-existing-site-option');
+                if(deleteOption) deleteOption.style.display='none';
+
+                // Wait a bit for Kinsta to process the deletion, then show deployment starting
+                this.showAlert('Site deleted. Starting deployment in 2 seconds...','info');
+                await new Promise(resolve => setTimeout(resolve,2000));
+                this.showAlert('Starting deployment now...','info');
+
+            } catch(error) {
+                this.showAlert(`Failed to delete existing site: ${error.message}`,'error');
+                return;
+            }
+        }
+
         // Enable deployment overlay immediately
         this.setDeploymentInProgress(true);
 
@@ -3777,7 +4245,7 @@ class AdminInterface {
         this.stepDurations.clear();
         this.realTimeTimers.forEach(timerId => {
             clearInterval(timerId);
-            console.log('Clearing existing timer:',timerId);
+            debugLog('Clearing existing timer:',timerId);
         });
         this.realTimeTimers.clear();
 
@@ -3785,8 +4253,8 @@ class AdminInterface {
         this.githubActionsCompleted=false;
         this.githubActionsManuallyUpdated=false;
 
-        console.log(`Deployment button clicked at: ${this.getISTTime()}`);
-        this.debugLog('All timers cleared for new deployment');
+        debugLog(`Deployment button clicked at: ${this.getISTTime()}`);
+        debugLog('All timers cleared for new deployment');
 
         // Auto-clear logs and temp files before starting deployment
         try {
@@ -3804,7 +4272,7 @@ class AdminInterface {
             });
 
             if(!resetResponse.ok) {
-                console.warn('Failed to auto-clear logs before deployment');
+                debugLog('Failed to auto-clear logs before deployment', 'warn');
             }
             else {
                 await this.loadDeploymentLogs();
@@ -3812,7 +4280,7 @@ class AdminInterface {
             }
 
         } catch(error) {
-            console.warn('Auto-clear failed, continuing with deployment:',error);
+            debugLog('Auto-clear failed, continuing with deployment:',error, 'warn');
         }
 
         let endpoint='?action=deploy';
@@ -3836,7 +4304,7 @@ class AdminInterface {
         }
 
         try {
-            console.log('Sending deployment request:',data);
+            debugLog('Sending deployment request:',data);
 
             const response=await fetch(endpoint,{
                 method: 'POST',
@@ -3846,14 +4314,14 @@ class AdminInterface {
                 body: JSON.stringify(data)
             });
 
-            console.log('Response status:',response.status);
+            debugLog('Response status:',response.status);
 
             if(!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const result=await response.json();
-            console.log('Deployment result:',result);
+            debugLog('Deployment result:',result);
 
             if(result.success) {
                 this.showAlert('Deployment started successfully!','success');
@@ -3866,10 +4334,10 @@ class AdminInterface {
 
             } else {
                 this.showAlert(result.message||'Failed to start deployment','error');
-                console.error('Deployment failed:',result);
+                debugLog('Deployment failed:',result, 'error');
             }
         } catch(error) {
-            console.error('Deployment request failed:',error);
+            debugLog('Deployment request failed:',error, 'error');
             this.showAlert(`Failed to start deployment: ${error.message}`,'error');
         }
     }
@@ -3887,7 +4355,7 @@ class AdminInterface {
         this.stepDurations.clear();
         this.realTimeTimers.forEach(timerId => {
             clearInterval(timerId);
-            console.log('Clearing existing timer:',timerId);
+            debugLog('Clearing existing timer:',timerId);
         });
         this.realTimeTimers.clear();
 
@@ -3895,11 +4363,11 @@ class AdminInterface {
         this.githubActionsCompleted=false;
         this.githubActionsManuallyUpdated=false;
 
-        console.log(`Deploy Again button clicked at: ${this.getISTTime()}`);
-        this.debugLog('All timers cleared for deploy again');
+        debugLog(`Deploy Again button clicked at: ${this.getISTTime()}`);
+        debugLog('All timers cleared for deploy again');
 
         try {
-            console.log('Sending deploy again request...');
+            debugLog('Sending deploy again request...');
 
             // Call the deploy-only endpoint - this will only run deploy.sh
             const response=await fetch('?action=deploy_again',{
@@ -3910,14 +4378,14 @@ class AdminInterface {
                 body: JSON.stringify({})
             });
 
-            console.log('Deploy Again response status:',response.status);
+            debugLog('Deploy Again response status:',response.status);
 
             if(!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const result=await response.json();
-            console.log('Deploy Again result:',result);
+            debugLog('Deploy Again result:',result);
 
             if(result.success) {
                 this.showAlert('Deployment started with existing credentials!','success');
@@ -3930,11 +4398,11 @@ class AdminInterface {
 
             } else {
                 this.showAlert(result.message||'Failed to start deployment','error');
-                console.error('Deploy Again failed:',result);
+                debugLog('Deploy Again failed:',result, 'error');
                 this.setDeploymentInProgress(false);
             }
         } catch(error) {
-            console.error('Deploy Again request failed:',error);
+            debugLog('Deploy Again request failed:',error, 'error');
             this.showAlert(`Failed to start deployment: ${error.message}`,'error');
             this.setDeploymentInProgress(false);
         }
@@ -3955,13 +4423,13 @@ class AdminInterface {
 
                 // If deployment is completed but we're still on github-actions step, check GitHub status once more
                 if(data.data.status==='completed'&&data.data.current_step==='github-actions'&&!this.githubActionsCompleted) {
-                    console.log('Deployment completed but GitHub Actions not yet completed, polling GitHub status');
+                    debugLog('Deployment completed but GitHub Actions not yet completed, polling GitHub status');
                     this.pollGitHubActionsStatus();
                 }
 
                 // Force check GitHub Actions status if we're on that step
                 if(data.data.current_step==='github-actions'&&!this.githubActionsCompleted) {
-                    console.log('Currently on GitHub Actions step, ensuring polling is active');
+                    debugLog('Currently on GitHub Actions step, ensuring polling is active');
                     this.startGitHubActionsPolling();
                 }
 
@@ -3975,23 +4443,23 @@ class AdminInterface {
                 }
             }
         } catch(error) {
-            console.error('Failed to poll deployment status:',error);
+            debugLog('Failed to poll deployment status:',error, 'error');
         }
     }
 
     startGitHubActionsPolling() {
-        console.log('startGitHubActionsPolling called. Current state:',{
+        debugLog('startGitHubActionsPolling called. Current state:',{
             hasInterval: !!this.githubActionsPollInterval,
             isCompleted: this.githubActionsCompleted
         });
 
         // Don't start multiple polling intervals
         if(this.githubActionsPollInterval||this.githubActionsCompleted) {
-            console.log('Skipping GitHub Actions polling - already running or completed');
+            debugLog('Skipping GitHub Actions polling - already running or completed');
             return;
         }
 
-        console.log('Starting GitHub Actions status polling...');
+        debugLog('Starting GitHub Actions status polling...');
         // Start polling GitHub Actions status
         this.pollGitHubActionsStatus();
     }
@@ -3999,17 +4467,17 @@ class AdminInterface {
     async pollGitHubActionsStatus() {
         // Don't poll if already completed
         if(this.githubActionsCompleted) {
-            console.log('GitHub Actions already completed, skipping poll');
+            debugLog('GitHub Actions already completed, skipping poll');
             return;
         }
 
         // Don't poll if system was recently reset
         if(this.systemRecentlyReset) {
-            console.log('System recently reset, skipping GitHub Actions poll');
+            debugLog('System recently reset, skipping GitHub Actions poll');
             return;
         }
 
-        console.log('🔄 Polling GitHub Actions status...');
+        debugLog('🔄 Polling GitHub Actions status...');
 
         try {
             const response=await fetch('?action=github_actions_status');
@@ -4017,7 +4485,7 @@ class AdminInterface {
 
             if(data.success) {
                 // Enhanced logging for debugging
-                console.log('📡 GitHub Actions Status Response:',{
+                debugLog('📡 GitHub Actions Status Response:',{
                     status: data.data.status,
                     github_status: data.data.github_status,
                     github_conclusion: data.data.github_conclusion,
@@ -4044,7 +4512,7 @@ class AdminInterface {
                     data.data.github_conclusion==='failure'||
                     data.data.github_conclusion==='cancelled';
 
-                console.log('🎯 Completion Check:',{
+                debugLog('🎯 Completion Check:',{
                     status: data.data.status,
                     github_status: data.data.github_status,
                     github_conclusion: data.data.github_conclusion,
@@ -4053,23 +4521,23 @@ class AdminInterface {
                 });
 
                 if(isCompleted) {
-                    console.log('✅ GitHub Actions completed! Calling handleGitHubActionsCompletion');
+                    debugLog('✅ GitHub Actions completed! Calling handleGitHubActionsCompletion');
                     this.handleGitHubActionsCompletion(data.data);
                 } else {
                     // Continue polling if still running/pending
-                    console.log('⏳ GitHub Actions still running, scheduling next poll in 5s');
+                    debugLog('⏳ GitHub Actions still running, scheduling next poll in 5s');
                     this.githubActionsPollInterval=setTimeout(() => this.pollGitHubActionsStatus(),5000);
                 }
             }
         } catch(error) {
-            console.error('❌ Failed to poll GitHub Actions status:',error);
+            debugLog('❌ Failed to poll GitHub Actions status:',error, 'error');
             // Retry on error
             this.githubActionsPollInterval=setTimeout(() => this.pollGitHubActionsStatus(),10000);
         }
     }
 
     handleGitHubActionsCompletion(githubData) {
-        console.log('handleGitHubActionsCompletion called with data:',githubData);
+        debugLog('handleGitHubActionsCompletion called with data:',githubData);
 
         // Mark as completed to stop all polling
         this.githubActionsCompleted=true;
@@ -4078,10 +4546,10 @@ class AdminInterface {
         this.stopAllPolling();
 
         // Show final status popup (only once per deployment session)
-        console.log('About to call showGitHubActionsFinalStatus...');
+        debugLog('About to call showGitHubActionsFinalStatus...');
         this.showGitHubActionsFinalStatus(githubData);
 
-        console.log('GitHub Actions completed with status:',githubData.status);
+        debugLog('GitHub Actions completed with status:',githubData.status);
     }
 
     stopAllPolling() {
@@ -4102,7 +4570,7 @@ class AdminInterface {
     }
 
     async forceRefreshGitHubStatus() {
-        console.log('🔧 Force refreshing GitHub Actions status...');
+        debugLog('🔧 Force refreshing GitHub Actions status...');
 
         // Show loading indicator
         const refreshBtn=document.querySelector('.github-refresh-btn');
@@ -4119,16 +4587,16 @@ class AdminInterface {
         this.githubActionsCompleted=false;
 
         try {
-            console.log('🔍 Bypassing protection flags to force GitHub Actions check...');
+            debugLog('🔍 Bypassing protection flags to force GitHub Actions check...');
 
             // First, let's see what the raw API response looks like
             const response=await fetch('?action=github_actions_status');
             const data=await response.json();
 
-            console.log('🐛 RAW API RESPONSE:',JSON.stringify(data,null,2));
+            debugLog('🐛 RAW API RESPONSE:',JSON.stringify(data,null,2));
 
             if(data.success&&data.data) {
-                console.log('🐛 DETAILED DATA ANALYSIS:',{
+                debugLog('🐛 DETAILED DATA ANALYSIS:',{
                     status: data.data.status,
                     github_status: data.data.github_status,
                     github_conclusion: data.data.github_conclusion,
@@ -4157,8 +4625,8 @@ class AdminInterface {
                     data.data.github_conclusion==='failure'||
                     data.data.github_conclusion==='cancelled';
 
-                console.log('🐛 COMPLETION CHECK RESULT:',isCompleted);
-                console.log('🐛 INDIVIDUAL CHECKS:',{
+                debugLog('🐛 COMPLETION CHECK RESULT:',isCompleted);
+                debugLog('🐛 INDIVIDUAL CHECKS:',{
                     'status===completed': data.data.status==='completed',
                     'status===success': data.data.status==='success',
                     'github_status===completed': data.data.github_status==='completed',
@@ -4167,16 +4635,16 @@ class AdminInterface {
                 });
 
                 if(isCompleted) {
-                    console.log('✅ Forcing completion handling...');
+                    debugLog('✅ Forcing completion handling...');
                     // Mark as completed before calling the handler
                     this.githubActionsCompleted=true;
                     this.handleGitHubActionsCompletion(data.data);
                 } else {
-                    console.log('❌ Not detected as completed. Manual override...');
+                    debugLog('❌ Not detected as completed. Manual override...');
                     // If all deployment steps are done but GitHub Actions not detected as complete,
                     // let's check if we should force completion
                     if(data.data.run_id) {
-                        console.log('🔧 Forcing completion due to existing run_id');
+                        debugLog('🔧 Forcing completion due to existing run_id');
                         data.data.status='completed';
                         data.data.github_conclusion='success';
                         this.githubActionsCompleted=true;
@@ -4188,7 +4656,7 @@ class AdminInterface {
             // Show success message
             this.showAlert('GitHub Actions status refreshed and analyzed','success');
         } catch(error) {
-            console.error('Failed to refresh GitHub status:',error);
+            debugLog('Failed to refresh GitHub status:',error, 'error');
             this.showAlert('Failed to refresh GitHub Actions status','error');
 
             // Restore original flags on error
@@ -4225,13 +4693,13 @@ class AdminInterface {
                 const deletedCount=(data.data&&data.data.deleted)? data.data.deleted.length:0;
                 const toDeleteCount=(data.data&&data.data.to_delete)? data.data.to_delete.length:0;
                 this.showToast(`Clean complete. ${deletedCount} files deleted; ${toDeleteCount} files matched as unused.`,'success');
-                console.log('Clean uploads result',data);
+                debugLog('Clean uploads result',data);
             } else {
-                console.error('Failed to clean uploads',data);
+                debugLog('Failed to clean uploads',data, 'error');
                 this.showToast('Failed to clean uploads. Check console for more details.','error');
             }
         } catch(err) {
-            console.error('Clean uploads error',err);
+            debugLog('Clean uploads error',err, 'error');
             this.showToast('Error while cleaning uploads','error');
         } finally {
             if(btn) {
@@ -4243,65 +4711,65 @@ class AdminInterface {
 
     // Debug function to check what's wrong with the run ID
     forceCheckRunId() {
-        console.log('🔧 DEBUG: Checking GitHub run ID issues...');
+        debugLog('🔧 DEBUG: Checking GitHub run ID issues...');
 
         fetch('?action=github_actions_status')
             .then(response => response.json())
             .then(data => {
-                console.log('🔧 DEBUG: GitHub Actions API Response:',data);
+                debugLog('🔧 DEBUG: GitHub Actions API Response:',data);
 
                 if(data.data&&data.data.run_id) {
-                    console.log('🔧 DEBUG: Current run ID being monitored:',data.data.run_id);
-                    console.log('🔧 DEBUG: Run URL:',data.data.url);
-                    console.log('🔧 DEBUG: Is this an old run?',data.data.is_monitoring);
+                    debugLog('🔧 DEBUG: Current run ID being monitored:',data.data.run_id);
+                    debugLog('🔧 DEBUG: Run URL:',data.data.url);
+                    debugLog('🔧 DEBUG: Is this an old run?',data.data.is_monitoring);
 
                     // Check if this run is really old
                     if(data.data.created_at) {
                         const runTime=new Date(data.data.created_at);
                         const now=new Date();
                         const minutesAgo=(now-runTime)/(1000*60);
-                        console.log(`🔧 DEBUG: Run created ${minutesAgo.toFixed(1)} minutes ago`);
+                        debugLog(`🔧 DEBUG: Run created ${minutesAgo.toFixed(1)} minutes ago`);
 
                         if(minutesAgo>10) {
-                            console.log('🔧 DEBUG: ⚠️ This run is very old! It might be completed but stuck.');
-                            console.log('🔧 DEBUG: Checking recent workflows instead...');
+                            debugLog('🔧 DEBUG: ⚠️ This run is very old! It might be completed but stuck.');
+                            debugLog('🔧 DEBUG: Checking recent workflows instead...');
 
                             // Try to get more recent workflows
                             fetch(`?action=github_actions_logs&run_id=${data.data.run_id}`)
                                 .then(response => response.json())
                                 .then(logData => {
-                                    console.log('🔧 DEBUG: Workflow logs:',logData);
+                                    debugLog('🔧 DEBUG: Workflow logs:',logData);
                                 })
                                 .catch(error => {
-                                    console.error('🔧 DEBUG: Error fetching logs:',error);
+                                    debugLog('🔧 DEBUG: Error fetching logs:',error, 'error');
                                 });
                         }
                     }
                 } else {
-                    console.log('🔧 DEBUG: No run ID found in response');
+                    debugLog('🔧 DEBUG: No run ID found in response');
                 }
             })
             .catch(error => {
-                console.error('🔧 DEBUG: Error checking run ID:',error);
+                debugLog('🔧 DEBUG: Error checking run ID:',error, 'error');
             });
     }
 
     // Function to force clear old GitHub run ID and check fresh
     forceClearOldRunId() {
-        console.log('🔧 CLEAR: Clearing old GitHub run ID and forcing fresh check...');
+        debugLog('🔧 CLEAR: Clearing old GitHub run ID and forcing fresh check...');
 
         // First clear the stored run ID
         fetch('?action=clear_github_run_id')
             .then(response => response.json())
             .then(data => {
-                console.log('🔧 CLEAR: Clear run ID response:',data);
+                debugLog('🔧 CLEAR: Clear run ID response:',data);
 
                 // Now force a fresh GitHub Actions status check
                 return fetch('?action=github_actions_status');
             })
             .then(response => response.json())
             .then(data => {
-                console.log('🔧 CLEAR: Fresh GitHub Actions status:',data);
+                debugLog('🔧 CLEAR: Fresh GitHub Actions status:',data);
 
                 if(data.success) {
                     this.updateGitHubActionsDisplay(data.data);
@@ -4312,23 +4780,23 @@ class AdminInterface {
                         data.data.github_conclusion==='success';
 
                     if(isCompleted) {
-                        console.log('🔧 CLEAR: Fresh data shows completion, handling...');
+                        debugLog('🔧 CLEAR: Fresh data shows completion, handling...');
                         this.githubActionsCompleted=true;
                         this.handleGitHubActionsCompletion(data.data);
                     }
                 }
             })
             .catch(error => {
-                console.error('🔧 CLEAR: Error:',error);
+                debugLog('🔧 CLEAR: Error:',error, 'error');
             });
     }
 
     showGitHubActionsFinalStatus(githubData) {
-        console.log('showGitHubActionsFinalStatus called with data:',githubData);
+        debugLog('showGitHubActionsFinalStatus called with data:',githubData);
 
         // Check if system was recently reset (prevent modal after reset)
         if(this.systemRecentlyReset) {
-            console.log('System was recently reset, skipping completion modal');
+            debugLog('System was recently reset, skipping completion modal');
             return;
         }
 
@@ -4336,12 +4804,12 @@ class AdminInterface {
         const currentRunId=githubData.run_id||`session_${Date.now()}`;
         const statusKey=`github_actions_final_${currentRunId}`;
 
-        console.log('Run ID:',currentRunId,'Status Key:',statusKey);
+        debugLog('Run ID:',currentRunId,'Status Key:',statusKey);
 
         // Check if we already showed the final status for this run
         const alreadyShown=localStorage.getItem(statusKey)==='shown';
         if(alreadyShown&&!currentRunId.startsWith('test_')) {
-            console.log('Final status already shown for run',currentRunId);
+            debugLog('Final status already shown for run',currentRunId);
             return;
         }
 
@@ -4357,7 +4825,7 @@ class AdminInterface {
     showDeploymentCompletionModal(githubData) {
         // Final safety check - don't show modal if system was recently reset
         if(this.systemRecentlyReset) {
-            console.log('System recently reset, blocking completion modal display');
+            debugLog('System recently reset, blocking completion modal display');
             return;
         }
 
@@ -4496,8 +4964,6 @@ class AdminInterface {
                                 Completed at ${completedAt}
                             </div>
                         ` :''}
-                        
-                        <!-- Action Buttons -->
                         <div class="modal-actions">
                             ${actionButtons}
                         </div>
@@ -4515,29 +4981,94 @@ class AdminInterface {
         // Add modal to DOM
         document.body.insertAdjacentHTML('beforeend',modalHTML);
 
+        // Attach copy-to-clipboard behavior for run ID button (if present)
+        const copyBtn=document.getElementById('copy-run-id-btn');
+        if(copyBtn) {
+            copyBtn.addEventListener('click',() => {
+                const runId=copyBtn.getAttribute('data-run-id')||copyBtn.dataset.runId;
+                if(!runId) return;
+
+                // Try modern clipboard API first
+                if(navigator.clipboard&&navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(runId).then(() => {
+                        const oldHtml=copyBtn.innerHTML;
+                        copyBtn.innerHTML='<i class="fas fa-check"></i>Copied';
+                        copyBtn.disabled=true;
+                        setTimeout(() => {
+                            copyBtn.innerHTML=oldHtml;
+                            copyBtn.disabled=false;
+                        },2500);
+                    }).catch(err => {
+                        debugLog('Failed to copy run id to clipboard',err, 'error');
+                        copyBtn.innerHTML='<i class="fas fa-exclamation-triangle"></i>Copy Failed';
+                        setTimeout(() => {copyBtn.innerHTML='<i class="fas fa-clipboard"></i>Copy Run ID';},2500);
+                    });
+                    return;
+                }
+
+                // Fallback for older browsers using execCommand
+                const tmp=document.createElement('input');
+                tmp.value=runId;
+                document.body.appendChild(tmp);
+                tmp.select();
+                try {
+                    document.execCommand('copy');
+                    const oldHtml=copyBtn.innerHTML;
+                    copyBtn.innerHTML='<i class="fas fa-check"></i>Copied';
+                    setTimeout(() => {copyBtn.innerHTML=oldHtml;},2500);
+                } catch(e) {
+                    debugLog('Fallback clipboard copy failed',e, 'error');
+                    copyBtn.innerHTML='<i class="fas fa-exclamation-triangle"></i>Copy Failed';
+                    setTimeout(() => {copyBtn.innerHTML='<i class="fas fa-clipboard"></i>Copy Run ID';},2500);
+                } finally {
+                    document.body.removeChild(tmp);
+                }
+            });
+        }
+
         // NOTE: Modal will stay open until user manually closes it
         // No auto-close timeout for better user experience
 
-        this.debugLog('Modern completion modal displayed for status:',githubData.status);
+        debugLog('Modern completion modal displayed for status:',githubData.status);
     }
 
     // Test GitHub Actions completion popup
     testGitHubCompletion(status='completed') {
-        console.log('Testing GitHub Actions completion modal...');
+        debugLog('Testing GitHub Actions completion modal...');
         const testData={
             status: status,
             run_id: `test_${Date.now()}`,
             message: `Test ${status} message`,
             url: 'https://github.com/test/repo/actions/runs/123',
+            owner: 'test',
+            repo: 'repo',
             site_url: 'https://example.com',
             created_at: new Date().toISOString()
         };
         this.showGitHubActionsFinalStatus(testData);
     }
 
+    // Test fallback behavior when the URL is missing but owner/repo + run_id exist
+    testGitHubCompletionFallback(status='completed') {
+        debugLog('Testing GitHub Actions completion modal fallback (no url provided)...');
+
+        const testData={
+            status: status,
+            run_id: `test_${Date.now()}`,
+            message: `Test ${status} message`,
+            url: null,
+            owner: 'frontlinestrategies',
+            repo: 'WebsiteBuild',
+            site_url: 'https://example.com',
+            created_at: new Date().toISOString()
+        };
+
+        this.showGitHubActionsFinalStatus(testData);
+    }
+
     // Test timing display
     testTimingDisplay() {
-        console.log('Testing individual step timing display...');
+        debugLog('Testing individual step timing display...');
 
         // Set test timing data for individual steps
         const now=Date.now();
@@ -4577,19 +5108,19 @@ class AdminInterface {
     }
 
     showPersistentAlert(title,message,type='info',duration=10000) {
-        console.log('showPersistentAlert called:',{title,message,type,duration});
+        debugLog('showPersistentAlert called:',{title,message,type,duration});
 
         // Create alert container if it doesn't exist
         let alertContainer=document.getElementById('persistent-alerts');
         if(!alertContainer) {
-            console.log('Creating new alert container');
+            debugLog('Creating new alert container');
             alertContainer=document.createElement('div');
             alertContainer.id='persistent-alerts';
             alertContainer.className='fixed top-4 right-4 max-w-md';
             alertContainer.style.zIndex='9999'; // Ensure it's above everything
             document.body.appendChild(alertContainer);
         } else {
-            console.log('Using existing alert container');
+            debugLog('Using existing alert container');
         }
 
         // Create alert element
@@ -4616,14 +5147,14 @@ class AdminInterface {
         `;
 
         // Add to container
-        console.log('Adding alert to container:',alert);
+        debugLog('Adding alert to container:',alert);
         alertContainer.appendChild(alert);
-        console.log('Alert added successfully. Container now has',alertContainer.children.length,'alerts');
+        debugLog('Alert added successfully. Container now has',alertContainer.children.length,'alerts');
 
         // Auto-remove after duration
         setTimeout(() => {
             if(document.getElementById(alertId)) {
-                console.log('Auto-removing alert:',alertId);
+                debugLog('Auto-removing alert:',alertId);
                 document.getElementById(alertId).remove();
             }
         },duration);
@@ -4637,14 +5168,14 @@ class AdminInterface {
         this.systemRecentlyReset=true;
         setTimeout(() => {
             this.systemRecentlyReset=false;
-            console.log('Reset flag cleared - completion modals can show again');
+            debugLog('Reset flag cleared - completion modals can show again');
         },5000); // Clear flag after 5 seconds
 
         // Close any existing deployment completion modals
         const existingModal=document.getElementById('deployment-completion-modal');
         if(existingModal) {
             existingModal.remove();
-            console.log('Closed deployment completion modal during reset');
+            debugLog('Closed deployment completion modal during reset');
         }
 
         // Show deployment section again
@@ -4658,7 +5189,7 @@ class AdminInterface {
         const githubKeys=Object.keys(localStorage).filter(key => key.startsWith('github_actions_final_'));
         githubKeys.forEach(key => {
             localStorage.removeItem(key);
-            console.log('Cleared localStorage key:',key);
+            debugLog('Cleared localStorage key:',key);
         });
 
         // Clear timing data
@@ -4679,7 +5210,7 @@ class AdminInterface {
         try {
             localStorage.removeItem('lastLogReadTime');
         } catch(e) {
-            console.warn('Unable to remove lastLogReadTime from localStorage',e);
+            debugLog('Unable to remove lastLogReadTime from localStorage',e, 'warn');
         }
 
         this.lastLogReadTime=0;
@@ -4700,16 +5231,16 @@ class AdminInterface {
             });
         },100);
 
-        console.log('Deployment state reset - GitHub Actions status and timing data cleared');
+        debugLog('Deployment state reset - GitHub Actions status and timing data cleared');
     }
 
     updateGitHubActionsDisplay(githubData) {
-        console.log('Updating GitHub Actions display with data:',githubData);
+        debugLog('Updating GitHub Actions display with data:',githubData);
 
         // Find the GitHub Actions step card
         const githubStepCard=document.querySelector('[data-step="github-actions"]');
         if(!githubStepCard) {
-            console.log('GitHub Actions step card not found');
+            debugLog('GitHub Actions step card not found');
             return;
         }
 
@@ -4793,6 +5324,147 @@ class AdminInterface {
     }
 
     /**
+     * Check if site exists in Kinsta without saving (debounced version)
+     */
+    debouncedCheckSiteExistence(siteTitle) {
+        // Clear existing timer
+        if(this.siteCheckDebounceTimer) {
+            clearTimeout(this.siteCheckDebounceTimer);
+        }
+
+        // Debounce the check (wait 800ms after user stops typing)
+        this.siteCheckDebounceTimer=setTimeout(async () => {
+            await this.checkSiteExistence(siteTitle);
+        },800);
+    }
+
+    /**
+     * Check if site exists in Kinsta without saving
+     */
+    async checkSiteExistence(siteTitle) {
+        if(!siteTitle||!siteTitle.trim()) {
+            return;
+        }
+
+        try {
+            const existsResponse=await fetch('?action=check_site_exists',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    site_title: siteTitle
+                })
+            });
+
+            const existsData=await existsResponse.json();
+
+            // Get warning elements
+            const siteTitleInput=document.getElementById('deployment-site-title');
+            const warningDiv=document.getElementById('site-title-warning');
+            const warningText=document.getElementById('site-title-warning-text');
+            const deleteOption=document.getElementById('delete-existing-site-option');
+            const deleteCheckbox=document.getElementById('delete-existing-site-checkbox');
+
+            if(existsData.success&&existsData.data.exists) {
+                // Site exists - show warning
+                const matchingSites=existsData.data.matching_sites||[];
+                const siteNames=matchingSites.map(s => s.display_name||s.name).join(', ');
+
+                // Store the site IDs and full details for potential deletion
+                this.existingSiteIds=matchingSites.map(s => s.id);
+                this.existingSiteDetails=matchingSites; // Store full site details for confirmation
+
+                // Add visual indicator to the input field
+                if(siteTitleInput) {
+                    siteTitleInput.classList.add('input-warning');
+                    siteTitleInput.style.borderColor='#f59e0b';
+                    siteTitleInput.style.backgroundColor='#fffbeb';
+                }
+
+                // Show warning div below input
+                if(warningDiv&&warningText) {
+                    warningText.textContent=`A site named "${siteNames}" already exists in Kinsta. Using this name will overwrite the existing site.`;
+                    warningDiv.style.display='block';
+                }
+
+                // Show delete option
+                if(deleteOption) {
+                    deleteOption.style.display='block';
+                    // Reset checkbox state
+                    if(deleteCheckbox) {
+                        deleteCheckbox.checked=false;
+                    }
+                }
+                else {
+                    debugLog('Delete option element not found in DOM', 'warn');
+                }
+
+                debugLog('Site title conflicts with existing Kinsta site:',siteNames, 'warn');
+            } else {
+                // No conflict - clear any previous warnings
+                this.existingSiteIds=[];
+                this.existingSiteDetails=[];
+
+                if(siteTitleInput) {
+                    siteTitleInput.classList.remove('input-warning');
+                    siteTitleInput.style.borderColor='';
+                    siteTitleInput.style.backgroundColor='';
+                }
+
+                // Hide warning div
+                if(warningDiv) {
+                    warningDiv.style.display='none';
+                }
+
+                // Hide delete option
+                if(deleteOption) {
+                    deleteOption.style.display='none';
+                }
+            }
+        } catch(error) {
+            debugLog('Failed to check site existence:',error.message, 'error');
+        }
+    }
+
+    // Company ID validation removed: client-side validation endpoint has been removed from the server.
+
+    /**
+     * Update Kinsta API token generation link with current company ID
+     */
+    updateKinstaTokenLink() {
+        const companyInput=document.getElementById('company-id-input');
+        const tokenLink=document.getElementById('kinsta-token-link');
+
+        if(!tokenLink) return;
+
+        const companyId=companyInput&&companyInput.value? companyInput.value.trim():'';
+
+        if(companyId) {
+            tokenLink.href=`https://my.kinsta.com/company/apiKeys?idCompany=${encodeURIComponent(companyId)}`;
+        } else {
+            tokenLink.href='https://my.kinsta.com/company/apiKeys';
+        }
+    }
+
+    /**
+     * Clear company validation display
+     */
+    clearCompanyValidation() {
+        const validationIcon=document.getElementById('company-validation-icon');
+        const companyNameDisplay=document.getElementById('company-name-display');
+
+        if(validationIcon) {
+            validationIcon.style.display='none';
+            validationIcon.innerHTML='';
+        }
+
+        if(companyNameDisplay) {
+            companyNameDisplay.style.display='none';
+        }
+    }
+
+    /**
      * Handle site title change in the deployment tab
      * Updates both site_title and display_name (as a slug)
      */
@@ -4821,6 +5493,9 @@ class AdminInterface {
         const displayName=this.slugify(siteTitle);
 
         try {
+            // Check if site exists (this will show/hide warnings)
+            await this.checkSiteExistence(siteTitle);
+
             // First, get the existing site configuration
             const configResponse=await fetch('?action=get_configs');
             const configData=await configResponse.json();
@@ -4840,7 +5515,7 @@ class AdminInterface {
                 display_name: displayName
             };
 
-            console.log('Updating site config:',{site_title: siteTitle,display_name: displayName});
+            debugLog('Updating site config:',{site_title: siteTitle,display_name: displayName});
 
             // Save the updated configuration
             const response=await fetch('?action=save_config',{
@@ -4857,16 +5532,16 @@ class AdminInterface {
             const result=await response.json();
 
             if(result.success) {
-                console.log('Site title updated successfully');
+                debugLog('Site title updated successfully');
                 this.showAlert&&this.showAlert('Site title updated successfully','success');
             } else {
                 const errorMsg='Failed to update site title: '+(result.message||'Unknown error');
-                console.error(errorMsg);
+                debugLog(errorMsg, 'error');
                 this.showAlert&&this.showAlert(errorMsg,'error');
             }
         } catch(error) {
             const errorMsg='Failed to save site title: '+error.message;
-            console.error(errorMsg);
+            debugLog(errorMsg, 'error');
             this.showAlert&&this.showAlert(errorMsg,'error');
         }
     }
@@ -4916,7 +5591,7 @@ class AdminInterface {
                 this.renderDeploymentHistory(data.data);
             }
         } catch(error) {
-            console.error('Failed to load deployment history:',error);
+            debugLog('Failed to load deployment history:',error, 'error');
         }
     }
 
@@ -4976,12 +5651,12 @@ class AdminInterface {
                     try {
                         localStorage.setItem('lastLogReadTime',String(data.timestamp));
                     } catch(e) {
-                        console.warn('Unable to persist lastLogReadTime to localStorage',e);
+                        debugLog('Unable to persist lastLogReadTime to localStorage',e, 'warn');
                     }
                 }
             }
         } catch(error) {
-            console.error('Failed to load deployment logs:',error);
+            debugLog('Failed to load deployment logs:',error, 'error');
         }
     }
 
@@ -5061,7 +5736,7 @@ class AdminInterface {
 
         // Load initial logs. If we have a persisted lastLogReadTime, resume tailing (realtime)
         if(this.lastLogReadTime&&Number(this.lastLogReadTime)>0) {
-            console.log('Resuming log tail from timestamp:',this.lastLogReadTime);
+            debugLog('Resuming log tail from timestamp:',this.lastLogReadTime);
             this.loadDeploymentLogs(true);
         } else {
             this.loadDeploymentLogs(false);
@@ -5459,7 +6134,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to save logo','error');
             }
         } catch(error) {
-            console.error('Failed to save logo:',error);
+            debugLog('Failed to save logo:',error, 'error');
             this.showAlert('Failed to save logo','error');
         } finally {
             logoUpload.classList.remove('uploading');
@@ -5496,7 +6171,7 @@ class AdminInterface {
                 logoUpload.classList.add('has-logo');
             }
         } catch(error) {
-            console.log('No existing logo found or error loading logo');
+            debugLog('No existing logo found or error loading logo');
         }
     }
 
@@ -5538,7 +6213,7 @@ class AdminInterface {
         // Initially hide deployment status and logs cards since no deployment is running
         this.setDeploymentInProgress(false);
 
-        console.log('Deployment steps initialized to pending state, status/logs cards hidden');
+        debugLog('Deployment steps initialized to pending state, status/logs cards hidden');
     }
 
     ensurePendingStateIfNotDeploying() {
@@ -5636,7 +6311,7 @@ class AdminInterface {
                 this.systemRecentlyReset=true;
                 setTimeout(() => {
                     this.systemRecentlyReset=false;
-                    console.log('Reset flag cleared - completion modals can show again');
+                    debugLog('Reset flag cleared - completion modals can show again');
                 },5000); // Clear flag after 5 seconds
 
                 // Clear deployment status display first
@@ -5651,7 +6326,7 @@ class AdminInterface {
                 const existingModal=document.getElementById('deployment-completion-modal');
                 if(existingModal) {
                     existingModal.remove();
-                    console.log('Removed existing deployment completion modal');
+                    debugLog('Removed existing deployment completion modal');
                 }
 
                 // Reset deployment state (includes GitHub Actions state and visual reset)
@@ -5673,7 +6348,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Reset failed','error');
             }
         } catch(error) {
-            console.error('Reset failed:',error);
+            debugLog('Reset failed:',error, 'error');
             this.showAlert('Failed to reset system','error');
         }
     }
@@ -5707,7 +6382,7 @@ class AdminInterface {
                 this.showAlert('Logs copied to clipboard successfully','success');
             }
         } catch(error) {
-            console.error('Failed to copy logs:',error);
+            debugLog('Failed to copy logs:',error, 'error');
             this.showAlert('Failed to copy logs to clipboard','error');
         }
     }
@@ -5852,7 +6527,7 @@ class AdminInterface {
 
             // Check if we have pending markers to load
             if(this.pendingMarkers) {
-                console.log('setupMarkersManager: Loading pending markers');
+                debugLog('setupMarkersManager: Loading pending markers');
                 this.loadMapMarkers(this.pendingMarkers);
             }
         }
@@ -5972,10 +6647,10 @@ class AdminInterface {
         const zoom=parseInt(document.querySelector('[data-path="integrations.maps.zoom"]')?.value)||10;
         const mapPreview=document.getElementById('map-preview');
 
-        console.log('Map preview update - API Key:',apiKey? 'Present':'Missing','Center:',lat,lng,'Zoom:',zoom);
+        debugLog('Map preview update - API Key:',apiKey? 'Present':'Missing','Center:',lat,lng,'Zoom:',zoom);
 
         if(!mapPreview) {
-            console.error('Map preview container not found');
+            debugLog('Map preview container not found', 'error');
             return;
         }
 
@@ -6022,26 +6697,26 @@ class AdminInterface {
 
         // Check if Google Maps API is already loaded and working
         if(window.google&&window.google.maps&&window.google.maps.Map) {
-            console.log('Google Maps API already loaded, creating map directly');
+            debugLog('Google Maps API already loaded, creating map directly');
             try {
                 this.createInteractiveMap(centerLat,centerLng,zoomLevel);
                 return;
             } catch(error) {
-                console.error('Error creating map with existing API:',error);
+                debugLog('Error creating map with existing API:',error, 'error');
                 // Continue to reload API if there's an error
             }
         }
 
         // Prevent multiple API loads
         if(window.googleMapsApiLoading) {
-            console.log('Google Maps API is already loading, waiting...');
+            debugLog('Google Maps API is already loading, waiting...');
             return;
         }
 
         // Remove any existing Google Maps scripts to prevent conflicts
         const existingScripts=document.querySelectorAll('script[src*="maps.googleapis.com"]');
         existingScripts.forEach(script => {
-            console.log('Removing existing Google Maps script');
+            debugLog('Removing existing Google Maps script');
             script.remove();
         });
 
@@ -6066,7 +6741,7 @@ class AdminInterface {
 
         // Error handling for script loading
         script.onerror=() => {
-            console.error('Failed to load Google Maps API');
+            debugLog('Failed to load Google Maps API', 'error');
             window.googleMapsApiLoading=false;
             mapContainer.innerHTML=`
                 <div class="text-muted d-flex align-items-center justify-content-center h-100">
@@ -6085,13 +6760,13 @@ class AdminInterface {
                     throw new Error('Google Maps API failed to load properly');
                 }
 
-                console.log('Google Maps API loaded successfully');
+                debugLog('Google Maps API loaded successfully');
                 this.createInteractiveMap(centerLat,centerLng,zoomLevel);
 
                 // Clean up the callback
                 delete window[callbackName];
             } catch(error) {
-                console.error('Error initializing map:',error);
+                debugLog('Error initializing map:',error, 'error');
                 mapContainer.innerHTML=`
                     <div class="text-muted d-flex align-items-center justify-content-center h-100">
                         <i class="fas fa-exclamation-triangle"></i>&nbsp;
@@ -6103,7 +6778,7 @@ class AdminInterface {
 
         // Add global error handler for authentication failures
         window.gm_authFailure=() => {
-            console.error('Google Maps API authentication failed');
+            debugLog('Google Maps API authentication failed', 'error');
             window.googleMapsApiLoading=false;
             window.googleMapsAuthFailed=true; // Set flag for future checks
             mapContainer.innerHTML=`
@@ -6121,13 +6796,13 @@ class AdminInterface {
     createInteractiveMap(centerLat,centerLng,zoomLevel) {
         const mapDiv=document.getElementById('interactive-map');
         if(!mapDiv) {
-            console.error('Map container element not found');
+            debugLog('Map container element not found', 'error');
             return;
         }
 
         // Validate Google Maps API availability
         if(!window.google||!window.google.maps||!window.google.maps.Map) {
-            console.error('Google Maps API not properly loaded');
+            debugLog('Google Maps API not properly loaded', 'error');
             mapDiv.innerHTML=`
                 <div class="text-muted d-flex align-items-center justify-content-center h-100">
                     <i class="fas fa-exclamation-triangle"></i>&nbsp;
@@ -6139,7 +6814,7 @@ class AdminInterface {
 
         // Validate coordinates
         if(isNaN(centerLat)||isNaN(centerLng)||isNaN(zoomLevel)) {
-            console.error('Invalid map coordinates or zoom level');
+            debugLog('Invalid map coordinates or zoom level', 'error');
             return;
         }
 
@@ -6206,7 +6881,7 @@ class AdminInterface {
             });
 
         } catch(error) {
-            console.error('Error creating Google Maps:',error);
+            debugLog('Error creating Google Maps:',error, 'error');
             mapDiv.innerHTML=`
                 <div class="text-muted d-flex align-items-center justify-content-center h-100">
                     <i class="fas fa-exclamation-triangle"></i>&nbsp;
@@ -6272,12 +6947,12 @@ class AdminInterface {
 
                         this.mapMarkers.push(marker);
                     } catch(markerError) {
-                        console.error('Error creating marker:',markerError);
+                        debugLog('Error creating marker:',markerError, 'error');
                     }
                 }
             });
         } catch(error) {
-            console.error('Error adding existing markers to map:',error);
+            debugLog('Error adding existing markers to map:',error, 'error');
         }
     }
 
@@ -6328,12 +7003,12 @@ class AdminInterface {
                     const address=results[0].formatted_address;
                     callback(address);
                 } else {
-                    console.log('Geocoder failed or no results found');
+                    debugLog('Geocoder failed or no results found');
                     callback(null);
                 }
             });
         } else {
-            console.log('Geocoder not available');
+            debugLog('Geocoder not available');
             callback(null);
         }
     }
@@ -6373,7 +7048,7 @@ class AdminInterface {
 
     // Enhanced config loading to handle new dynamic components
     loadConfigData(configs) {
-        console.log('Loading config data:',configs);
+        debugLog('Loading config data:',configs);
 
         // Load navigation menu items - check multiple possible paths
         let menuItems=null;
@@ -6387,7 +7062,7 @@ class AdminInterface {
             menuItems=configs.navigation.menu_items;
         }
 
-        console.log('Menu items found:',menuItems);
+        debugLog('Menu items found:',menuItems);
         if(menuItems) {
             this.loadNavigationItems(menuItems);
         }
@@ -6420,7 +7095,7 @@ class AdminInterface {
         }
 
         if(markers&&markers.length>0) {
-            console.log('Loading',markers.length,'markers from configuration');
+            debugLog('Loading',markers.length,'markers from configuration');
             this.loadMapMarkers(markers);
         }
 
@@ -6473,7 +7148,7 @@ class AdminInterface {
     loadMapMarkers(markers) {
         const container=document.getElementById('markers-container');
         if(!container) {
-            console.log('Markers container not ready, storing',markers.length,'markers for later loading');
+            debugLog('Markers container not ready, storing',markers.length,'markers for later loading');
             // Store markers for later when the container becomes available
             this.pendingMarkers=markers;
             return;
@@ -6491,7 +7166,7 @@ class AdminInterface {
             }
         });
 
-        console.log('Successfully loaded',markers.length,'markers into the form');
+        debugLog('Successfully loaded',markers.length,'markers into the form');
         // Clear pending markers since they've been loaded
         this.pendingMarkers=null;
 
@@ -6502,28 +7177,28 @@ class AdminInterface {
     // Enhanced config saving to handle new dynamic components
     collectDynamicConfigData(configType=null) {
         const dynamicData={};
-        console.log('DEBUG: Collecting dynamic data for configType:',configType);
+        debugLog('DEBUG: Collecting dynamic data for configType:',configType);
 
         // Collect navigation menu items (only for main config)
         if(!configType||configType==='main') {
             const menuItems=[];
             const menuContainer=document.getElementById('menu-items-container');
-            console.log('DEBUG: Menu container found:',!!menuContainer);
+            debugLog('DEBUG: Menu container found:',!!menuContainer);
             if(menuContainer) {
-                console.log('DEBUG: Menu items in container:',menuContainer.querySelectorAll('.menu-item').length);
+                debugLog('DEBUG: Menu items in container:',menuContainer.querySelectorAll('.menu-item').length);
             }
 
             document.querySelectorAll('#menu-items-container .menu-item').forEach(item => {
                 const title=item.querySelector('.menu-title').value.trim();
                 const url=item.querySelector('.menu-url').value.trim();
-                console.log('DEBUG: Menu item found - Title:',title,'URL:',url);
+                debugLog('DEBUG: Menu item found - Title:',title,'URL:',url);
                 if(title&&url) {
                     menuItems.push({title,url});
                 }
             });
             // Always save menu items, even if empty array (to clear existing items)
             dynamicData['site.navigation.menu_items']=menuItems;
-            console.log('DEBUG: Final menu items to save:',menuItems);
+            debugLog('DEBUG: Final menu items to save:',menuItems);
         }
 
         // Collect plugins (only for plugins config)
@@ -6531,36 +7206,36 @@ class AdminInterface {
             // Collect keep plugins
             const keepPlugins=[];
             const keepContainer=document.getElementById('keep-plugins-container');
-            console.log('DEBUG: Keep plugins container found:',!!keepContainer);
+            debugLog('DEBUG: Keep plugins container found:',!!keepContainer);
             if(keepContainer) {
-                console.log('DEBUG: Keep plugin inputs found:',keepContainer.querySelectorAll('.keep-plugin-name').length);
+                debugLog('DEBUG: Keep plugin inputs found:',keepContainer.querySelectorAll('.keep-plugin-name').length);
             }
 
             document.querySelectorAll('#keep-plugins-container .keep-plugin-name').forEach(input => {
                 const plugin=input.value.trim();
-                console.log('DEBUG: Keep plugin input value:',plugin);
+                debugLog('DEBUG: Keep plugin input value:',plugin);
                 if(plugin) keepPlugins.push(plugin);
             });
             // Always save keep plugins, even if empty array (to clear existing items)
             dynamicData['plugins.keep']=keepPlugins;
-            console.log('DEBUG: Final keep plugins to save:',keepPlugins);
+            debugLog('DEBUG: Final keep plugins to save:',keepPlugins);
 
             // Collect install plugins
             const installPlugins=[];
             const installContainer=document.getElementById('install-plugins-container');
-            console.log('DEBUG: Install plugins container found:',!!installContainer);
+            debugLog('DEBUG: Install plugins container found:',!!installContainer);
             if(installContainer) {
-                console.log('DEBUG: Install plugin inputs found:',installContainer.querySelectorAll('.install-plugin-name').length);
+                debugLog('DEBUG: Install plugin inputs found:',installContainer.querySelectorAll('.install-plugin-name').length);
             }
 
             document.querySelectorAll('#install-plugins-container .install-plugin-name').forEach(input => {
                 const plugin=input.value.trim();
-                console.log('DEBUG: Install plugin input value:',plugin);
+                debugLog('DEBUG: Install plugin input value:',plugin);
                 if(plugin) installPlugins.push(plugin);
             });
             // Always save install plugins, even if empty array (to clear existing items)
             dynamicData['plugins.install']=installPlugins;
-            console.log('DEBUG: Final install plugins to save:',installPlugins);
+            debugLog('DEBUG: Final install plugins to save:',installPlugins);
         }
 
         // Collect map markers (only for integrations config)
@@ -6930,7 +7605,7 @@ class AdminInterface {
     }
 
     loadDynamicLists(configs) {
-        console.log('Loading dynamic lists with config data:',configs);
+        debugLog('Loading dynamic lists with config data:',configs);
 
         const mainConfig=configs.main||configs.config||configs;
 
@@ -6938,7 +7613,7 @@ class AdminInterface {
         const countriesPath='security.geo_blocking.allowed_countries';
         const countries=this.getNestedValue(mainConfig,countriesPath);
         if(countries&&Array.isArray(countries)) {
-            console.log('Loading countries:',countries);
+            debugLog('Loading countries:',countries);
             loadDynamicListFromConfig('countries-list',countries);
         }
 
@@ -6951,7 +7626,7 @@ class AdminInterface {
             ips=ips.split('\n').filter(ip => ip.trim());
         }
         if(ips&&Array.isArray(ips)) {
-            console.log('Loading IPs:',ips);
+            debugLog('Loading IPs:',ips);
             loadDynamicListFromConfig('ip-list',ips);
         }
     }
@@ -6961,7 +7636,7 @@ class AdminInterface {
         const targetInput=document.getElementById(targetId);
 
         if(!targetInput) {
-            console.error('Target input not found:',targetId);
+            debugLog('Target input not found:',targetId, 'error');
             return;
         }
 
@@ -7073,13 +7748,13 @@ class AdminInterface {
             const result=await saveResponse.json();
 
             if(result.success) {
-                console.log(`${type} config saved successfully`);
+                debugLog(`${type} config saved successfully`);
             } else {
-                console.error(`Failed to save ${type} config:`,result.message);
+                debugLog(`Failed to save ${type} config:`,result.message, 'error');
                 showNotification(`Failed to save configuration: ${result.message}`,'error');
             }
         } catch(error) {
-            console.error(`Error saving ${type} config:`,error);
+            debugLog(`Error saving ${type} config:`,error, 'error');
             showNotification('Error saving configuration','error');
         }
     }
@@ -7151,7 +7826,7 @@ class AdminInterface {
                 this.showAlert(`Configuration save failed: ${errorMessage}`,'error');
             }
         } catch(error) {
-            console.error('Error saving mixed git config:',error);
+            debugLog('Error saving mixed git config:',error, 'error');
             this.showAlert('Error saving configuration','error');
         }
     }
@@ -7181,11 +7856,11 @@ class AdminInterface {
             if(result.success) {
                 this.renderContentList(type,result.data);
             } else {
-                console.error(`Failed to load ${type}:`,result.message);
+                debugLog(`Failed to load ${type}:`,result.message, 'error');
                 this.showAlert(`Failed to load ${type}`,'error');
             }
         } catch(error) {
-            console.error(`Error loading ${type}:`,error);
+            debugLog(`Error loading ${type}:`,error, 'error');
             this.showAlert(`Failed to load ${type}`,'error');
         }
     }
@@ -7536,7 +8211,7 @@ class AdminInterface {
             this.showAlert('Image uploaded successfully','success');
 
         } catch(error) {
-            console.error('Error uploading image:',error);
+            debugLog('Error uploading image:',error, 'error');
             this.showAlert('Failed to upload image: '+error.message,'error');
         } finally {
             uploadBtn.disabled=false;
@@ -7610,7 +8285,7 @@ class AdminInterface {
             this.showAlert('Image uploaded successfully','success');
 
         } catch(error) {
-            console.error('Error uploading image:',error);
+            debugLog('Error uploading image:',error, 'error');
             this.showAlert('Failed to upload image: '+error.message,'error');
         } finally {
             uploadBtn.disabled=false;
@@ -7656,7 +8331,7 @@ class AdminInterface {
                 this.loadContentType(type);
 
             } catch(error) {
-                console.error('Error saving testimonial:',error);
+                debugLog('Error saving testimonial:',error, 'error');
                 this.showAlert('Failed to save testimonial','error');
             }
         } else if(type==='sliders') {
@@ -7702,7 +8377,7 @@ class AdminInterface {
                 this.loadContentType(type);
 
             } catch(error) {
-                console.error('Error saving slider:',error);
+                debugLog('Error saving slider:',error, 'error');
                 this.showAlert('Failed to save slider','error');
             }
         } else {
@@ -7737,7 +8412,7 @@ class AdminInterface {
                 this.loadContentType(type);
 
             } catch(error) {
-                console.error('Error saving content:',error);
+                debugLog('Error saving content:',error, 'error');
                 this.showAlert('Failed to save content','error');
             }
         }
@@ -7765,7 +8440,7 @@ class AdminInterface {
             this.showAlert(`${type.slice(0,-1)} deleted successfully`,'success');
 
         } catch(error) {
-            console.error('Error deleting content:',error);
+            debugLog('Error deleting content:',error, 'error');
             this.showAlert('Failed to delete content','error');
         }
     }
@@ -7853,7 +8528,7 @@ class AdminInterface {
             setTimeout(() => this.editContentItem(type,newIndex),100);
 
         } catch(error) {
-            console.error('Error adding content:',error);
+            debugLog('Error adding content:',error, 'error');
             this.showAlert('Failed to add new content','error');
         }
     }
@@ -7879,7 +8554,7 @@ class AdminInterface {
 
             return result;
         } catch(error) {
-            console.error('Error saving contents:',error);
+            debugLog('Error saving contents:',error, 'error');
             throw error;
         }
     } async saveAllContents() {
@@ -7895,17 +8570,17 @@ class AdminInterface {
 
             this.showAlert('All contents saved successfully','success');
         } catch(error) {
-            console.error('Error saving all contents:',error);
+            debugLog('Error saving all contents:',error, 'error');
             this.showAlert('Failed to save all contents','error');
         }
     }
 
     switchContentTab(tabName) {
-        this.debugLog('switchContentTab called with:',tabName);
+        debugLog('switchContentTab called with:',tabName);
 
         // Prevent rapid successive calls (debounce)
         if(this.switchingTab) {
-            this.debugLog('switchContentTab blocked - already in progress');
+            debugLog('switchContentTab blocked - already in progress');
             return;
         }
 
@@ -8042,7 +8717,7 @@ class AdminInterface {
                 buttonTarget: buttonTarget
             };
         } catch(error) {
-            console.error('Error parsing slider content:',error);
+            debugLog('Error parsing slider content:',error, 'error');
             return {
                 title: '',
                 content: '',
@@ -8128,7 +8803,7 @@ class AdminInterface {
 
             return updatedSlider;
         } catch(error) {
-            console.error('Error building slider content:',error);
+            debugLog('Error building slider content:',error, 'error');
             return originalSlider||{
                 name: formData.name,
                 widgets: [],
@@ -8142,7 +8817,7 @@ class AdminInterface {
      * Deploy New Site - Reset deployment state and reload page to show form
      */
     deployNewSite() {
-        console.log('Deploy New Site clicked - resetting deployment state...');
+        debugLog('Deploy New Site clicked - resetting deployment state...');
 
         // Set flag to prevent any new modals during transition - IMMEDIATE PROTECTION
         this.systemRecentlyReset=true;
@@ -8152,7 +8827,7 @@ class AdminInterface {
 
         // Reset GitHub Actions completion state for fresh deployment
         this.githubActionsCompleted=false; // Allow fresh completion detection
-        console.log('🔄 GitHub Actions completion flag reset to allow fresh deployment');
+        debugLog('🔄 GitHub Actions completion flag reset to allow fresh deployment');
 
         // Clear all polling intervals aggressively
         this.stopAllPolling();
@@ -8175,7 +8850,7 @@ class AdminInterface {
      */
     clearBackendStateSync() {
         try {
-            console.log('🧹 Clearing backend GitHub run ID and deployment state...');
+            debugLog('🧹 Clearing backend GitHub run ID and deployment state...');
 
             // Clear GitHub run ID
             const xhr1=new XMLHttpRequest();
@@ -8185,9 +8860,9 @@ class AdminInterface {
             if(xhr1.status===200) {
                 const data1=JSON.parse(xhr1.responseText);
                 if(data1.success) {
-                    console.log('✅ Backend GitHub run ID cleared successfully');
+                    debugLog('✅ Backend GitHub run ID cleared successfully');
                 } else {
-                    console.warn('⚠️ Failed to clear GitHub run ID:',data1.message);
+                    debugLog('⚠️ Failed to clear GitHub run ID:',data1.message, 'warn');
                 }
             }
 
@@ -8199,9 +8874,9 @@ class AdminInterface {
             if(xhr2.status===200) {
                 const data2=JSON.parse(xhr2.responseText);
                 if(data2.success) {
-                    console.log('✅ Backend deployment status cleared successfully');
+                    debugLog('✅ Backend deployment status cleared successfully');
                 } else {
-                    console.warn('⚠️ Failed to clear deployment status:',data2.message);
+                    debugLog('⚠️ Failed to clear deployment status:',data2.message, 'warn');
                 }
             }
 
@@ -8213,14 +8888,14 @@ class AdminInterface {
             if(xhr3.status===200) {
                 const data3=JSON.parse(xhr3.responseText);
                 if(data3.success) {
-                    console.log('✅ Backend system reset successfully');
+                    debugLog('✅ Backend system reset successfully');
                 } else {
-                    console.warn('⚠️ Failed to reset system:',data3.message);
+                    debugLog('⚠️ Failed to reset system:',data3.message, 'warn');
                 }
             }
 
         } catch(error) {
-            console.error('❌ Error clearing backend state:',error);
+            debugLog('❌ Error clearing backend state:',error, 'error');
         }
     }
 
@@ -8228,7 +8903,7 @@ class AdminInterface {
      * Deploy Again - Run only the deploy step (deploy.sh) with existing credentials
      */
     deployAgain() {
-        console.log('Deploy Again clicked - running deploy step only...');
+        debugLog('Deploy Again clicked - running deploy step only...');
 
         // Set flag to prevent modal interference during deploy again
         this.systemRecentlyReset=true;
@@ -8268,7 +8943,7 @@ class AdminInterface {
 
             // Fallback to provided URL (from GitHub data)
             if(fallbackUrl&&fallbackUrl!=='#') {
-                console.log('Using fallback URL:',fallbackUrl);
+                debugLog('Using fallback URL:',fallbackUrl);
                 window.open(fallbackUrl,'_blank');
                 return;
             }
@@ -8276,14 +8951,14 @@ class AdminInterface {
             // Last resort - show error
             const errorMessage=result.message||'Site URL not available';
             this.showAlert(`Unable to get site URL: ${errorMessage}`,'warning');
-            console.warn('Site URL fetch failed:',result);
+            debugLog('Site URL fetch failed:',result, 'warn');
 
         } catch(error) {
-            console.error('Failed to get site URL:',error);
+            debugLog('Failed to get site URL:',error, 'error');
 
             // Try fallback URL on error
             if(fallbackUrl&&fallbackUrl!=='#') {
-                console.log('API failed, using fallback URL:',fallbackUrl);
+                debugLog('API failed, using fallback URL:',fallbackUrl);
                 window.open(fallbackUrl,'_blank');
             } else {
                 this.showAlert('Failed to get site URL. Please check if the site is deployed.','error');
@@ -8782,14 +9457,14 @@ document.addEventListener('DOMContentLoaded',() => {
     window.testPopup=() => adminInterface.testPopup();
     // Manual refresh function for debugging GitHub Actions status
     window.forceRefreshGitHubStatus=async () => {
-        console.log('🔄 Manually forcing GitHub Actions status refresh...');
+        debugLog('🔄 Manually forcing GitHub Actions status refresh...');
         try {
             const response=await fetch('?action=github_actions_status');
             const data=await response.json();
-            console.log('🔍 GitHub Actions API Response:',data);
+            debugLog('🔍 GitHub Actions API Response:',data);
 
             if(data.success) {
-                console.log('📊 GitHub Status Details:',{
+                debugLog('📊 GitHub Status Details:',{
                     status: data.data.status,
                     github_status: data.data.github_status,
                     github_conclusion: data.data.github_conclusion,
@@ -8811,15 +9486,15 @@ document.addEventListener('DOMContentLoaded',() => {
                     data.data.github_conclusion==='failure'||
                     data.data.github_conclusion==='cancelled';
 
-                console.log('✅ Is Completed:',isCompleted);
+                debugLog('✅ Is Completed:',isCompleted);
 
                 if(isCompleted) {
-                    console.log('🎉 Triggering completion handler...');
+                    debugLog('🎉 Triggering completion handler...');
                     adminInterface.handleGitHubActionsCompletion(data.data);
                 }
             }
         } catch(error) {
-            console.error('❌ Error refreshing GitHub status:',error);
+            debugLog('❌ Error refreshing GitHub status:',error, 'error');
         }
     };
 
@@ -8833,7 +9508,7 @@ document.addEventListener('DOMContentLoaded',() => {
 
     // Debug function to manually reset deployment display
     window.resetDeploymentDisplay=() => {
-        console.log('🔄 Manually resetting deployment display...');
+        debugLog('🔄 Manually resetting deployment display...');
         const mockIdleStatus={
             status: 'idle',
             current_step: '',
@@ -8841,31 +9516,31 @@ document.addEventListener('DOMContentLoaded',() => {
         };
         adminInterface.updateCompactViewStatus(mockIdleStatus);
         adminInterface.setDeploymentInProgress(false);
-        console.log('✅ Deployment display reset to idle state');
+        debugLog('✅ Deployment display reset to idle state');
     };
 
     // Debug function to refresh deployment status from server
     window.refreshDeploymentStatus=async () => {
-        console.log('🔄 Refreshing deployment status from server...');
+        debugLog('🔄 Refreshing deployment status from server...');
         try {
             const response=await fetch('?action=deployment_status');
             const data=await response.json();
 
             if(data.success) {
-                console.log('📡 Current deployment status:',data.data);
+                debugLog('📡 Current deployment status:',data.data);
                 adminInterface.updateDeploymentStatusDisplay(data.data);
-                console.log('✅ Deployment status refreshed');
+                debugLog('✅ Deployment status refreshed');
             } else {
-                console.error('❌ Failed to fetch deployment status:',data.message);
+                debugLog('❌ Failed to fetch deployment status:',data.message, 'error');
             }
         } catch(error) {
-            console.error('❌ Error fetching deployment status:',error);
+            debugLog('❌ Error fetching deployment status:',error, 'error');
         }
     };
 
     // Debug function to manually mark deployment as failed at specific step
     window.markDeploymentFailed=(step='get-cred') => {
-        console.log(`🚫 Manually marking deployment as failed at step: ${step}`);
+        debugLog(`🚫 Manually marking deployment as failed at step: ${step}`);
         const mockFailedStatus={
             status: 'failed',
             current_step: step,
@@ -8874,17 +9549,17 @@ document.addEventListener('DOMContentLoaded',() => {
         };
         adminInterface.updateCompactViewStatus(mockFailedStatus);
         adminInterface.updateDeploymentStatusDisplay(mockFailedStatus);
-        console.log('✅ Deployment marked as failed');
+        debugLog('✅ Deployment marked as failed');
     };
 
     // Debug function to reset Google Maps
     window.resetGoogleMaps=() => {
-        console.log('🗺️ Resetting Google Maps...');
+        debugLog('🗺️ Resetting Google Maps...');
 
         // Remove existing scripts
         const existingScripts=document.querySelectorAll('script[src*="maps.googleapis.com"]');
         existingScripts.forEach(script => {
-            console.log('Removing script:',script.src);
+            debugLog('Removing script:',script.src);
             script.remove();
         });
 
@@ -8892,10 +9567,10 @@ document.addEventListener('DOMContentLoaded',() => {
         if(window.google) {
             try {
                 delete window.google;
-                console.log('Cleared window.google');
+                debugLog('Cleared window.google');
             } catch(e) {
                 window.google=undefined;
-                console.log('Set window.google to undefined');
+                debugLog('Set window.google to undefined');
             }
         }
 
@@ -8914,24 +9589,24 @@ document.addEventListener('DOMContentLoaded',() => {
             mapPreview.innerHTML='<div class="text-muted d-flex align-items-center justify-content-center h-100"><i class="fas fa-map-marked-alt fa-2x mb-2"></i><br>Google Maps reset - Enter API key to reload</div>';
         }
 
-        console.log('✅ Google Maps reset complete');
+        debugLog('✅ Google Maps reset complete');
     };
 
     // Debug function to check Google Maps status
     window.checkGoogleMapsStatus=() => {
-        console.log('=== Google Maps Status ===');
-        console.log('window.google:',window.google);
-        console.log('window.google.maps:',window.google?.maps);
-        console.log('googleMapsApiLoading:',window.googleMapsApiLoading);
-        console.log('gm_authFailure:',typeof window.gm_authFailure);
-        console.log('API scripts count:',document.querySelectorAll('script[src*="maps.googleapis.com"]').length);
+        debugLog('=== Google Maps Status ===');
+        debugLog('window.google:',window.google);
+        debugLog('window.google.maps:',window.google?.maps);
+        debugLog('googleMapsApiLoading:',window.googleMapsApiLoading);
+        debugLog('gm_authFailure:',typeof window.gm_authFailure);
+        debugLog('API scripts count:',document.querySelectorAll('script[src*="maps.googleapis.com"]').length);
 
         const apiKey=document.querySelector('[data-path="authentication.api_keys.google_maps"]')?.value;
-        console.log('API Key present:',apiKey? 'Yes':'No');
-        console.log('API Key length:',apiKey?.length||0);
+        debugLog('API Key present:',apiKey? 'Yes':'No');
+        debugLog('API Key length:',apiKey?.length||0);
 
         const mapContainer=document.getElementById('interactive-map');
-        console.log('Map container exists:',mapContainer? 'Yes':'No');
+        debugLog('Map container exists:',mapContainer? 'Yes':'No');
     };
 
     // Add UI enhancements after initialization
@@ -8951,7 +9626,7 @@ document.addEventListener('DOMContentLoaded',() => {
     // Debug functions for GitHub Actions
     window.testGitHubStatus=() => adminInterface.pollGitHubActionsStatus();
     window.forceGitHubCompletion=() => {
-        console.log('🔧 Forcing GitHub Actions completion check...');
+        debugLog('🔧 Forcing GitHub Actions completion check...');
         adminInterface.githubActionsCompleted=false;
         adminInterface.pollGitHubActionsStatus();
         // Show user feedback
@@ -8960,7 +9635,7 @@ document.addEventListener('DOMContentLoaded',() => {
         }
     };
     window.resetGitHubState=() => {
-        console.log('🔄 Resetting GitHub Actions state...');
+        debugLog('🔄 Resetting GitHub Actions state...');
         adminInterface.githubActionsCompleted=false;
         adminInterface.githubActionsManuallyUpdated=false;
         adminInterface.stopAllPolling();
@@ -8970,20 +9645,20 @@ document.addEventListener('DOMContentLoaded',() => {
         }
     };
     window.forceCloseModal=() => {
-        console.log('🗂️ Force closing completion modal...');
+        debugLog('🗂️ Force closing completion modal...');
         const modal=document.getElementById('deployment-completion-modal');
         if(modal) {
             modal.remove();
-            console.log('✅ Modal removed');
+            debugLog('✅ Modal removed');
         }
         // Clear localStorage flags
         const keys=Object.keys(localStorage).filter(key => key.startsWith('github_actions_final_'));
         keys.forEach(key => localStorage.removeItem(key));
-        console.log('✅ Cleared completion flags');
+        debugLog('✅ Cleared completion flags');
         adminInterface.showAlert('Modal force closed and flags cleared','success');
     };
     window.forceCompleteDeployment=() => {
-        console.log('🎯 Force completing deployment...');
+        debugLog('🎯 Force completing deployment...');
         adminInterface.githubActionsCompleted=true;
         adminInterface.setDeploymentInProgress(false);
         const modal=document.getElementById('deployment-completion-modal');
@@ -8991,19 +9666,19 @@ document.addEventListener('DOMContentLoaded',() => {
         adminInterface.showAlert('Deployment marked as completed','success');
     };
     window.forceHideDeploymentForm=() => {
-        console.log('� Force hiding deployment form and showing progress sections...');
+        debugLog('� Force hiding deployment form and showing progress sections...');
         adminInterface.setDeploymentInProgress(true);
         adminInterface.showAlert('✅ Fixed UI state - form hidden, progress visible','success');
     };
     window.forceShowDeploymentForm=() => {
-        console.log('🔧 Force showing deployment form and hiding progress sections...');
+        debugLog('🔧 Force showing deployment form and hiding progress sections...');
         adminInterface.setDeploymentInProgress(false);
         adminInterface.showAlert('✅ Fixed UI state - form visible, progress hidden','success');
     };
 
-    console.log('Debug mode controls: Call toggleDebug() or adminInterface.toggleDebug() to toggle logging');
-    console.log('Test functions: testDeployNewSite(), testDeployAgain(), testOpenSiteUrl()');
-    console.log('GitHub debug: testGitHubStatus(), forceGitHubCompletion(), resetGitHubState()');
-    console.log('Modal debug: forceCloseModal(), forceCompleteDeployment()');
-    console.log('Status debug: Click "Force Check GitHub Status" button or call forceGitHubCompletion()');
+    debugLog('Debug mode controls: Call toggleDebug() or adminInterface.toggleDebug() to toggle logging');
+    debugLog('Test functions: testDeployNewSite(), testDeployAgain(), testOpenSiteUrl()');
+    debugLog('GitHub debug: testGitHubStatus(), forceGitHubCompletion(), resetGitHubState()');
+    debugLog('Modal debug: forceCloseModal(), forceCompleteDeployment()');
+    debugLog('Status debug: Click "Force Check GitHub Status" button or call forceGitHubCompletion()');
 });

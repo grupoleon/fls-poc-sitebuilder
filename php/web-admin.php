@@ -8,14 +8,17 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Frontline Framework</title>
-        <link rel="icon" href="admin/assets/img/favicon.ico">
-        <link rel="stylesheet" href="admin/assets/css/main.css">
-        <link rel="stylesheet" href="admin/assets/css/components.css">
+
+        <link rel="icon" href="/php/admin/assets/img/favicon.ico">
+        <link rel="stylesheet" href="/php/admin/assets/css/main.css">
+        <link rel="stylesheet" href="/php/admin/assets/css/components.css">
         <link rel="stylesheet" href="//fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
         <link rel="stylesheet" href="//fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-        <link rel="stylesheet" href="admin/assets/css/tools.css">
-        <link rel="stylesheet" href="admin/assets/css/forms.css">
+        <link rel="stylesheet" href="/php/admin/assets/css/tools.css">
+        <link rel="stylesheet" href="/php/admin/assets/css/forms.css">
+        <link rel="stylesheet" href="/php/admin/assets/css/local-config.css">
+        <link rel="stylesheet" href="/php/admin/assets/css/raw-configs.css">
         <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
     </head>
 
@@ -25,7 +28,7 @@
             <nav class="admin-sidebar">
                 <div class="sidebar-header">
                     <a href="#" class="logo">
-                        <img id="fls-logo" src="/admin/assets/img/logo.png" alt="Framework Interface Logo">
+                        <img id="fls-logo" src="/php/admin/assets/img/logo.png" alt="Framework Interface Logo">
                     </a>
                 </div>
 
@@ -58,6 +61,18 @@
                         <a href="#" class="nav-link" data-tab="forms">
                             <i class="fas fa-file-lines nav-icon"></i>
                             Forms Manager
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tab="local-config">
+                            <i class="fas fa-cog nav-icon"></i>
+                            Local Config
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tab="raw-configs">
+                            <i class="fas fa-code nav-icon"></i>
+                            Raw Configs
                         </a>
                     </div>
                 </div>
@@ -113,6 +128,30 @@
                                         <input type="text" id="deployment-site-title" class="form-input"
                                             placeholder="Enter site title">
                                         <div class="form-help">Enter your website's name (e.g., "My Campaign Site")
+                                        </div>
+                                        <div id="site-title-warning" class="form-warning"
+                                            style="display: none; margin-top: 8px; padding: 8px 12px; background-color: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 0.875rem; color: #92400e;">
+                                            <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>
+                                            <span id="site-title-warning-text"></span>
+                                        </div>
+                                        <div id="delete-existing-site-option"
+                                            style="display: none; margin-top: 12px; padding: 12px; background-color: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px;">
+                                            <label
+                                                style="display: flex; align-items: center; cursor: pointer; font-size: 0.875rem; color: #991b1b;">
+                                                <input type="checkbox" id="delete-existing-site-checkbox"
+                                                    style="margin-right: 8px; cursor: pointer;">
+                                                <span style="font-weight: 600;">
+                                                    <i class="fas fa-trash-alt" style="margin-right: 4px;"></i>
+                                                    Delete existing site before deploying
+                                                </span>
+                                            </label>
+                                            <div
+                                                style="margin-top: 8px; font-size: 0.8125rem; color: #7f1d1d; line-height: 1.4;">
+                                                <i class="fas fa-exclamation-circle" style="margin-right: 4px;"></i>
+                                                <strong>Warning:</strong> This will permanently delete the existing site
+                                                and all its data from Kinsta before creating a new one. This action
+                                                cannot be undone.
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -354,7 +393,7 @@
                         <div class="tab-container">
                             <div class="tab-nav">
                                 <a href="#" class="tab-link active" data-subtab="git-config">Git Config</a>
-                                <a href="#" class="tab-link" data-subtab="site-config">Site Config</a>
+                                <a href="#" class="tab-link" data-subtab="site-config">Kinsta Settings</a>
                                 <a href="#" class="tab-link" data-subtab="security-config">Security</a>
                                 <a href="#" class="tab-link" data-subtab="integrations-config">Integrations</a>
                                 <a href="#" class="tab-link" data-subtab="navigation-config">Navigation</a>
@@ -372,18 +411,13 @@
                                 <div class="card-body">
                                     <form id="git-config-form">
                                         <div class="config-section">
-                                            <h3 class="font-semibold mb-3">Repository Settings</h3>
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div class="form-group">
-                                                    <label class="form-label">GitHub Organization</label>
-                                                    <input type="text" class="form-input config-input" data-path="org">
-                                                </div>
-                                                <div class="form-group">
-                                                    <label class="form-label">Repository Name</label>
-                                                    <input type="text" class="form-input config-input" data-path="repo">
-                                                </div>
+                                            <h3 class="font-semibold mb-3">API Tokens</h3>
+                                            <div class="alert alert-info mb-3"
+                                                style="padding: 12px; background: #e8f4fd; border-left: 4px solid #1e90ff; border-radius: 4px;">
+                                                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                                                <strong>Important:</strong> Configure these tokens first before using
+                                                the repository dropdowns below.
                                             </div>
-
                                             <div class="grid grid-cols-1 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">
@@ -415,33 +449,74 @@
                                                     </div>
                                                 </div>
 
+
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">Repository Settings</h3>
+                                            <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">
-                                                        Kinsta API Token
+                                                        GitHub Organization
                                                         <i class="fas fa-info-circle text-blue-500 ml-1"
-                                                            title="Kinsta API token for server management. Keep this secure!"></i>
+                                                            title="Select your GitHub organization or username"></i>
                                                     </label>
-                                                    <div
-                                                        style="position: relative; display: flex; align-items: center; gap: 8px;">
-                                                        <input type="password" id="kinsta-token-input"
-                                                            class="form-input config-input token-field"
-                                                            data-path="site.kinsta_token" data-config-type="main"
-                                                            disabled
-                                                            placeholder="••••••••••••••••••••••••••••••••••••••••"
-                                                            style="flex: 1;">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-primary edit-field-btn"
-                                                            data-target="kinsta-token-input" title="Edit Kinsta Token">
-                                                            <i class="fas fa-edit"></i> Edit
+                                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                                        <select id="git-org-select" class="form-select config-input"
+                                                            data-path="org" style="flex: 1;">
+                                                            <option value="">Loading organizations...</option>
+                                                        </select>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            onclick="window.adminInterface.refreshGitOrgs()"
+                                                            title="Refresh organization list from GitHub">
+                                                            <i class="fas fa-sync-alt"></i>
                                                         </button>
                                                     </div>
-                                                    <div class="form-help mt-1">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        Repository Name
+                                                        <i class="fas fa-info-circle text-blue-500 ml-1"
+                                                            title="Select repository from the chosen organization"></i>
+                                                    </label>
+                                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                                        <select id="git-repo-select" class="form-select config-input"
+                                                            data-path="repo" style="flex: 1;">
+                                                            <option value="">Select organization first...</option>
+                                                        </select>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            onclick="window.adminInterface.refreshGitRepos()"
+                                                            title="Refresh repository list from GitHub">
+                                                            <i class="fas fa-sync-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 gap-4 mt-3">
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        Deployment Branch
+                                                        <i class="fas fa-info-circle text-blue-500 ml-1"
+                                                            title="Git branch to trigger workflow on"></i>
+                                                    </label>
+                                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                                        <select id="git-branch-select" class="form-select config-input"
+                                                            data-path="branch" style="flex: 1;">
+                                                            <option value="">Loading branches...</option>
+                                                        </select>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            onclick="window.adminInterface.refreshGitBranches()"
+                                                            title="Refresh branch list from GitHub">
+                                                            <i class="fas fa-sync-alt"></i> Refresh
+                                                        </button>
+                                                    </div>
+                                                    <div class="form-help">
                                                         <small class="text-muted">
-                                                            Kinsta API token for server management.
-                                                            <a href="https://my.kinsta.com/api/tokens" target="_blank"
-                                                                class="text-blue-600">
-                                                                Generate one here
-                                                            </a>
+                                                            Select which branch to use for triggering GitHub Actions
+                                                            workflows. Click Refresh to fetch latest branches from
+                                                            GitHub.
                                                         </small>
                                                     </div>
                                                 </div>
@@ -479,14 +554,87 @@
                             </div>
                         </div>
 
-                        <!-- Site Configuration -->
+                        <!-- Kinsta Settings -->
                         <div id="site-config-tab" class="subtab-content">
                             <div class="card">
                                 <div class="card-header">
-                                    <h2 class="card-title">Site Configuration</h2>
+                                    <h2 class="card-title">Kinsta Settings</h2>
                                 </div>
                                 <div class="card-body">
                                     <form id="site-config-form">
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">API Access</h3>
+                                            <div class="alert alert-info mb-3"
+                                                style="padding: 12px; background: #e8f4fd; border-left: 4px solid #1e90ff; border-radius: 4px;">
+                                                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                                                <strong>Important:</strong> Configure the Kinsta API token to enable
+                                                site deployment and management.
+                                            </div>
+                                            <div class="grid grid-cols-1 gap-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        Kinsta API Token
+                                                        <i class="fas fa-info-circle text-blue-500 ml-1"
+                                                            title="Kinsta API token for server management. Keep this secure!"></i>
+                                                    </label>
+                                                    <div
+                                                        style="position: relative; display: flex; align-items: center; gap: 8px;">
+                                                        <input type="password" id="kinsta-token-input"
+                                                            class="form-input config-input token-field"
+                                                            data-path="site.kinsta_token" data-config-type="main"
+                                                            disabled
+                                                            placeholder="••••••••••••••••••••••••••••••••••••••••"
+                                                            style="flex: 1;">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-primary edit-field-btn"
+                                                            data-target="kinsta-token-input" title="Edit Kinsta Token">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </button>
+                                                    </div>
+                                                    <div class="form-help mt-1">
+                                                        <small class="text-muted">
+                                                            Kinsta API token for server management.
+                                                            <a href="https://my.kinsta.com/company/apiKeys"
+                                                                id="kinsta-token-link" target="_blank"
+                                                                class="text-blue-600">
+                                                                Generate one here
+                                                            </a>
+                                                        </small>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        Company ID
+                                                        <i class="fas fa-info-circle text-blue-500 ml-1"
+                                                            title="Your Kinsta Company ID. Handle with care!"></i>
+                                                    </label>
+                                                    <div
+                                                        style="position: relative; display: flex; align-items: center; gap: 8px;">
+                                                        <div style="flex: 1; position: relative;">
+                                                            <input type="text" id="company-id-input"
+                                                                class="form-input config-input" data-path="company"
+                                                                disabled placeholder="Enter your Kinsta Company ID"
+                                                                style="width: 100%; padding-right: 40px;">
+                                                            <span id="company-validation-icon"
+                                                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none;">
+                                                            </span>
+                                                        </div>
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-primary edit-field-btn"
+                                                            data-target="company-id-input" title="Edit Company ID">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </button>
+                                                    </div>
+                                                    <div id="company-name-display"
+                                                        style="margin-top: 8px; font-size: 0.875rem; color: #059669; display: none;">
+                                                        <i class="fas fa-building mr-1"></i>
+                                                        <span id="company-name-text"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="config-section">
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
@@ -539,7 +687,7 @@
                                         </div>
 
                                         <div class="config-section">
-                                            <div class="grid grid-cols-2 gap-4">
+                                            <div class="grid grid-cols-1 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">Region</label>
                                                     <select class="form-select config-input" data-path="region">
@@ -547,24 +695,6 @@
                                                         <option value="europe-west1">Europe West</option>
                                                         <option value="asia-southeast1">Asia Southeast</option>
                                                     </select>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label class="form-label">
-                                                        Company ID
-                                                        <i class="fas fa-info-circle text-blue-500 ml-1"
-                                                            title="Your Kinsta Company ID. Handle with care!"></i>
-                                                    </label>
-                                                    <div
-                                                        style="position: relative; display: flex; align-items: center; gap: 8px;">
-                                                        <input type="text" id="company-id-input"
-                                                            class="form-input config-input" data-path="company" disabled
-                                                            placeholder="Enter your Kinsta Company ID" style="flex: 1;">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-primary edit-field-btn"
-                                                            data-target="company-id-input" title="Edit Company ID">
-                                                            <i class="fas fa-edit"></i> Edit
-                                                        </button>
-                                                    </div>
                                                 </div>
                                             </div>
 
@@ -657,7 +787,7 @@
                                         </div>
 
                                         <button type="button" class="btn btn-primary save-config-btn" data-type="site">
-                                            Save Site Configuration
+                                            Save Kinsta Settings
                                         </button>
                                     </form>
                                 </div>
@@ -2285,6 +2415,27 @@
                                         <small class="text-muted">This text will appear on the submit button</small>
                                     </div>
 
+                                    <label>Form Placeholders</label>
+                                    <div class="form-group">
+                                        <small class="text-muted">Add placeholder tags that will be replaced with this form during auto-placement (e.g., "Contact Form" becomes [contact-form])</small>
+                                        <div class="placeholder-input-wrapper">
+                                            <input type="text" id="placeholder-input"
+                                                placeholder="Enter placeholder (e.g., Contact Form)"
+                                                title="Enter placeholder name (will be auto-slugified and wrapped in brackets)">
+                                            <button type="button" id="add-placeholder-btn" class="btn btn-sm btn-success">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2">
+                                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                                </svg>
+                                                Add Placeholder
+                                            </button>
+                                        </div>
+                                        <div id="placeholders-list" class="placeholders-list">
+                                            <!-- Placeholders will be rendered here -->
+                                        </div>
+                                    </div>
+
                                     <div class="form-editor-actions">
                                         <button type="button" id="form-save-btn" class="form-save-btn">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -2312,6 +2463,185 @@
                         </div>
                     </div>
 
+                    <!-- Local Config Tab -->
+                    <div id="local-config-content" class="tab-content">
+                        <div class="page-header">
+                            <h2>Local Configuration</h2>
+                            <p class="text-muted">Manage environment settings, PHP configuration, and debug options</p>
+                        </div>
+
+                        <!-- PHP Detection Success Notice -->
+                        <div class="alert alert-success" id="php-status-alert">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>PHP Configured Successfully!</strong><br>
+                                <small id="php-detection-info">Auto-detected PHP 8.3.15 (fpm-fcgi)</small>
+                            </div>
+                        </div>
+
+                        <div class="config-sections-grid">
+                            <!-- PHP Configuration Section -->
+                            <div class="config-card">
+                                <div class="config-card-header">
+                                    <h3><i class="fas fa-chevron-right"></i> PHP Configuration</h3>
+                                </div>
+                                <div class="config-card-body">
+                                    <div class="config-info-row">
+                                        <div class="config-info-label">
+                                            <i class="fas fa-folder"></i> Path:
+                                        </div>
+                                        <div class="config-info-value" id="php-path">/nix/store/7fkkvqn2Qa8Fjdw5uawZ</div>
+                                        <div class="config-info-badge">? Unknown</div>
+                                    </div>
+                                    <div class="config-info-row">
+                                        <div class="config-info-label">
+                                            <i class="fas fa-code-branch"></i> Version:
+                                        </div>
+                                        <div class="config-info-value" id="php-version">8.3.15</div>
+                                    </div>
+                                    <div class="config-info-row">
+                                        <div class="config-info-label">
+                                            <i class="fas fa-server"></i> SAPI:
+                                        </div>
+                                        <div class="config-info-value" id="php-sapi">fpm-fcgi</div>
+                                    </div>
+
+                                    <div class="config-actions-row">
+                                        <div class="config-manual-override">
+                                            <label class="config-info-label">
+                                                <i class="fas fa-edit"></i> Manual Override
+                                            </label>
+                                            <div class="config-input-group">
+                                                <input type="text" id="php-manual-path" class="form-input"
+                                                       placeholder="/usr/bin/php or /usr/">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="window.localConfigManager.testPHPPath()">
+                                                    <i class="fas fa-vial"></i> Test
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="config-button-group">
+                                            <button class="btn btn-sm btn-primary" onclick="window.localConfigManager.savePHPConfig()">
+                                                <i class="fas fa-save"></i> Save
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" onclick="window.localConfigManager.resetPHPConfig()">
+                                                <i class="fas fa-redo"></i> Reset
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" onclick="window.localConfigManager.refreshPHPConfig()">
+                                                <i class="fas fa-sync-alt"></i> Refresh
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Debug Settings Section -->
+                            <div class="config-card">
+                                <div class="config-card-header">
+                                    <h3><i class="fas fa-bug"></i> Debug Settings</h3>
+                                </div>
+                                <div class="config-card-body">
+                                    <div class="debug-setting-item">
+                                        <div class="debug-setting-header">
+                                            <div class="debug-setting-icon">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </div>
+                                            <h4>Console Logging</h4>
+                                        </div>
+                                        <div class="debug-setting-toggle">
+                                            <label class="toggle-switch-wrapper">
+                                                <input type="checkbox" id="console-logging-toggle" class="toggle-input" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <p class="debug-setting-description">Enable/disable console.log output for debugging</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Help Section -->
+                        <div class="config-help-section">
+                            <button class="config-help-toggle" onclick="this.parentElement.classList.toggle('expanded')">
+                                <i class="fas fa-question-circle"></i> Configuration Help
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="config-help-content">
+                                <h4>About Local Configuration</h4>
+                                <p>The local configuration file (local-config.json) stores environment-specific settings that should not be committed to version control.</p>
+
+                                <h5>PHP Configuration</h5>
+                                <ul>
+                                    <li><strong>Auto-detection:</strong> The system automatically detects your PHP installation</li>
+                                    <li><strong>Manual Override:</strong> Specify a custom PHP path if auto-detection fails</li>
+                                    <li><strong>Test:</strong> Verify your PHP configuration before saving</li>
+                                </ul>
+
+                                <h5>Debug Settings</h5>
+                                <ul>
+                                    <li><strong>Console Logging:</strong> Control browser console output for development</li>
+                                    <li><strong>Error Reporting:</strong> Enable detailed error messages during development</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Raw Configs Tab -->
+                    <div id="raw-configs-content" class="tab-content">
+                        <div class="page-header">
+                            <h2>Raw Configuration Files</h2>
+                            <p class="text-muted">View all configuration JSON files as raw text</p>
+                        </div>
+
+                        <div class="raw-config-section">
+                            <div class="config-file-selector">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-code"></i> Select File:
+                                    </label>
+                                    <select id="config-file-select" class="form-select">
+                                        <option value="">-- Choose a configuration file --</option>
+                                        <option value="config.json">config.json</option>
+                                        <option value="forms-config.json">forms-config.json</option>
+                                        <option value="git.json">git.json</option>
+                                        <option value="local-config.json">local-config.json</option>
+                                        <option value="site.json">site.json</option>
+                                        <option value="theme-config.json">theme-config.json</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="window.rawConfigManager.refreshFileList()">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="config-file-actions">
+                                <button class="btn btn-primary" onclick="document.getElementById('config-import-input').click()">
+                                    <i class="fas fa-upload"></i> Import Config File
+                                </button>
+                                <input type="file" id="config-import-input" accept=".json" style="display: none;">
+                                <button class="btn btn-secondary" id="config-copy-btn" onclick="window.rawConfigManager.copyToClipboard()">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button class="btn btn-secondary" id="config-download-btn" onclick="window.rawConfigManager.downloadCurrentConfig()">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+
+                            <div class="config-file-info">
+                                <div id="config-file-metadata" class="file-metadata">
+                                    <span><i class="fas fa-file"></i> File Size: <span id="file-size">-</span></span>
+                                    <span><i class="fas fa-code"></i> Lines: <span id="file-lines">-</span></span>
+                                    <span><i class="fas fa-clock"></i> Last Modified: <span id="file-modified">-</span></span>
+                                </div>
+                            </div>
+
+                            <div class="code-viewer-wrapper">
+                                <div class="code-viewer">
+                                    <pre><code id="raw-config-viewer" class="language-json">Select a file to view its contents</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div> <!-- Close main-content -->
             </main>
         </div>
@@ -2320,9 +2650,11 @@
         <!-- Help Modal -->
         <?php include 'admin/includes/help.php'; ?>
 
-        <script src="admin/assets/js/tools.js"></script>
-        <script src="admin/assets/js/forms.js"></script>
-        <script src="admin/assets/js/admin.js"></script>
+        <script src="/php/admin/assets/js/tools.js"></script>
+        <script src="/php/admin/assets/js/forms.js"></script>
+        <script src="/php/admin/assets/js/raw-config.js"></script>
+        <script src="/php/admin/assets/js/local-config.js"></script>
+        <script src="/php/admin/assets/js/admin.js"></script>
     </body>
 
 </html>

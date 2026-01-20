@@ -1,0 +1,199 @@
+/**
+ * Raw Configuration Viewer Styles
+ */
+
+/* ===== RAW CONFIG VIEWER ===== */
+.raw-config-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+}
+
+.config-file-selector {
+    background: var(--white, #fff);
+    padding: var(--space-4, 1rem);
+    border-radius: var(--radius-lg, 8px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.config-file-selector .form-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 0.75rem);
+    margin-bottom: 0;
+}
+
+.config-file-selector .form-group label {
+    min-width: 120px;
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.config-file-selector .form-select {
+    flex: 1;
+}
+
+.config-file-actions {
+    display: flex;
+    gap: var(--space-3, 0.75rem);
+    flex-wrap: wrap;
+}
+
+.config-file-info {
+    background: #f9fafb;
+    padding: var(--space-3, 0.75rem);
+    border-radius: var(--radius-md, 6px);
+    border: 1px solid #e5e7eb;
+}
+
+.file-metadata {
+    display: flex;
+    gap: var(--space-6, 1.5rem);
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.file-metadata span {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+}
+
+.file-metadata i {
+    color: #3b82f6;
+}
+
+.code-viewer-wrapper {
+    background: var(--white, #fff);
+    border-radius: var(--radius-lg, 8px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+    overflow: hidden;
+}
+
+.code-viewer {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow: auto;
+    max-height: 600px;
+    border-radius: var(--radius-md, 6px);
+}
+
+.code-viewer pre {
+    margin: 0;
+    padding: var(--space-4, 1rem);
+    background: transparent;
+    border: none;
+}
+
+.code-viewer code {
+    display: block;
+    font-family: inherit;
+    color: inherit;
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
+}
+
+/* Syntax highlighting for JSON */
+.language-json {
+    color: #d4d4d4;
+}
+
+.config-viewer-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+}
+
+.config-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4, 1rem);
+    background: var(--white, #fff);
+    border-radius: var(--radius-lg, 8px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.config-viewer-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827;
+}
+
+.config-actions {
+    display: flex;
+    gap: var(--space-2, 0.5rem);
+}
+
+/* Alert styles for raw configs */
+.alert {
+    padding: var(--space-4, 1rem);
+    border-radius: var(--radius-md, 6px);
+    margin-bottom: var(--space-4, 1rem);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3, 0.75rem);
+}
+
+.alert i {
+    margin-top: 2px;
+}
+
+.alert-info {
+    background: #e8f4fd;
+    border: 1px solid #b3d9f0;
+    color: #0c5d8a;
+}
+
+.alert-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+/* Button spacing for file actions */
+.config-file-actions .btn {
+    white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .config-file-selector .form-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .config-file-selector .form-group label {
+        min-width: auto;
+    }
+
+    .config-file-actions {
+        flex-direction: column;
+    }
+
+    .config-file-actions .btn {
+        width: 100%;
+    }
+
+    .file-metadata {
+        flex-direction: column;
+        gap: var(--space-2, 0.5rem);
+    }
+}

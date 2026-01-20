@@ -1,15 +1,15 @@
 {
-    "site_title": "pocsite",
-    "display_name": "pocsite",
-    "admin_email": "admin@example.com",
-    "admin_user": "frontline",
-    "admin_password": "secure123",
-    "region": "us-central1",
-    "company": "",
-    "wp_language": "en_US",
-    "install_mode": "new",
-    "is_multisite": false,
-    "is_subdomain_multisite": false,
-    "woocommerce": false,
-    "wordpressseo": false
+  "site_title": "pocsite",
+  "display_name": "pocsite",
+  "admin_email": "admin@example.com",
+  "admin_user": "frontline",
+  "admin_password": "secure123",
+  "region": "us-central1",
+  "company": "",
+  "wp_language": "en_US",
+  "install_mode": "new",
+  "is_multisite": false,
+  "is_subdomain_multisite": false,
+  "woocommerce": false,
+  "wordpressseo": false
 }

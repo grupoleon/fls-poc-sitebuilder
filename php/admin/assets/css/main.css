@@ -1959,6 +1959,53 @@ form>button {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Tertiary button for smaller actions (copy run id) */
+.modal-btn-tertiary {
+    background: transparent;
+    color: #475569;
+    border: 1px dashed #cbd5e1;
+    padding: 0.6rem 0.9rem;
+    min-width: 110px;
+    font-size: 0.85rem;
+}
+
+.modal-btn-tertiary:hover {
+    border-style: solid;
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+}
+
+.run-link-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.run-link-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #334155;
+}
+
+.run-link-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.run-id.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+    background: #f8fafc;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e6edf3;
+    color: #0f172a;
+    font-weight: 700;
+}
+
 /* Footer */
 .modal-footer {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);

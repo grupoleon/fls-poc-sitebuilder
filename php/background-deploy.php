@@ -263,7 +263,7 @@ try {
         $envString .= 'unset SUDO_USER SUDO_UID SUDO_GID; ';
 
         $debugString = implode('; ', $debugCommands) . '; ';
-        $command     = "cd $scriptPath && $envString $debugString /bin/bash {$stepInfo['script']}";
+        $command     = "cd " . escapeshellarg($scriptPath) . " && $envString $debugString /bin/bash {$stepInfo['script']}";
         #shorten command for logging upto 100 chars and add ... if longer
         $commandTrimmed = strlen($command) > 100 ? substr($command, 0, 100) . '...' : $command;
         # writeDeploymentLog("Executing: $commandTrimmed", 'INFO', $stepKey);
@@ -343,7 +343,7 @@ try {
                     writeDeploymentLog("Monitoring timed out for step: {$stepInfo['name']}. Checking final status...", 'WARNING', $stepKey);
 
                     // Do a final status check to see if the operation completed despite timeout
-                    $finalCheckCommand = "cd $scriptPath && ./status.sh";
+                    $finalCheckCommand = "cd " . escapeshellarg($scriptPath) . " && ./status.sh";
                     $finalCheckOutput  = shell_exec($finalCheckCommand);
                     $finalStatus       = json_decode(trim($finalCheckOutput), true);
 

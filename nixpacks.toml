@@ -1,17 +1,23 @@
 # nixpacks.toml
-# Force the PHP provider (since this repo doesn't have a composer.json or index.php)
+# PHP application with index.php served by nginx + php-fpm (provided by Kinsta)
 providers = ["php"]
 
-[variables]
-# Use router.php as the fallback so nginx (PHP provider) routes like the built-in server
-NIXPACKS_PHP_FALLBACK_PATH = "/router.php"
-
 [phases.setup]
-# Ensure the local web helper is executable inside the image
-nixPkgs = ["...", "jq"]
-cmds = ["chmod +x ./web"]
+# Install required CLI tools for deployment scripts
+nixPkgs = ["...", "jq", "curl", "openssl"]
+cmds = [
+  "echo '=== Setting up application directories ==='",
+  # Create all required directories with subdirectories
+  "mkdir -p /app/config /app/logs/api /app/logs/deployment /app/tmp",
+  # Set ownership to nobody:nogroup for writable directories
+  "chown -R nobody:nogroup /app/config /app/logs /app/tmp",
+  # Set proper permissions (rwx for owner, rx for group/others on dirs, rw for files)
+  "chmod -R 755 /app/config /app/logs /app/tmp",
+  # Verify setup
+  "echo '=== Directory permissions set ==='",
+  "ls -ld /app/config /app/logs /app/tmp || true",
+  "ls -la /app/logs || true"
+]
 
-[start]
-# Start the app directly to bind to 0.0.0.0 so Kinsta's proxy can connect.
-# Also print explicit startup message to logs for verification.
-cmd = "echo \"Starting php dev server on 0.0.0.0:$PORT\" && exec php -S \"0.0.0.0:$PORT\" router.php"
+# Nginx + php-fpm handles web serving (provided by Kinsta platform)
+# index.php serves as the application entry point

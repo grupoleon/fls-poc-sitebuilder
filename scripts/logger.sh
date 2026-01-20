@@ -159,8 +159,12 @@ log_file() {
     
     if [ "$status" = "success" ]; then
         log_success "$operation: $(basename "$file")" "file"
-    else
+    elif [ "$status" = "info" ]; then
+        log_info "$operation: $(basename "$file")" "file"
+    elif [ "$status" = "failed" ]; then
         log_error "Failed to $operation: $(basename "$file")" "file"
+    else
+        log_warning "$operation: $(basename "$file") (status: $status)" "file"
     fi
 }
 

@@ -1,10 +1,10 @@
 {
-    "token": "",
-    "org": "Frontline-Strategies",
-    "repo": "WebsiteBuild",
-    "branch": "content_automation",
-    "host": "146.148.59.197",
-    "user": "pocsite",
-    "port": 44125,
-    "path": "/www/pocsite/public"
+  "token": "",
+  "org": "Frontline-Strategies",
+  "repo": "WebsiteBuild",
+  "branch": "content_automation",
+  "host": "146.148.59.197",
+  "user": "pocsite",
+  "port": 44125,
+  "path": "/www/pocsite/public"
 }

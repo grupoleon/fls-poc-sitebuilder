@@ -1,8 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# Establish script directories for reliable path resolution
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
 # Load logging utilities
-source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
+source "$SCRIPT_DIR/logger.sh"
 
 # Function to validate required tools
 check_dependencies() {
@@ -29,9 +33,9 @@ check_dependencies() {
 # Function to read target site ID
 get_target_site_id() {
     # First check if we have a direct site_id.txt file
-    if [[ -f "tmp/site_id.txt" ]]; then
+    if [[ -f "$ROOT_DIR/tmp/site_id.txt" ]]; then
         local site_id
-        site_id=$(cat tmp/site_id.txt | tr -d '[:space:]')
+        site_id=$(cat "$ROOT_DIR/tmp/site_id.txt" | tr -d '[:space:]')
         if [[ -n "$site_id" ]]; then
             echo "$site_id"
             return 0
@@ -39,9 +43,9 @@ get_target_site_id() {
     fi
     
     # If no direct site ID, check if there's an operation we can query
-    if [[ -f "tmp/operation_id.txt" ]]; then
+    if [[ -f "$ROOT_DIR/tmp/operation_id.txt" ]]; then
         local operation_id
-        operation_id=$(cat tmp/operation_id.txt | tr -d '[:space:]')
+        operation_id=$(cat "$ROOT_DIR/tmp/operation_id.txt" | tr -d '[:space:]')
         if [[ -n "$operation_id" ]]; then
             log_info_silent "Found operation ID: $operation_id"
             log_info_silent "Waiting 30 seconds for operation to start..."
@@ -84,7 +88,7 @@ get_target_site_id() {
                 if [[ -n "$site_id" && "$site_id" != "null" ]]; then
                     log_success_silent "Retrieved site ID from operation: $site_id"
                     # Store the site ID for future use
-                    echo "$site_id" > tmp/site_id.txt
+                    echo "$site_id" > "$ROOT_DIR/tmp/site_id.txt"
                     echo "$site_id"
                     return 0
                 fi
@@ -95,8 +99,8 @@ get_target_site_id() {
                 
                 # Wait for Kinsta's internal retry to complete - check for actual site creation
                 local display_name company_id
-                display_name=$(jq -r '.display_name' config/site.json)
-                company_id=$(jq -r '.company' config/site.json)
+                display_name=$(jq -r '.display_name' "$ROOT_DIR/config/site.json")
+                company_id=$(jq -r '.company' "$ROOT_DIR/config/site.json")
                 
                 if [[ -n "$display_name" && "$display_name" != "null" && -n "$company_id" && "$company_id" != "null" ]]; then
                     # Poll for site creation completion (Kinsta retries internally)
@@ -116,7 +120,7 @@ get_target_site_id() {
                             site_id=$(echo "$sites_response" | jq -r ".company.sites[] | select(.display_name == \"$display_name\") | .id")
                             if [[ -n "$site_id" && "$site_id" != "null" ]]; then
                                 log_success_silent "Site creation completed! Found site ID: $site_id"
-                                echo "$site_id" > tmp/site_id.txt
+                                echo "$site_id" > "$ROOT_DIR/tmp/site_id.txt"
                                 echo "$site_id"
                                 return 0
                             fi
@@ -125,7 +129,7 @@ get_target_site_id() {
                             site_id=$(echo "$sites_response" | jq -r ".company.sites[] | select(.display_name | test(\"${display_name}.*\"; \"i\")) | .id" | head -1)
                             if [[ -n "$site_id" && "$site_id" != "null" ]]; then
                                 log_success_silent "Site creation completed! Found similar site ID: $site_id"
-                                echo "$site_id" > tmp/site_id.txt
+                                echo "$site_id" > "$ROOT_DIR/tmp/site_id.txt"
                                 echo "$site_id"
                                 return 0
                             fi
@@ -146,8 +150,8 @@ get_target_site_id() {
                 
                 # Get the display name and company from config and query for existing site
                 local display_name company_id
-                display_name=$(jq -r '.display_name' config/site.json)
-                company_id=$(jq -r '.company' config/site.json)
+                display_name=$(jq -r '.display_name' "$ROOT_DIR/config/site.json")
+                company_id=$(jq -r '.company' "$ROOT_DIR/config/site.json")
                 if [[ -n "$display_name" && "$display_name" != "null" && -n "$company_id" && "$company_id" != "null" ]]; then
                     log_info_silent "Querying sites for company $company_id to find: $display_name"
                     local sites_response
@@ -159,7 +163,7 @@ get_target_site_id() {
                         if [[ -n "$site_id" && "$site_id" != "null" ]]; then
                             log_success_silent "Found existing site ID: $site_id"
                             # Store the site ID for future use
-                            echo "$site_id" > tmp/site_id.txt
+                            echo "$site_id" > "$ROOT_DIR/tmp/site_id.txt"
                             echo "$site_id"
                             return 0
                         fi
@@ -179,23 +183,23 @@ get_target_site_id() {
 
 # Function to validate JSON files
 validate_json_files() {
-    if [[ ! -f "config/site.json" ]]; then
-        log_error "config/site.json not found"
+    if [[ ! -f "$ROOT_DIR/config/site.json" ]]; then
+        log_error "$ROOT_DIR/config/site.json not found"
         exit 1
     fi
     
-    if ! jq empty config/site.json; then
-        log_error "config/site.json contains invalid JSON"
+    if ! jq empty "$ROOT_DIR/config/site.json"; then
+        log_error "$ROOT_DIR/config/site.json contains invalid JSON"
         exit 1
     fi
     
-    if [[ ! -f "config/git.json" ]]; then
-        log_error "config/git.json not found"
+    if [[ ! -f "$ROOT_DIR/config/git.json" ]]; then
+        log_error "$ROOT_DIR/config/git.json not found"
         exit 1
     fi
     
-    if ! jq empty config/git.json; then
-        log_error "config/git.json contains invalid JSON"
+    if ! jq empty "$ROOT_DIR/config/git.json"; then
+        log_error "$ROOT_DIR/config/git.json contains invalid JSON"
         exit 1
     fi
 }
@@ -231,18 +235,18 @@ store_github_secrets() {
     
     # Read GitHub configuration  
     local github_owner github_repo
-    github_owner=$(jq -r '.org // empty' config/git.json)
-    github_repo=$(jq -r '.repo // empty' config/git.json)
+    github_owner=$(jq -r '.org // empty' "$ROOT_DIR/config/git.json")
+    github_repo=$(jq -r '.repo // empty' "$ROOT_DIR/config/git.json")
     
     if [[ -z "$github_owner" || -z "$github_repo" ]]; then
-        log_error "GitHub owner or repository not found in config/git.json"
+        log_error "GitHub owner or repository not found in $ROOT_DIR/config/git.json"
         return 1
     fi
     
     # Get active theme from theme config
     local active_theme="FLS-One"  # Default fallback
-    if [[ -f "config/theme-config.json" ]]; then
-        active_theme=$(jq -r '.active_theme // "FLS-One"' config/theme-config.json)
+    if [[ -f "$ROOT_DIR/config/theme-config.json" ]]; then
+        active_theme=$(jq -r '.active_theme // "FLS-One"' "$ROOT_DIR/config/theme-config.json")
         log_info "Active theme from config: $active_theme"
     fi
     
@@ -383,10 +387,10 @@ main() {
     
     # Fetch company_id from config/site.json
     local company_id
-    company_id=$(jq -r '.company' config/site.json)
+    company_id=$(jq -r '.company' "$ROOT_DIR/config/site.json")
     
     if [[ -z "$company_id" || "$company_id" == "null" ]]; then
-        log_error "Could not extract company ID from config/site.json"
+        log_error "Could not extract company ID from $ROOT_DIR/config/site.json"
         exit 1
     fi
     
@@ -575,7 +579,7 @@ update_git_json() {
     log_info "Updating git.json with site credentials..."
     
     # Create backup of original git.json
-    if ! cp config/git.json config/git.json.backup; then
+    if ! cp "$ROOT_DIR/config/git.json" "$ROOT_DIR/config/git.json.backup"; then
         log_error "Failed to create backup of git.json"
         exit 1
     fi
@@ -586,10 +590,10 @@ update_git_json() {
        --argjson port "$ssh_port" \
        --arg path "$ssh_path" \
        '.user = $user | .host = $host | .port = $port | .path = $path' \
-       config/git.json > config/git.json.tmp; then
+       "$ROOT_DIR/config/git.json" > "$ROOT_DIR/config/git.json.tmp"; then
         
-        mv config/git.json.tmp config/git.json
-        rm config/git.json.backup
+        mv "$ROOT_DIR/config/git.json.tmp" "$ROOT_DIR/config/git.json"
+        rm "$ROOT_DIR/config/git.json.backup"
         
         log_success "Successfully updated git.json with site credentials"
         log_info "Updated values:"
@@ -611,7 +615,7 @@ update_git_json() {
         
     else
         log_error "Failed to update git.json"
-        mv config/git.json.backup config/git.json
+        mv "$ROOT_DIR/config/git.json.backup" "$ROOT_DIR/config/git.json"
         log_step_failed "Get Site Credentials" "Failed to update git configuration"
         exit 1
     fi

@@ -69,7 +69,7 @@
             "pagination-header-design": "show",
             "pagination-header": "nav"
         },
-        "formName": "Document Upload Form",
+        "formName": "document-upload-form",
         "version": "1.47.0",
         "form-border-style": "solid",
         "form-padding": "",
