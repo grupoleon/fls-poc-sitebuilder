@@ -9,3 +9,6 @@ cmds = [
   "chmod -R 777 /app/config /app/logs /app/tmp",
   "chown -R nobody:nogroup /app/config /app/logs /app/tmp",
 ]
+
+[start]
+cmd = "php -S 0.0.0.0:8080 -t /app"
