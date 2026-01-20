@@ -6,11 +6,11 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
 
 # Install required extensions if not already installed
-extensions=("jq" "curl" "openssl")
+extensions=("jq" "curl" "openssl" "openssh-client" "git")
 for ext in "${extensions[@]}"; do
     if ! command -v "$ext" &> /dev/null; then
         log_info "Installing missing extension: $ext"
-        apt update && apt install -y "$ext"
+        apt-get update -qq && apt-get install -y -qq "$ext" > /dev/null 2>&1
         log_success "Installed extension: $ext"
     else
         log_info "$ext is already installed"

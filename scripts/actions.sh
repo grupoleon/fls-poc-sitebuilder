@@ -6,6 +6,16 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
 
+# Install required extensions if not already installed
+extensions=("jq" "curl" "openssl" "openssh-client" "git")
+for ext in "${extensions[@]}"; do
+    if ! command -v "$ext" &> /dev/null 2>&1; then
+        log_info "Installing missing extension: $ext"
+        apt-get update -qq && apt-get install -y -qq "$ext" > /dev/null 2>&1
+        log_success "Installed extension: $ext"
+    fi
+done
+
 # Configuration
 CONFIG_FILE="$(dirname "${BASH_SOURCE[0]}")/../config/git.json"
 WORKFLOW_ID="deploy.yml"
