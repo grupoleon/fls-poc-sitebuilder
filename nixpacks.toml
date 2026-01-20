@@ -4,7 +4,7 @@ providers = ["php"]
 
 [phases.setup]
 # Install required CLI tools for deployment scripts
-nixPkgs = ["...", "jq", "curl", "openssl"]
+nixPkgs = ["bash", "git", "jq", "curl", "openssl", "coreutils"]
 cmds = [
   "echo '=== Setting up application directories ==='",
   # Create all required directories with subdirectories
