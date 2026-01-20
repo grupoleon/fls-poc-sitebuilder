@@ -1,7 +1,7 @@
 # nixpacks.toml
 # Minimal config - only add required packages, let nixpacks auto-detect everything else
 [phases.setup]
-nixPkgs = ["jq", "curl"]
+nixPkgs = ["jq", "curl", "nodejs"]
 
 [phases.install]
 cmds = [
