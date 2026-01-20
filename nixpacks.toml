@@ -4,7 +4,7 @@ providers = ["php"]
 
 [phases.setup]
 # Install required CLI tools for deployment scripts
-nixPkgs = ["bash", "git", "jq", "curl", "openssl", "coreutils"]
+nixPkgs = ["bash", "git", "jq", "curl", "openssl", "coreutils", "nodejs"]
 cmds = [
   "echo '=== Setting up application directories ==='",
   # Create all required directories with subdirectories
@@ -18,6 +18,11 @@ cmds = [
   "ls -ld /app/config /app/logs /app/tmp || true",
   "ls -la /app/logs || true"
 ]
+
+[start]
+# Kinsta provides nginx + php-fpm, but nixpacks needs a start command
+# Use php-fpm as the process that keeps the container running
+cmd = "php-fpm -F"
 
 # Nginx + php-fpm handles web serving (provided by Kinsta platform)
 # index.php serves as the application entry point
