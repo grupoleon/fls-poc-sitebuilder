@@ -1,0 +1,10 @@
+# nixpacks.toml
+# Add jq for deployment scripts without overriding PHP auto-detection
+[phases.setup]
+aptPkgs = ["jq"]
+
+[phases.install]
+cmds = [
+  "mkdir -p /app/config /app/logs/api /app/logs/deployment /app/tmp",
+  "chmod -R 777 /app/config /app/logs /app/tmp"
+]
