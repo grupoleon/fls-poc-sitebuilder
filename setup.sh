@@ -29,7 +29,7 @@ echo ""
 # Install required packages
 echo "▶ Installing required packages..."
 apt-get update -qq
-apt-get install -y -qq jq openssh-client openssl git curl
+apt-get install -y -qq jq openssh-client openssl git curl rsync
 echo "  ✓ Packages installed"
 echo ""
 
@@ -37,6 +37,7 @@ echo ""
 echo "▶ Creating SSH directory..."
 mkdir -p /app/.ssh
 chmod 700 /app/.ssh
+chown -R nobody:nogroup /app/.ssh
 echo "  ✓ /app/.ssh created with proper permissions"
 echo ""
 

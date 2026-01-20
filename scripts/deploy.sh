@@ -133,7 +133,7 @@ upload_file() {
         log_progress "$upload_attempts" "$max_attempts" "Uploading $file_name"
         
         # Use rsync with shorter timeout since connectivity is verified
-        local rsync_cmd="rsync -avz -e 'ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/id_rsa -p $KINSTA_PORT'"
+        local rsync_cmd="rsync -avz -e 'ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i $HOME/.ssh/id_rsa -p $KINSTA_PORT'"
         local upload_error_output
         
         if upload_error_output=$(eval "${rsync_cmd} '$file_path' '${KINSTA_USER}@${KINSTA_HOST}:/tmp/'" 2>&1); then
@@ -206,10 +206,10 @@ upload_configs() {
     
     # Verify theme config was uploaded correctly
     print_info "Verifying theme config upload..."
-    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "test -f /tmp/theme-config.json"; then
+    if ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "test -f /tmp/theme-config.json"; then
         print_success "Theme config confirmed on server"
         # Show the active theme from uploaded config
-        ACTIVE_THEME=$(ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "jq -r '.active_theme' /tmp/theme-config.json 2>/dev/null" || echo "")
+        ACTIVE_THEME=$(ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "jq -r '.active_theme' /tmp/theme-config.json 2>/dev/null" || echo "")
         if [[ -n "$ACTIVE_THEME" && "$ACTIVE_THEME" != "null" ]]; then
             print_success "Active theme detected: $ACTIVE_THEME"
         else
@@ -230,13 +230,13 @@ create_legacy_theme_configs() {
     print_info "Creating legacy theme config files to prevent errors..."
     
     # Create /tmp/themes directory on server
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/themes"
+    ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/themes"
     
     # Get active theme from the main theme config
-    ACTIVE_THEME=$(ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "jq -r '.active_theme // \"FLS-One\"' /tmp/theme-config.json 2>/dev/null")
+    ACTIVE_THEME=$(ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "jq -r '.active_theme // \"FLS-One\"' /tmp/theme-config.json 2>/dev/null")
     
     # Create FLS-One.json
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "cat > /tmp/themes/FLS-One.json << 'EOF'
+    ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "cat > /tmp/themes/FLS-One.json << 'EOF'
 {
   \"theme_name\": \"FLS-One\",
   \"active\": $([ \"$ACTIVE_THEME\" = \"FLS-One\" ] && echo \"true\" || echo \"false\"),
@@ -258,7 +258,7 @@ create_legacy_theme_configs() {
 EOF"
     
     # Create FLS-Two.json
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "cat > /tmp/themes/FLS-Two.json << 'EOF'
+    ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "cat > /tmp/themes/FLS-Two.json << 'EOF'
 {
   \"theme_name\": \"FLS-Two\",
   \"active\": $([ \"$ACTIVE_THEME\" = \"FLS-Two\" ] && echo \"true\" || echo \"false\"),
@@ -294,7 +294,7 @@ upload_pages() {
     print_info "These custom layouts will replace theme defaults BEFORE activation"
     
     # Create pages directory on server
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages"
+    ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages"
     
     # Upload CPT JSON files first
     local custom_posts_dir="$pages_dir/cpt"
@@ -303,7 +303,7 @@ upload_pages() {
         print_info "Uploading CPT JSON files..."
         
         # Create CPT directory on server
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p '$custom_posts_dir_server'"
+        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p '$custom_posts_dir_server'"
         
         # Count and upload JSON files
         local custom_posts_count=$(find "$custom_posts_dir" -name "*.json" -type f | wc -l)
@@ -320,7 +320,7 @@ upload_pages() {
                     exit 1
                 fi
 
-                if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" "$json_file" "${KINSTA_USER}@${KINSTA_HOST}:$custom_posts_dir_server/"; then
+                if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$json_file" "${KINSTA_USER}@${KINSTA_HOST}:$custom_posts_dir_server/"; then
                     print_success "CPT $file_name uploaded successfully"
                 else
                     print_error "Failed to upload CPT: $file_name"
@@ -361,7 +361,7 @@ upload_pages() {
             fi
             
             # Create theme directory structure on server (only for layouts)
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages/$theme_name/layouts"
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages/$theme_name/layouts"
 
             # Upload layout files (these are the main theme-specific files)
             local layouts_dir="$active_theme_dir/layouts"
@@ -372,7 +372,7 @@ upload_pages() {
                 for layout_file in "$layouts_dir"/*.json; do
                     if [[ -f "$layout_file" ]]; then
                         print_info "Uploading layout: $(basename "$layout_file")"
-                        if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" "$layout_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/layouts/"; then
+                        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$layout_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/layouts/"; then
                             print_success "Layout $(basename "$layout_file") uploaded for $theme_name"
                         else
                             print_error "Failed to upload layout $(basename "$layout_file") for $theme_name"
@@ -392,7 +392,7 @@ upload_pages() {
             for page_file in "$active_theme_dir"/*.json; do
                 if [[ -f "$page_file" ]]; then
                     print_info "Uploading legacy file: $(basename "$page_file")"
-                    if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" "$page_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/"; then
+                    if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$page_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/"; then
                         print_success "Legacy file $(basename "$page_file") uploaded for $theme_name"
                     else
                         print_error "Failed to upload legacy file $(basename "$page_file") for $theme_name"
@@ -420,7 +420,7 @@ upload_pages() {
             print_info "Uploading $slide_count common slide files to server"
             
             # Create single slides directory on server
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/slides"
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/slides"
             
             # Upload all slides to single location
             for slide_file in "$common_slides_dir"/*.json; do
@@ -433,7 +433,7 @@ upload_pages() {
                         exit 1
                     fi
 
-                    if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" "$slide_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/slides/"; then
+                    if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$slide_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/slides/"; then
                         print_success "Common slide $(basename "$slide_file") uploaded"
                     else
                         print_error "Failed to upload common slide $(basename "$slide_file")"
@@ -457,7 +457,7 @@ upload_pages() {
             print_info "Uploading $form_count common form files to server"
             
             # Create forms directory on server (upload to /tmp/forms for better organization)
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/forms"
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/forms"
             
             # Upload all forms to server
             for form_file in "$common_forms_dir"/*.json; do
@@ -470,7 +470,7 @@ upload_pages() {
                         exit 1
                     fi
 
-                    if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" "$form_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/forms/"; then
+                    if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$form_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/forms/"; then
                         print_success "Common form $(basename "$form_file") uploaded"
                     else
                         print_error "Failed to upload common form $(basename "$form_file")"
@@ -546,9 +546,9 @@ upload_images() {
         print_info "Uploading current logo: $current_logo"
         print_info "Logo file size: $(stat -f%z "$uploads_dir/$current_logo" 2>/dev/null || echo "unknown") bytes"
         print_info "Logo extension: $logo_ext"
-        print_info "SSH key file: ~/.ssh/id_rsa (exists: $(test -f ~/.ssh/id_rsa && echo "yes" || echo "no"))"
+        print_info "SSH key file: $HOME/.ssh/id_rsa (exists: $(test -f $HOME/.ssh/id_rsa && echo "yes" || echo "no"))"
         
-        if scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P "$KINSTA_PORT" -v "$uploads_dir/$current_logo" "${KINSTA_USER}@${KINSTA_HOST}:$logo_target" 2>&1; then
+        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" -v "$uploads_dir/$current_logo" "${KINSTA_USER}@${KINSTA_HOST}:$logo_target" 2>&1; then
             print_success "Logo uploaded successfully: $current_logo -> $logo_target"
         else
             scp_exit_code=$?
@@ -569,14 +569,14 @@ upload_images() {
     print_info "Uploading all files recursively from framework-interface/uploads/images..."
     
     # Create uploads directory on server  
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/uploads"
+    ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/uploads"
     
     # Upload all files recursively via rsync for efficiency
     if find "$uploads_dir" -type f -print -quit | grep -q .; then
         file_count=$(find "$uploads_dir" -type f | wc -l)
         print_info "Found $file_count files to upload (all file types, recursive)"
         
-        if rsync -azv -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p $KINSTA_PORT" \
+        if rsync -azv -e "ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p $KINSTA_PORT" \
             "$uploads_dir/" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/" 2>&1; then
             print_success "All files uploaded successfully ($file_count files, recursive)"
         else
