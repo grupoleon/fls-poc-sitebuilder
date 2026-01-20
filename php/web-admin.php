@@ -80,6 +80,9 @@
                 <!-- Help Button -->
                 <div class="sidebar-footer"
                     style="padding: var(--space-4); border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <a href="/php/admin/docs/index.php" class="btn btn-primary btn-sm w-full mb-2" target="_blank" style="text-decoration: none;">
+                        <i class="fas fa-book"></i> Documentation
+                    </a>
                     <button type="button" class="btn btn-secondary btn-sm w-full" id="help-btn">
                         <i class="fas fa-question-circle"></i> Help & Shortcuts
                     </button>
