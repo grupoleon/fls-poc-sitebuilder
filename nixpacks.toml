@@ -1,27 +1,11 @@
 # nixpacks.toml
-# PHP application with index.php served by nginx + php-fpm (provided by Kinsta)
-providers = ["php"]
-
+# Minimal config - only add required packages, let nixpacks auto-detect everything else
 [phases.setup]
-# Install required CLI tools for deployment scripts
-nixPkgs = ["bash", "git", "jq", "curl", "openssl", "coreutils", "nodejs"]
+nixPkgs = ["jq", "curl"]
 
 [phases.install]
-# Create application directories and set permissions
 cmds = [
-  "echo '=== Setting up application directories ==='",
   "mkdir -p /app/config /app/logs/api /app/logs/deployment /app/tmp",
   "chmod -R 777 /app/config /app/logs /app/tmp",
-  "echo '=== Directory permissions set ==='",
-  "ls -ld /app/config /app/logs /app/tmp 2>&1 || echo 'Directory listing failed'",
-  "which jq || echo 'jq not found'",
-  "which curl || echo 'curl not found'",
-  "which git || echo 'git not found'"
+  "chown -R nobody:nogroup /app/config /app/logs /app/tmp",
 ]
-
-[start]
-# Keep container alive - Kinsta's platform handles nginx + php-fpm
-cmd = "tail -f /dev/null"
-
-# Nginx + php-fpm handles web serving (provided by Kinsta platform)
-# index.php serves as the application entry point
