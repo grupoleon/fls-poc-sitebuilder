@@ -164,6 +164,8 @@ upload_configs() {
     print_info "Testing SSH connectivity to Kinsta server..."
     if ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>/dev/null; then
         print_error "SSH connectivity failed. Please check network connection and credentials."
+        # try this code manually to debug
+        print_info "Debug command: ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i ~/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
         exit 1
     fi
     print_success "SSH connectivity verified"
