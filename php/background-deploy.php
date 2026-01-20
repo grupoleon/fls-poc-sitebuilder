@@ -232,13 +232,13 @@ try {
             2 => ["pipe", "w"], // stderr
         ];
 
-        // Set up environment for better network connectivity
+        // Set up environment for container
         $envVars = [
             'PATH'          => '/usr/local/bin:/usr/bin:/bin',
-            'HOME'          => '/Users/vishnu', // Ensure HOME is set correctly for SSH key access
-            'USER'          => 'vishnu',        // Override numeric USER to prevent SSH confusion
-            'LOGNAME'       => 'vishnu',        // Additional user environment variable
-            'SSH_AUTH_SOCK' => '',              // Prevent SSH agent confusion
+            'HOME'          => '/app',   // Use app directory in container
+            'USER'          => 'nobody', // Use container user
+            'LOGNAME'       => 'nobody', // Match container user
+            'SSH_AUTH_SOCK' => '',       // Prevent SSH agent confusion
         ];
         // Add network debugging for DNS resolution issues
         $debugCommands = [

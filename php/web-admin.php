@@ -80,10 +80,12 @@
                 <!-- Help Button -->
                 <div class="sidebar-footer"
                     style="padding: var(--space-4); border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                    <a href="/php/admin/docs/index.php" class="btn btn-primary btn-sm w-full mb-2" target="_blank" style="text-decoration: none;">
+                    <a href="/php/admin/docs/index.php" class="btn btn-primary btn-sm w-full mb-3" target="_blank"
+                        style="text-decoration: none; background: linear-gradient(135deg, #14b8a6, #0d9488); border: none; box-shadow: 0 4px 6px rgba(20, 184, 166, 0.3); font-weight: 600;">
                         <i class="fas fa-book"></i> Documentation
                     </a>
-                    <button type="button" class="btn btn-secondary btn-sm w-full" id="help-btn">
+                    <button type="button" class="btn btn-secondary btn-sm w-full" id="help-btn"
+                        style="background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.8); font-weight: 500;">
                         <i class="fas fa-question-circle"></i> Help & Shortcuts
                     </button>
                 </div>
@@ -2420,12 +2422,15 @@
 
                                     <label>Form Placeholders</label>
                                     <div class="form-group">
-                                        <small class="text-muted">Add placeholder tags that will be replaced with this form during auto-placement (e.g., "Contact Form" becomes [contact-form])</small>
+                                        <small class="text-muted">Add placeholder tags that will be replaced with this
+                                            form during auto-placement (e.g., "Contact Form" becomes
+                                            [contact-form])</small>
                                         <div class="placeholder-input-wrapper">
                                             <input type="text" id="placeholder-input"
                                                 placeholder="Enter placeholder (e.g., Contact Form)"
                                                 title="Enter placeholder name (will be auto-slugified and wrapped in brackets)">
-                                            <button type="button" id="add-placeholder-btn" class="btn btn-sm btn-success">
+                                            <button type="button" id="add-placeholder-btn"
+                                                class="btn btn-sm btn-success">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="2">
                                                     <line x1="12" y1="5" x2="12" y2="19" />
@@ -2493,7 +2498,8 @@
                                         <div class="config-info-label">
                                             <i class="fas fa-folder"></i> Path:
                                         </div>
-                                        <div class="config-info-value" id="php-path">/nix/store/7fkkvqn2Qa8Fjdw5uawZ</div>
+                                        <div class="config-info-value" id="php-path">/nix/store/7fkkvqn2Qa8Fjdw5uawZ
+                                        </div>
                                         <div class="config-info-badge">? Unknown</div>
                                     </div>
                                     <div class="config-info-row">
@@ -2516,20 +2522,24 @@
                                             </label>
                                             <div class="config-input-group">
                                                 <input type="text" id="php-manual-path" class="form-input"
-                                                       placeholder="/usr/bin/php or /usr/">
-                                                <button class="btn btn-sm btn-outline-primary" onclick="window.localConfigManager.testPHPPath()">
+                                                    placeholder="/usr/bin/php or /usr/">
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="window.localConfigManager.testPHPPath()">
                                                     <i class="fas fa-vial"></i> Test
                                                 </button>
                                             </div>
                                         </div>
                                         <div class="config-button-group">
-                                            <button class="btn btn-sm btn-primary" onclick="window.localConfigManager.savePHPConfig()">
+                                            <button class="btn btn-sm btn-primary"
+                                                onclick="window.localConfigManager.savePHPConfig()">
                                                 <i class="fas fa-save"></i> Save
                                             </button>
-                                            <button class="btn btn-sm btn-secondary" onclick="window.localConfigManager.resetPHPConfig()">
+                                            <button class="btn btn-sm btn-secondary"
+                                                onclick="window.localConfigManager.resetPHPConfig()">
                                                 <i class="fas fa-redo"></i> Reset
                                             </button>
-                                            <button class="btn btn-sm btn-secondary" onclick="window.localConfigManager.refreshPHPConfig()">
+                                            <button class="btn btn-sm btn-secondary"
+                                                onclick="window.localConfigManager.refreshPHPConfig()">
                                                 <i class="fas fa-sync-alt"></i> Refresh
                                             </button>
                                         </div>
@@ -2552,12 +2562,14 @@
                                         </div>
                                         <div class="debug-setting-toggle">
                                             <label class="toggle-switch-wrapper">
-                                                <input type="checkbox" id="console-logging-toggle" class="toggle-input" checked>
+                                                <input type="checkbox" id="console-logging-toggle" class="toggle-input"
+                                                    checked>
                                                 <span class="toggle-slider"></span>
                                             </label>
                                         </div>
                                     </div>
-                                    <p class="debug-setting-description">Enable/disable console.log output for debugging</p>
+                                    <p class="debug-setting-description">Enable/disable console.log output for debugging
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -2567,40 +2579,43 @@
                             <div class="config-card-header">
                                 <h3><i class="fas fa-file-alt"></i> Log Viewer</h3>
                             </div>
-                                <div class="config-card-body">
-                                    <div class="form-group">
-                                        <label class="form-label">
-                                            <i class="fas fa-list"></i> Select Log File
-                                        </label>
-                                        <div class="d-flex gap-2">
-                                            <select id="log-file-select" class="form-select" style="flex: 1;">
-                                                <option value="">Loading log files...</option>
-                                            </select>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.localConfigManager.refreshLogFiles()">
-                                                <i class="fas fa-sync-alt"></i> Refresh
+                            <div class="config-card-body">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-list"></i> Select Log File
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <select id="log-file-select" class="form-select" style="flex: 1;">
+                                            <option value="">Loading log files...</option>
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick="window.localConfigManager.refreshLogFiles()">
+                                            <i class="fas fa-sync-alt"></i> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="log-viewer-container" class="log-viewer-container" style="display: none;">
+                                    <div class="log-viewer-header">
+                                        <div class="log-file-info">
+                                            <span class="log-file-name" id="log-current-file"></span>
+                                            <span class="log-file-meta" id="log-file-meta"></span>
+                                        </div>
+                                        <div class="log-viewer-actions">
+                                            <button type="button" class="btn btn-sm btn-outline"
+                                                onclick="window.localConfigManager.downloadLogFile()">
+                                                <i class="fas fa-download"></i> Download
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline"
+                                                onclick="window.localConfigManager.copyLogContent()">
+                                                <i class="fas fa-copy"></i> Copy
                                             </button>
                                         </div>
                                     </div>
-
-                                    <div id="log-viewer-container" class="log-viewer-container" style="display: none;">
-                                        <div class="log-viewer-header">
-                                            <div class="log-file-info">
-                                                <span class="log-file-name" id="log-current-file"></span>
-                                                <span class="log-file-meta" id="log-file-meta"></span>
-                                            </div>
-                                            <div class="log-viewer-actions">
-                                                <button type="button" class="btn btn-sm btn-outline" onclick="window.localConfigManager.downloadLogFile()">
-                                                    <i class="fas fa-download"></i> Download
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline" onclick="window.localConfigManager.copyLogContent()">
-                                                    <i class="fas fa-copy"></i> Copy
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="log-viewer-content">
-                                            <pre id="log-content-display" class="log-content"></pre>
-                                        </div>
+                                    <div class="log-viewer-content">
+                                        <pre id="log-content-display" class="log-content"></pre>
                                     </div>
+                                </div>
 
                                 <div id="log-viewer-empty" class="log-viewer-empty">
                                     <i class="fas fa-folder-open"></i>
@@ -2632,21 +2647,25 @@
                                         <option value="site.json">site.json</option>
                                         <option value="theme-config.json">theme-config.json</option>
                                     </select>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="window.rawConfigManager.refreshFileList()">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                        onclick="window.rawConfigManager.refreshFileList()">
                                         <i class="fas fa-sync-alt"></i> Refresh
                                     </button>
                                 </div>
                             </div>
 
                             <div class="config-file-actions">
-                                <button class="btn btn-primary" onclick="document.getElementById('config-import-input').click()">
+                                <button class="btn btn-primary"
+                                    onclick="document.getElementById('config-import-input').click()">
                                     <i class="fas fa-upload"></i> Import Config File
                                 </button>
                                 <input type="file" id="config-import-input" accept=".json" style="display: none;">
-                                <button class="btn btn-secondary" id="config-copy-btn" onclick="window.rawConfigManager.copyToClipboard()">
+                                <button class="btn btn-secondary" id="config-copy-btn"
+                                    onclick="window.rawConfigManager.copyToClipboard()">
                                     <i class="fas fa-copy"></i> Copy
                                 </button>
-                                <button class="btn btn-secondary" id="config-download-btn" onclick="window.rawConfigManager.downloadCurrentConfig()">
+                                <button class="btn btn-secondary" id="config-download-btn"
+                                    onclick="window.rawConfigManager.downloadCurrentConfig()">
                                     <i class="fas fa-download"></i> Download
                                 </button>
                             </div>
@@ -2655,7 +2674,8 @@
                                 <div id="config-file-metadata" class="file-metadata">
                                     <span><i class="fas fa-file"></i> File Size: <span id="file-size">-</span></span>
                                     <span><i class="fas fa-code"></i> Lines: <span id="file-lines">-</span></span>
-                                    <span><i class="fas fa-clock"></i> Last Modified: <span id="file-modified">-</span></span>
+                                    <span><i class="fas fa-clock"></i> Last Modified: <span
+                                            id="file-modified">-</span></span>
                                 </div>
                             </div>
 
