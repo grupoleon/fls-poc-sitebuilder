@@ -471,6 +471,98 @@ function handleRequest()
                 ]);
                 break;
 
+            case 'list_log_files':
+                try {
+                    $logsDir  = __DIR__ . '/../logs';
+                    $logFiles = [];
+
+                    // Recursive function to scan directories
+                    $scanDirectory = function ($dir, $prefix = '') use (&$scanDirectory, &$logFiles, $logsDir) {
+                        if (! is_dir($dir)) {
+                            return;
+                        }
+
+                        $items = scandir($dir);
+                        foreach ($items as $item) {
+                            if ($item === '.' || $item === '..') {
+                                continue;
+                            }
+
+                            $fullPath     = $dir . '/' . $item;
+                            $relativePath = $prefix . $item;
+
+                            if (is_dir($fullPath)) {
+                                $scanDirectory($fullPath, $relativePath . '/');
+                            } elseif (is_file($fullPath)) {
+                                $logFiles[] = [
+                                    'name'     => $item,
+                                    'path'     => $relativePath,
+                                    'size'     => filesize($fullPath),
+                                    'modified' => filemtime($fullPath),
+                                    'category' => $prefix ? rtrim($prefix, '/') : 'root',
+                                ];
+                            }
+                        }
+                    };
+
+                    $scanDirectory($logsDir);
+
+                    // Sort by modified time (newest first)
+                    usort($logFiles, function ($a, $b) {
+                        return $b['modified'] - $a['modified'];
+                    });
+
+                    echo json_encode([
+                        'success' => true,
+                        'data'    => $logFiles,
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to list log files: ' . $e->getMessage(),
+                    ]);
+                }
+                break;
+
+            case 'read_log_file':
+                try {
+                    $filePath = $_GET['file'] ?? '';
+
+                    if (empty($filePath)) {
+                        throw new Exception('File path is required');
+                    }
+
+                    // Security: ensure the path is within logs directory
+                    $logsDir       = realpath(__DIR__ . '/../logs');
+                    $requestedFile = realpath($logsDir . '/' . $filePath);
+
+                    if ($requestedFile === false || strpos($requestedFile, $logsDir) !== 0) {
+                        throw new Exception('Invalid file path');
+                    }
+
+                    if (! file_exists($requestedFile)) {
+                        throw new Exception('File not found');
+                    }
+
+                    // Read file content
+                    $content = file_get_contents($requestedFile);
+
+                    echo json_encode([
+                        'success' => true,
+                        'data'    => [
+                            'content'  => $content,
+                            'size'     => filesize($requestedFile),
+                            'modified' => filemtime($requestedFile),
+                        ],
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+                break;
+
             case 'deployment_history':
                 $history = $deploymentManager->getDeploymentHistory();
                 echo json_encode(['success' => true, 'data' => $history]);

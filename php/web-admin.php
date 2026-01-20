@@ -2559,28 +2559,50 @@
                             </div>
                         </div>
 
-                        <!-- Configuration Help Section -->
-                        <div class="config-help-section">
-                            <button class="config-help-toggle" onclick="this.parentElement.classList.toggle('expanded')">
-                                <i class="fas fa-question-circle"></i> Configuration Help
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="config-help-content">
-                                <h4>About Local Configuration</h4>
-                                <p>The local configuration file (local-config.json) stores environment-specific settings that should not be committed to version control.</p>
+                        <!-- Log Viewer Section (Full Width) -->
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <h3><i class="fas fa-file-alt"></i> Log Viewer</h3>
+                            </div>
+                                <div class="config-card-body">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-list"></i> Select Log File
+                                        </label>
+                                        <div class="d-flex gap-2">
+                                            <select id="log-file-select" class="form-select" style="flex: 1;">
+                                                <option value="">Loading log files...</option>
+                                            </select>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.localConfigManager.refreshLogFiles()">
+                                                <i class="fas fa-sync-alt"></i> Refresh
+                                            </button>
+                                        </div>
+                                    </div>
 
-                                <h5>PHP Configuration</h5>
-                                <ul>
-                                    <li><strong>Auto-detection:</strong> The system automatically detects your PHP installation</li>
-                                    <li><strong>Manual Override:</strong> Specify a custom PHP path if auto-detection fails</li>
-                                    <li><strong>Test:</strong> Verify your PHP configuration before saving</li>
-                                </ul>
+                                    <div id="log-viewer-container" class="log-viewer-container" style="display: none;">
+                                        <div class="log-viewer-header">
+                                            <div class="log-file-info">
+                                                <span class="log-file-name" id="log-current-file"></span>
+                                                <span class="log-file-meta" id="log-file-meta"></span>
+                                            </div>
+                                            <div class="log-viewer-actions">
+                                                <button type="button" class="btn btn-sm btn-outline" onclick="window.localConfigManager.downloadLogFile()">
+                                                    <i class="fas fa-download"></i> Download
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline" onclick="window.localConfigManager.copyLogContent()">
+                                                    <i class="fas fa-copy"></i> Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="log-viewer-content">
+                                            <pre id="log-content-display" class="log-content"></pre>
+                                        </div>
+                                    </div>
 
-                                <h5>Debug Settings</h5>
-                                <ul>
-                                    <li><strong>Console Logging:</strong> Control browser console output for development</li>
-                                    <li><strong>Error Reporting:</strong> Enable detailed error messages during development</li>
-                                </ul>
+                                <div id="log-viewer-empty" class="log-viewer-empty">
+                                    <i class="fas fa-folder-open"></i>
+                                    <p>Select a log file to view its content</p>
+                                </div>
                             </div>
                         </div>
                     </div>
