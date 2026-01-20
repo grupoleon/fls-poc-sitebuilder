@@ -10,7 +10,7 @@ extensions=("jq" "curl" "openssl")
 for ext in "${extensions[@]}"; do
     if ! command -v "$ext" &> /dev/null; then
         log_info "Installing missing extension: $ext"
-        apt-get update -qq && apt-get install -y -qq "$ext" > /dev/null 2>&1
+        apt update && apt install -y "$ext"
         log_success "Installed extension: $ext"
     else
         log_info "$ext is already installed"
