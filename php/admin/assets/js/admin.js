@@ -628,7 +628,7 @@ class AdminInterface {
             toggleBtn.title='Show Detailed View';
             debugLog('Compact view shown successfully');
         } else {
-            debugLog('Failed to show compact view - missing elements', 'error');
+            debugLog('Failed to show compact view - missing elements','error');
         }
     }
 
@@ -646,7 +646,7 @@ class AdminInterface {
             toggleBtn.title='Show Compact View';
             debugLog('Compact view hidden successfully');
         } else {
-            debugLog('Failed to hide compact view - missing elements', 'error');
+            debugLog('Failed to hide compact view - missing elements','error');
         }
     }
 
@@ -735,7 +735,7 @@ class AdminInterface {
         debugLog(`Found compact step element for ${stepId}:`,compactStep);
 
         if(!compactStep) {
-            debugLog(`No compact step element found for stepId: ${stepId}`, 'warn');
+            debugLog(`No compact step element found for stepId: ${stepId}`,'warn');
             return;
         }
 
@@ -758,7 +758,7 @@ class AdminInterface {
             statusElement.textContent=statusText[status]||status;
             debugLog(`Updated status text for ${stepId} to: ${statusText[status]||status}`);
         } else {
-            debugLog(`No status element found in step ${stepId}`, 'warn');
+            debugLog(`No status element found in step ${stepId}`,'warn');
         }
 
         // Update label if provided
@@ -768,7 +768,7 @@ class AdminInterface {
                 labelElement.textContent=label;
                 debugLog(`Updated label for ${stepId} to: ${label}`);
             } else {
-                debugLog(`No label element found in step ${stepId}`, 'warn');
+                debugLog(`No label element found in step ${stepId}`,'warn');
             }
         }
 
@@ -1027,7 +1027,7 @@ class AdminInterface {
     makeImageUploadClickable(upload) {
         // Check if upload is valid
         if(!upload) {
-            debugLog('Cannot make null upload clickable', 'error');
+            debugLog('Cannot make null upload clickable','error');
             return;
         }
 
@@ -1086,7 +1086,7 @@ class AdminInterface {
                 await this.pollGitHubActionsStatus();
             }
         } catch(error) {
-            debugLog('Error checking GitHub Actions status:',error, 'error');
+            debugLog('Error checking GitHub Actions status:',error,'error');
         }
     }
 
@@ -1148,7 +1148,7 @@ class AdminInterface {
         const parentTab=document.querySelector('.tab-content.active');
 
         if(!parentTab) {
-            debugLog('No active parent tab found', 'warn');
+            debugLog('No active parent tab found','warn');
             return;
         }
 
@@ -1197,7 +1197,7 @@ class AdminInterface {
                 this.updateDashboardData(data.data);
             }
         } catch(error) {
-            debugLog('Failed to load dashboard:',error, 'error');
+            debugLog('Failed to load dashboard:',error,'error');
         }
     }
 
@@ -1306,7 +1306,7 @@ class AdminInterface {
                 await this.loadGitOrganizations();
             }
         } catch(error) {
-            debugLog('Failed to load configuration:',error, 'error');
+            debugLog('Failed to load configuration:',error,'error');
         }
     }
 
@@ -1317,11 +1317,20 @@ class AdminInterface {
         const gitConfig=this.currentConfig?.git;
         if(!gitConfig||!gitConfig.token) {
             orgSelect.innerHTML='<option value="">Configure GitHub token first</option>';
+            // Show saved value even without token
+            if(gitConfig?.org) {
+                orgSelect.innerHTML+=`<option value="${gitConfig.org}" selected>${gitConfig.org}</option>`;
+            }
             return;
         }
 
         try {
-            orgSelect.innerHTML='<option value="">Loading organizations...</option>';
+            // Show saved value immediately before fetching from GitHub
+            if(gitConfig.org) {
+                orgSelect.innerHTML=`<option value="${gitConfig.org}" selected>${gitConfig.org} (Loading...)</option>`;
+            } else {
+                orgSelect.innerHTML='<option value="">Loading organizations...</option>';
+            }
 
             // Fetch user info to get username
             const userResponse=await fetch('https://api.github.com/user',{
@@ -1384,11 +1393,13 @@ class AdminInterface {
             orgSelect.addEventListener('change',this.handleOrgChange);
 
         } catch(error) {
-            debugLog('Failed to load Git organizations:',error, 'error');
+            debugLog('Failed to load Git organizations:',error,'error');
             orgSelect.innerHTML='<option value="">Failed to load organizations</option>';
             // Add manual entry option
             if(gitConfig.org) {
                 orgSelect.innerHTML+=`<option value="${gitConfig.org}" selected>${gitConfig.org}</option>`;
+                // Try to load repos and branches even if org fetch failed
+                await this.loadGitRepositories();
             }
         }
     }
@@ -1401,17 +1412,31 @@ class AdminInterface {
         const selectedOrg=orgSelect.value;
         if(!selectedOrg) {
             repoSelect.innerHTML='<option value="">Select organization first...</option>';
+            // Show saved value even without org selection
+            const gitConfig=this.currentConfig?.git;
+            if(gitConfig?.repo) {
+                repoSelect.innerHTML+=`<option value="${gitConfig.repo}" selected>${gitConfig.repo}</option>`;
+            }
             return;
         }
 
         const gitConfig=this.currentConfig?.git;
         if(!gitConfig||!gitConfig.token) {
             repoSelect.innerHTML='<option value="">Configure GitHub token first</option>';
+            // Show saved value even without token
+            if(gitConfig?.repo) {
+                repoSelect.innerHTML+=`<option value="${gitConfig.repo}" selected>${gitConfig.repo}</option>`;
+            }
             return;
         }
 
         try {
-            repoSelect.innerHTML='<option value="">Loading repositories...</option>';
+            // Show saved value immediately before fetching from GitHub
+            if(gitConfig.repo) {
+                repoSelect.innerHTML=`<option value="${gitConfig.repo}" selected>${gitConfig.repo} (Loading...)</option>`;
+            } else {
+                repoSelect.innerHTML='<option value="">Loading repositories...</option>';
+            }
 
             // Check if selected org is a User or Organization
             const selectedOption=orgSelect.options[orgSelect.selectedIndex];
@@ -1476,11 +1501,13 @@ class AdminInterface {
             }
 
         } catch(error) {
-            debugLog('Failed to load Git repositories:',error, 'error');
+            debugLog('Failed to load Git repositories:',error,'error');
             repoSelect.innerHTML='<option value="">Failed to load repositories</option>';
             // Add manual entry option
             if(gitConfig.repo) {
                 repoSelect.innerHTML+=`<option value="${gitConfig.repo}" selected>${gitConfig.repo}</option>`;
+                // Trigger branches load even on error if repo is configured
+                await this.loadGitBranches();
             }
         }
     }
@@ -1497,13 +1524,31 @@ class AdminInterface {
         const repo=repoSelect?.value||gitConfig?.repo;
         const token=gitConfig?.token;
 
-        if(!org||!repo||!token) {
+        if(!org||!repo) {
             branchSelect.innerHTML='<option value="">Select org and repo first</option>';
+            // Show saved value even without org/repo selection
+            if(gitConfig?.branch) {
+                branchSelect.innerHTML+=`<option value="${gitConfig.branch}" selected>${gitConfig.branch}</option>`;
+            }
+            return;
+        }
+
+        if(!token) {
+            branchSelect.innerHTML='<option value="">Configure GitHub token first</option>';
+            // Show saved value even without token
+            if(gitConfig?.branch) {
+                branchSelect.innerHTML+=`<option value="${gitConfig.branch}" selected>${gitConfig.branch}</option>`;
+            }
             return;
         }
 
         try {
-            branchSelect.innerHTML='<option value="">Loading branches...</option>';
+            // Show saved value immediately before fetching from GitHub
+            if(gitConfig?.branch) {
+                branchSelect.innerHTML=`<option value="${gitConfig.branch}" selected>${gitConfig.branch} (Loading...)</option>`;
+            } else {
+                branchSelect.innerHTML='<option value="">Loading branches...</option>';
+            }
 
             const response=await fetch(`https://api.github.com/repos/${org}/${repo}/branches`,{
                 headers: {
@@ -1528,7 +1573,7 @@ class AdminInterface {
 
             debugLog(`Loaded ${branches.length} branches from GitHub`);
         } catch(error) {
-            debugLog('Failed to load Git branches:',error, 'error');
+            debugLog('Failed to load Git branches:',error,'error');
             branchSelect.innerHTML=`
                 <option value="">Failed to load branches</option>
                 <option value="content_automation">content_automation (default)</option>
@@ -1562,7 +1607,7 @@ class AdminInterface {
                 this.currentConfig=data.data;
             }
         } catch(error) {
-            debugLog('Failed to reload config:',error, 'error');
+            debugLog('Failed to reload config:',error,'error');
         }
 
         // Load orgs from GitHub
@@ -1606,7 +1651,7 @@ class AdminInterface {
                 this.currentConfig=data.data;
             }
         } catch(error) {
-            debugLog('Failed to reload config:',error, 'error');
+            debugLog('Failed to reload config:',error,'error');
         }
 
         // Load branches from GitHub
@@ -1628,10 +1673,10 @@ class AdminInterface {
             if(data.success) {
                 await this.populateThemeSelect(data.data);
             } else {
-                debugLog('Theme loading failed:',data.message, 'error');
+                debugLog('Theme loading failed:',data.message,'error');
             }
         } catch(error) {
-            debugLog('Failed to load themes:',error, 'error');
+            debugLog('Failed to load themes:',error,'error');
         }
     }
 
@@ -1654,7 +1699,7 @@ class AdminInterface {
                 activeTheme=pagesData.data.active_theme;
             }
         } catch(error) {
-            debugLog('Failed to get active theme:',error, 'error');
+            debugLog('Failed to get active theme:',error,'error');
         }
 
         // Populate Page Editor theme select
@@ -1721,13 +1766,13 @@ class AdminInterface {
             }
 
             if(!activeTheme) {
-                debugLog('No theme found to load page options', 'warn');
+                debugLog('No theme found to load page options','warn');
                 return;
             }
 
             await this.updatePageOptionsForTheme(activeTheme);
         } catch(error) {
-            debugLog('Failed to load page options for forms:',error, 'error');
+            debugLog('Failed to load page options for forms:',error,'error');
         }
     }
 
@@ -1799,10 +1844,10 @@ class AdminInterface {
                 // Also update dynamic forms if they exist
                 await this.loadDynamicForms(pagesData.data.pages);
             } else {
-                debugLog('Failed to load page options for theme:',theme,pagesData.message, 'error');
+                debugLog('Failed to load page options for theme:',theme,pagesData.message,'error');
             }
         } catch(error) {
-            debugLog('Failed to update page options for theme:',theme,error, 'error');
+            debugLog('Failed to update page options for theme:',theme,error,'error');
         }
     }
 
@@ -1846,7 +1891,7 @@ class AdminInterface {
                         }
                     }
                 } catch(error) {
-                    debugLog('Failed to fetch pages for forms:',error, 'error');
+                    debugLog('Failed to fetch pages for forms:',error,'error');
                 }
             }
 
@@ -1900,7 +1945,7 @@ class AdminInterface {
             // Re-populate config values if they exist
             this.populateConfigForms(this.currentConfig);
         } catch(error) {
-            debugLog('Failed to load dynamic forms:',error, 'error');
+            debugLog('Failed to load dynamic forms:',error,'error');
             const container=document.getElementById('dynamic-forms-container');
             if(container) {
                 container.innerHTML=`<div class="text-center py-4 text-red-500">
@@ -1979,7 +2024,7 @@ class AdminInterface {
                         }
                     }
                 } catch(themeError) {
-                    debugLog('Failed to load themes for deployment:',themeError, 'error');
+                    debugLog('Failed to load themes for deployment:',themeError,'error');
                 }
                 // Resume monitoring/log tailing if the deployment is currently running
                 if(data.data&&data.data.status==='running') {
@@ -1989,7 +2034,7 @@ class AdminInterface {
                 }
             }
         } catch(error) {
-            debugLog('Failed to load deployment status:',error, 'error');
+            debugLog('Failed to load deployment status:',error,'error');
         }
     }
 
@@ -2479,7 +2524,7 @@ class AdminInterface {
             const contentType=response.headers.get('content-type');
             if(!contentType||!contentType.includes('application/json')) {
                 const textResponse=await response.text();
-                debugLog('Server returned non-JSON response:',textResponse, 'error');
+                debugLog('Server returned non-JSON response:',textResponse,'error');
                 throw new Error('Server returned an error. Check browser console for details.');
             }
 
@@ -2492,11 +2537,11 @@ class AdminInterface {
                 // Show success message
                 this.showAlert('Theme saved successfully!','success');
             } else {
-                debugLog('Failed to save active theme:',result.message, 'error');
+                debugLog('Failed to save active theme:',result.message,'error');
                 this.showAlert(result.message||'Failed to save theme selection','error');
             }
         } catch(error) {
-            debugLog('Error saving active theme:',error, 'error');
+            debugLog('Error saving active theme:',error,'error');
             this.showAlert('Error saving theme: '+error.message,'error');
         }
     }
@@ -2552,7 +2597,7 @@ class AdminInterface {
             const contentType=response.headers.get('content-type');
             if(!contentType||!contentType.includes('application/json')) {
                 const textResponse=await response.text();
-                debugLog('Server returned non-JSON response:',textResponse, 'error');
+                debugLog('Server returned non-JSON response:',textResponse,'error');
                 throw new Error('Server returned an error. Check browser console for details.');
             }
 
@@ -2582,11 +2627,11 @@ class AdminInterface {
 
                 this.showAlert(result.message||'Theme list refreshed successfully!','success');
             } else {
-                debugLog('Failed to refresh theme list:',result.message, 'error');
+                debugLog('Failed to refresh theme list:',result.message,'error');
                 this.showAlert(result.message||'Failed to refresh theme list','error');
             }
         } catch(error) {
-            debugLog('Error refreshing theme list:',error, 'error');
+            debugLog('Error refreshing theme list:',error,'error');
             this.showAlert('Error refreshing theme list: '+error.message,'error');
         } finally {
             // Remove spinning animation
@@ -2704,7 +2749,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to save configuration','error');
             }
         } catch(error) {
-            debugLog('Failed to save configuration:',error, 'error');
+            debugLog('Failed to save configuration:',error,'error');
             this.showAlert('Failed to save configuration','error');
         }
     }
@@ -2717,11 +2762,11 @@ class AdminInterface {
             if(data.success&&data.data) {
                 this.populatePageEditor(data.data);
             } else {
-                debugLog('Failed to load page editor:',data.message||'Unknown error', 'error');
+                debugLog('Failed to load page editor:',data.message||'Unknown error','error');
                 this.showAlert('Failed to load page editor','error');
             }
         } catch(error) {
-            debugLog('Failed to load page editor:',error, 'error');
+            debugLog('Failed to load page editor:',error,'error');
             this.showAlert('Error loading page editor: '+error.message,'error');
         }
     }
@@ -2739,7 +2784,7 @@ class AdminInterface {
                 this.loadThemePages(data.active_theme);
             }
         } else {
-            debugLog('No themes available', 'error');
+            debugLog('No themes available','error');
             this.showAlert('No themes found','warning');
         }
     }
@@ -2747,7 +2792,7 @@ class AdminInterface {
     async loadThemePages(theme) {
         try {
             if(!theme) {
-                debugLog('No theme specified for loading pages', 'error');
+                debugLog('No theme specified for loading pages','error');
                 return;
             }
 
@@ -2779,11 +2824,11 @@ class AdminInterface {
                     this.loadPageContent(theme,pageToLoad);
                 }
             } else {
-                debugLog('Failed to load theme pages:',data.message||'Unknown error', 'error');
+                debugLog('Failed to load theme pages:',data.message||'Unknown error','error');
                 this.showAlert('Failed to load pages for '+theme,'error');
             }
         } catch(error) {
-            debugLog('Failed to load theme pages:',error, 'error');
+            debugLog('Failed to load theme pages:',error,'error');
             this.showAlert('Error loading theme pages: '+error.message,'error');
         }
     }
@@ -2833,7 +2878,7 @@ class AdminInterface {
     async loadPageContent(theme,page) {
         try {
             if(!theme||!page) {
-                debugLog('Theme or page not specified', 'error');
+                debugLog('Theme or page not specified','error');
                 return;
             }
 
@@ -2855,11 +2900,11 @@ class AdminInterface {
             if(data.success&&data.data) {
                 this.renderPageSections(data.data,theme,page);
             } else {
-                debugLog('Failed to load page content:',data.message||'Unknown error', 'error');
+                debugLog('Failed to load page content:',data.message||'Unknown error','error');
                 this.showAlert('Failed to load page content','error');
             }
         } catch(error) {
-            debugLog('Failed to load page content:',error, 'error');
+            debugLog('Failed to load page content:',error,'error');
             this.showAlert('Error loading page: '+error.message,'error');
         }
     }
@@ -3696,7 +3741,7 @@ class AdminInterface {
     initializeCKEditor() {
         // Check if ClassicEditor is available
         if(typeof ClassicEditor==='undefined') {
-            debugLog('CKEditor ClassicEditor not available, falling back to plain textareas', 'warn');
+            debugLog('CKEditor ClassicEditor not available, falling back to plain textareas','warn');
             return;
         }
 
@@ -3805,7 +3850,7 @@ class AdminInterface {
                 debugLog('CKEditor initialized for',textarea.id);
 
             } catch(error) {
-                debugLog('Error initializing CKEditor for',textarea.id,error, 'error');
+                debugLog('Error initializing CKEditor for',textarea.id,error,'error');
                 // Show the textarea as fallback
                 textarea.style.display='block';
             }
@@ -3827,7 +3872,7 @@ class AdminInterface {
                     editor.destroy();
                 }
             } catch(error) {
-                debugLog('Error destroying CKEditor instance:',id,error, 'error');
+                debugLog('Error destroying CKEditor instance:',id,error,'error');
             }
         }
         this.ckEditorInstances.clear();
@@ -3849,7 +3894,7 @@ class AdminInterface {
         // Store reference to upload container before starting FileReader
         const upload=input.closest('.image-upload');
         if(!upload) {
-            debugLog('Could not find parent .image-upload element', 'error');
+            debugLog('Could not find parent .image-upload element','error');
             return;
         }
 
@@ -3893,7 +3938,7 @@ class AdminInterface {
         // Store reference to upload container
         const upload=input.closest('.image-upload');
         if(!upload) {
-            debugLog('Could not find parent .image-upload element for file input', 'error');
+            debugLog('Could not find parent .image-upload element for file input','error');
         }
 
         try {
@@ -3927,7 +3972,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to upload image','error');
             }
         } catch(error) {
-            debugLog('Failed to upload image:',error, 'error');
+            debugLog('Failed to upload image:',error,'error');
             this.showAlert('Failed to upload image','error');
         } finally {
             // Ensure any 'uploading' class is removed
@@ -3990,7 +4035,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to save page content','error');
             }
         } catch(error) {
-            debugLog('Failed to save page content:',error, 'error');
+            debugLog('Failed to save page content:',error,'error');
             this.showAlert('Failed to save page content','error');
         }
     }
@@ -4272,7 +4317,7 @@ class AdminInterface {
             });
 
             if(!resetResponse.ok) {
-                debugLog('Failed to auto-clear logs before deployment', 'warn');
+                debugLog('Failed to auto-clear logs before deployment','warn');
             }
             else {
                 await this.loadDeploymentLogs();
@@ -4280,7 +4325,7 @@ class AdminInterface {
             }
 
         } catch(error) {
-            debugLog('Auto-clear failed, continuing with deployment:',error, 'warn');
+            debugLog('Auto-clear failed, continuing with deployment:',error,'warn');
         }
 
         let endpoint='?action=deploy';
@@ -4334,10 +4379,10 @@ class AdminInterface {
 
             } else {
                 this.showAlert(result.message||'Failed to start deployment','error');
-                debugLog('Deployment failed:',result, 'error');
+                debugLog('Deployment failed:',result,'error');
             }
         } catch(error) {
-            debugLog('Deployment request failed:',error, 'error');
+            debugLog('Deployment request failed:',error,'error');
             this.showAlert(`Failed to start deployment: ${error.message}`,'error');
         }
     }
@@ -4398,11 +4443,11 @@ class AdminInterface {
 
             } else {
                 this.showAlert(result.message||'Failed to start deployment','error');
-                debugLog('Deploy Again failed:',result, 'error');
+                debugLog('Deploy Again failed:',result,'error');
                 this.setDeploymentInProgress(false);
             }
         } catch(error) {
-            debugLog('Deploy Again request failed:',error, 'error');
+            debugLog('Deploy Again request failed:',error,'error');
             this.showAlert(`Failed to start deployment: ${error.message}`,'error');
             this.setDeploymentInProgress(false);
         }
@@ -4443,7 +4488,7 @@ class AdminInterface {
                 }
             }
         } catch(error) {
-            debugLog('Failed to poll deployment status:',error, 'error');
+            debugLog('Failed to poll deployment status:',error,'error');
         }
     }
 
@@ -4530,7 +4575,7 @@ class AdminInterface {
                 }
             }
         } catch(error) {
-            debugLog('❌ Failed to poll GitHub Actions status:',error, 'error');
+            debugLog('❌ Failed to poll GitHub Actions status:',error,'error');
             // Retry on error
             this.githubActionsPollInterval=setTimeout(() => this.pollGitHubActionsStatus(),10000);
         }
@@ -4656,7 +4701,7 @@ class AdminInterface {
             // Show success message
             this.showAlert('GitHub Actions status refreshed and analyzed','success');
         } catch(error) {
-            debugLog('Failed to refresh GitHub status:',error, 'error');
+            debugLog('Failed to refresh GitHub status:',error,'error');
             this.showAlert('Failed to refresh GitHub Actions status','error');
 
             // Restore original flags on error
@@ -4695,11 +4740,11 @@ class AdminInterface {
                 this.showToast(`Clean complete. ${deletedCount} files deleted; ${toDeleteCount} files matched as unused.`,'success');
                 debugLog('Clean uploads result',data);
             } else {
-                debugLog('Failed to clean uploads',data, 'error');
+                debugLog('Failed to clean uploads',data,'error');
                 this.showToast('Failed to clean uploads. Check console for more details.','error');
             }
         } catch(err) {
-            debugLog('Clean uploads error',err, 'error');
+            debugLog('Clean uploads error',err,'error');
             this.showToast('Error while cleaning uploads','error');
         } finally {
             if(btn) {
@@ -4741,7 +4786,7 @@ class AdminInterface {
                                     debugLog('🔧 DEBUG: Workflow logs:',logData);
                                 })
                                 .catch(error => {
-                                    debugLog('🔧 DEBUG: Error fetching logs:',error, 'error');
+                                    debugLog('🔧 DEBUG: Error fetching logs:',error,'error');
                                 });
                         }
                     }
@@ -4750,7 +4795,7 @@ class AdminInterface {
                 }
             })
             .catch(error => {
-                debugLog('🔧 DEBUG: Error checking run ID:',error, 'error');
+                debugLog('🔧 DEBUG: Error checking run ID:',error,'error');
             });
     }
 
@@ -4787,7 +4832,7 @@ class AdminInterface {
                 }
             })
             .catch(error => {
-                debugLog('🔧 CLEAR: Error:',error, 'error');
+                debugLog('🔧 CLEAR: Error:',error,'error');
             });
     }
 
@@ -4999,7 +5044,7 @@ class AdminInterface {
                             copyBtn.disabled=false;
                         },2500);
                     }).catch(err => {
-                        debugLog('Failed to copy run id to clipboard',err, 'error');
+                        debugLog('Failed to copy run id to clipboard',err,'error');
                         copyBtn.innerHTML='<i class="fas fa-exclamation-triangle"></i>Copy Failed';
                         setTimeout(() => {copyBtn.innerHTML='<i class="fas fa-clipboard"></i>Copy Run ID';},2500);
                     });
@@ -5017,7 +5062,7 @@ class AdminInterface {
                     copyBtn.innerHTML='<i class="fas fa-check"></i>Copied';
                     setTimeout(() => {copyBtn.innerHTML=oldHtml;},2500);
                 } catch(e) {
-                    debugLog('Fallback clipboard copy failed',e, 'error');
+                    debugLog('Fallback clipboard copy failed',e,'error');
                     copyBtn.innerHTML='<i class="fas fa-exclamation-triangle"></i>Copy Failed';
                     setTimeout(() => {copyBtn.innerHTML='<i class="fas fa-clipboard"></i>Copy Run ID';},2500);
                 } finally {
@@ -5210,7 +5255,7 @@ class AdminInterface {
         try {
             localStorage.removeItem('lastLogReadTime');
         } catch(e) {
-            debugLog('Unable to remove lastLogReadTime from localStorage',e, 'warn');
+            debugLog('Unable to remove lastLogReadTime from localStorage',e,'warn');
         }
 
         this.lastLogReadTime=0;
@@ -5397,10 +5442,10 @@ class AdminInterface {
                     }
                 }
                 else {
-                    debugLog('Delete option element not found in DOM', 'warn');
+                    debugLog('Delete option element not found in DOM','warn');
                 }
 
-                debugLog('Site title conflicts with existing Kinsta site:',siteNames, 'warn');
+                debugLog('Site title conflicts with existing Kinsta site:',siteNames,'warn');
             } else {
                 // No conflict - clear any previous warnings
                 this.existingSiteIds=[];
@@ -5423,7 +5468,7 @@ class AdminInterface {
                 }
             }
         } catch(error) {
-            debugLog('Failed to check site existence:',error.message, 'error');
+            debugLog('Failed to check site existence:',error.message,'error');
         }
     }
 
@@ -5536,12 +5581,12 @@ class AdminInterface {
                 this.showAlert&&this.showAlert('Site title updated successfully','success');
             } else {
                 const errorMsg='Failed to update site title: '+(result.message||'Unknown error');
-                debugLog(errorMsg, 'error');
+                debugLog(errorMsg,'error');
                 this.showAlert&&this.showAlert(errorMsg,'error');
             }
         } catch(error) {
             const errorMsg='Failed to save site title: '+error.message;
-            debugLog(errorMsg, 'error');
+            debugLog(errorMsg,'error');
             this.showAlert&&this.showAlert(errorMsg,'error');
         }
     }
@@ -5591,7 +5636,7 @@ class AdminInterface {
                 this.renderDeploymentHistory(data.data);
             }
         } catch(error) {
-            debugLog('Failed to load deployment history:',error, 'error');
+            debugLog('Failed to load deployment history:',error,'error');
         }
     }
 
@@ -5651,12 +5696,12 @@ class AdminInterface {
                     try {
                         localStorage.setItem('lastLogReadTime',String(data.timestamp));
                     } catch(e) {
-                        debugLog('Unable to persist lastLogReadTime to localStorage',e, 'warn');
+                        debugLog('Unable to persist lastLogReadTime to localStorage',e,'warn');
                     }
                 }
             }
         } catch(error) {
-            debugLog('Failed to load deployment logs:',error, 'error');
+            debugLog('Failed to load deployment logs:',error,'error');
         }
     }
 
@@ -6134,7 +6179,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Failed to save logo','error');
             }
         } catch(error) {
-            debugLog('Failed to save logo:',error, 'error');
+            debugLog('Failed to save logo:',error,'error');
             this.showAlert('Failed to save logo','error');
         } finally {
             logoUpload.classList.remove('uploading');
@@ -6348,7 +6393,7 @@ class AdminInterface {
                 this.showAlert(result.message||'Reset failed','error');
             }
         } catch(error) {
-            debugLog('Reset failed:',error, 'error');
+            debugLog('Reset failed:',error,'error');
             this.showAlert('Failed to reset system','error');
         }
     }
@@ -6382,7 +6427,7 @@ class AdminInterface {
                 this.showAlert('Logs copied to clipboard successfully','success');
             }
         } catch(error) {
-            debugLog('Failed to copy logs:',error, 'error');
+            debugLog('Failed to copy logs:',error,'error');
             this.showAlert('Failed to copy logs to clipboard','error');
         }
     }
@@ -6650,7 +6695,7 @@ class AdminInterface {
         debugLog('Map preview update - API Key:',apiKey? 'Present':'Missing','Center:',lat,lng,'Zoom:',zoom);
 
         if(!mapPreview) {
-            debugLog('Map preview container not found', 'error');
+            debugLog('Map preview container not found','error');
             return;
         }
 
@@ -6702,7 +6747,7 @@ class AdminInterface {
                 this.createInteractiveMap(centerLat,centerLng,zoomLevel);
                 return;
             } catch(error) {
-                debugLog('Error creating map with existing API:',error, 'error');
+                debugLog('Error creating map with existing API:',error,'error');
                 // Continue to reload API if there's an error
             }
         }
@@ -6741,7 +6786,7 @@ class AdminInterface {
 
         // Error handling for script loading
         script.onerror=() => {
-            debugLog('Failed to load Google Maps API', 'error');
+            debugLog('Failed to load Google Maps API','error');
             window.googleMapsApiLoading=false;
             mapContainer.innerHTML=`
                 <div class="text-muted d-flex align-items-center justify-content-center h-100">
@@ -6766,7 +6811,7 @@ class AdminInterface {
                 // Clean up the callback
                 delete window[callbackName];
             } catch(error) {
-                debugLog('Error initializing map:',error, 'error');
+                debugLog('Error initializing map:',error,'error');
                 mapContainer.innerHTML=`
                     <div class="text-muted d-flex align-items-center justify-content-center h-100">
                         <i class="fas fa-exclamation-triangle"></i>&nbsp;
@@ -6778,7 +6823,7 @@ class AdminInterface {
 
         // Add global error handler for authentication failures
         window.gm_authFailure=() => {
-            debugLog('Google Maps API authentication failed', 'error');
+            debugLog('Google Maps API authentication failed','error');
             window.googleMapsApiLoading=false;
             window.googleMapsAuthFailed=true; // Set flag for future checks
             mapContainer.innerHTML=`
@@ -6796,13 +6841,13 @@ class AdminInterface {
     createInteractiveMap(centerLat,centerLng,zoomLevel) {
         const mapDiv=document.getElementById('interactive-map');
         if(!mapDiv) {
-            debugLog('Map container element not found', 'error');
+            debugLog('Map container element not found','error');
             return;
         }
 
         // Validate Google Maps API availability
         if(!window.google||!window.google.maps||!window.google.maps.Map) {
-            debugLog('Google Maps API not properly loaded', 'error');
+            debugLog('Google Maps API not properly loaded','error');
             mapDiv.innerHTML=`
                 <div class="text-muted d-flex align-items-center justify-content-center h-100">
                     <i class="fas fa-exclamation-triangle"></i>&nbsp;
@@ -6814,7 +6859,7 @@ class AdminInterface {
 
         // Validate coordinates
         if(isNaN(centerLat)||isNaN(centerLng)||isNaN(zoomLevel)) {
-            debugLog('Invalid map coordinates or zoom level', 'error');
+            debugLog('Invalid map coordinates or zoom level','error');
             return;
         }
 
@@ -6881,7 +6926,7 @@ class AdminInterface {
             });
 
         } catch(error) {
-            debugLog('Error creating Google Maps:',error, 'error');
+            debugLog('Error creating Google Maps:',error,'error');
             mapDiv.innerHTML=`
                 <div class="text-muted d-flex align-items-center justify-content-center h-100">
                     <i class="fas fa-exclamation-triangle"></i>&nbsp;
@@ -6947,12 +6992,12 @@ class AdminInterface {
 
                         this.mapMarkers.push(marker);
                     } catch(markerError) {
-                        debugLog('Error creating marker:',markerError, 'error');
+                        debugLog('Error creating marker:',markerError,'error');
                     }
                 }
             });
         } catch(error) {
-            debugLog('Error adding existing markers to map:',error, 'error');
+            debugLog('Error adding existing markers to map:',error,'error');
         }
     }
 
@@ -7636,7 +7681,7 @@ class AdminInterface {
         const targetInput=document.getElementById(targetId);
 
         if(!targetInput) {
-            debugLog('Target input not found:',targetId, 'error');
+            debugLog('Target input not found:',targetId,'error');
             return;
         }
 
@@ -7750,11 +7795,11 @@ class AdminInterface {
             if(result.success) {
                 debugLog(`${type} config saved successfully`);
             } else {
-                debugLog(`Failed to save ${type} config:`,result.message, 'error');
+                debugLog(`Failed to save ${type} config:`,result.message,'error');
                 showNotification(`Failed to save configuration: ${result.message}`,'error');
             }
         } catch(error) {
-            debugLog(`Error saving ${type} config:`,error, 'error');
+            debugLog(`Error saving ${type} config:`,error,'error');
             showNotification('Error saving configuration','error');
         }
     }
@@ -7826,7 +7871,7 @@ class AdminInterface {
                 this.showAlert(`Configuration save failed: ${errorMessage}`,'error');
             }
         } catch(error) {
-            debugLog('Error saving mixed git config:',error, 'error');
+            debugLog('Error saving mixed git config:',error,'error');
             this.showAlert('Error saving configuration','error');
         }
     }
@@ -7856,11 +7901,11 @@ class AdminInterface {
             if(result.success) {
                 this.renderContentList(type,result.data);
             } else {
-                debugLog(`Failed to load ${type}:`,result.message, 'error');
+                debugLog(`Failed to load ${type}:`,result.message,'error');
                 this.showAlert(`Failed to load ${type}`,'error');
             }
         } catch(error) {
-            debugLog(`Error loading ${type}:`,error, 'error');
+            debugLog(`Error loading ${type}:`,error,'error');
             this.showAlert(`Failed to load ${type}`,'error');
         }
     }
@@ -8211,7 +8256,7 @@ class AdminInterface {
             this.showAlert('Image uploaded successfully','success');
 
         } catch(error) {
-            debugLog('Error uploading image:',error, 'error');
+            debugLog('Error uploading image:',error,'error');
             this.showAlert('Failed to upload image: '+error.message,'error');
         } finally {
             uploadBtn.disabled=false;
@@ -8285,7 +8330,7 @@ class AdminInterface {
             this.showAlert('Image uploaded successfully','success');
 
         } catch(error) {
-            debugLog('Error uploading image:',error, 'error');
+            debugLog('Error uploading image:',error,'error');
             this.showAlert('Failed to upload image: '+error.message,'error');
         } finally {
             uploadBtn.disabled=false;
@@ -8331,7 +8376,7 @@ class AdminInterface {
                 this.loadContentType(type);
 
             } catch(error) {
-                debugLog('Error saving testimonial:',error, 'error');
+                debugLog('Error saving testimonial:',error,'error');
                 this.showAlert('Failed to save testimonial','error');
             }
         } else if(type==='sliders') {
@@ -8377,7 +8422,7 @@ class AdminInterface {
                 this.loadContentType(type);
 
             } catch(error) {
-                debugLog('Error saving slider:',error, 'error');
+                debugLog('Error saving slider:',error,'error');
                 this.showAlert('Failed to save slider','error');
             }
         } else {
@@ -8412,7 +8457,7 @@ class AdminInterface {
                 this.loadContentType(type);
 
             } catch(error) {
-                debugLog('Error saving content:',error, 'error');
+                debugLog('Error saving content:',error,'error');
                 this.showAlert('Failed to save content','error');
             }
         }
@@ -8440,7 +8485,7 @@ class AdminInterface {
             this.showAlert(`${type.slice(0,-1)} deleted successfully`,'success');
 
         } catch(error) {
-            debugLog('Error deleting content:',error, 'error');
+            debugLog('Error deleting content:',error,'error');
             this.showAlert('Failed to delete content','error');
         }
     }
@@ -8528,7 +8573,7 @@ class AdminInterface {
             setTimeout(() => this.editContentItem(type,newIndex),100);
 
         } catch(error) {
-            debugLog('Error adding content:',error, 'error');
+            debugLog('Error adding content:',error,'error');
             this.showAlert('Failed to add new content','error');
         }
     }
@@ -8554,7 +8599,7 @@ class AdminInterface {
 
             return result;
         } catch(error) {
-            debugLog('Error saving contents:',error, 'error');
+            debugLog('Error saving contents:',error,'error');
             throw error;
         }
     } async saveAllContents() {
@@ -8570,7 +8615,7 @@ class AdminInterface {
 
             this.showAlert('All contents saved successfully','success');
         } catch(error) {
-            debugLog('Error saving all contents:',error, 'error');
+            debugLog('Error saving all contents:',error,'error');
             this.showAlert('Failed to save all contents','error');
         }
     }
@@ -8717,7 +8762,7 @@ class AdminInterface {
                 buttonTarget: buttonTarget
             };
         } catch(error) {
-            debugLog('Error parsing slider content:',error, 'error');
+            debugLog('Error parsing slider content:',error,'error');
             return {
                 title: '',
                 content: '',
@@ -8803,7 +8848,7 @@ class AdminInterface {
 
             return updatedSlider;
         } catch(error) {
-            debugLog('Error building slider content:',error, 'error');
+            debugLog('Error building slider content:',error,'error');
             return originalSlider||{
                 name: formData.name,
                 widgets: [],
@@ -8862,7 +8907,7 @@ class AdminInterface {
                 if(data1.success) {
                     debugLog('✅ Backend GitHub run ID cleared successfully');
                 } else {
-                    debugLog('⚠️ Failed to clear GitHub run ID:',data1.message, 'warn');
+                    debugLog('⚠️ Failed to clear GitHub run ID:',data1.message,'warn');
                 }
             }
 
@@ -8876,7 +8921,7 @@ class AdminInterface {
                 if(data2.success) {
                     debugLog('✅ Backend deployment status cleared successfully');
                 } else {
-                    debugLog('⚠️ Failed to clear deployment status:',data2.message, 'warn');
+                    debugLog('⚠️ Failed to clear deployment status:',data2.message,'warn');
                 }
             }
 
@@ -8890,12 +8935,12 @@ class AdminInterface {
                 if(data3.success) {
                     debugLog('✅ Backend system reset successfully');
                 } else {
-                    debugLog('⚠️ Failed to reset system:',data3.message, 'warn');
+                    debugLog('⚠️ Failed to reset system:',data3.message,'warn');
                 }
             }
 
         } catch(error) {
-            debugLog('❌ Error clearing backend state:',error, 'error');
+            debugLog('❌ Error clearing backend state:',error,'error');
         }
     }
 
@@ -8951,10 +8996,10 @@ class AdminInterface {
             // Last resort - show error
             const errorMessage=result.message||'Site URL not available';
             this.showAlert(`Unable to get site URL: ${errorMessage}`,'warning');
-            debugLog('Site URL fetch failed:',result, 'warn');
+            debugLog('Site URL fetch failed:',result,'warn');
 
         } catch(error) {
-            debugLog('Failed to get site URL:',error, 'error');
+            debugLog('Failed to get site URL:',error,'error');
 
             // Try fallback URL on error
             if(fallbackUrl&&fallbackUrl!=='#') {
@@ -9494,7 +9539,7 @@ document.addEventListener('DOMContentLoaded',() => {
                 }
             }
         } catch(error) {
-            debugLog('❌ Error refreshing GitHub status:',error, 'error');
+            debugLog('❌ Error refreshing GitHub status:',error,'error');
         }
     };
 
@@ -9531,10 +9576,10 @@ document.addEventListener('DOMContentLoaded',() => {
                 adminInterface.updateDeploymentStatusDisplay(data.data);
                 debugLog('✅ Deployment status refreshed');
             } else {
-                debugLog('❌ Failed to fetch deployment status:',data.message, 'error');
+                debugLog('❌ Failed to fetch deployment status:',data.message,'error');
             }
         } catch(error) {
-            debugLog('❌ Error fetching deployment status:',error, 'error');
+            debugLog('❌ Error fetching deployment status:',error,'error');
         }
     };
 
