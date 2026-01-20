@@ -160,12 +160,28 @@ upload_configs() {
         exit 1
     fi
     
+    # Ensure .ssh directory exists with proper permissions (critical for nobody user)
+    print_info "Ensuring SSH directory and key exist..."
+    if [[ ! -d "$HOME/.ssh" ]]; then
+        mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+        print_info "Created $HOME/.ssh directory"
+    fi
+    
+    if [[ ! -f "$HOME/.ssh/id_rsa" ]]; then
+        print_error "SSH key not found at $HOME/.ssh/id_rsa"
+        print_info "Please generate SSH key with: ssh-keygen -t rsa -b 4096 -C 'kinsta-deployment' -f $HOME/.ssh/id_rsa -N ''"
+        exit 1
+    fi
+    chmod 600 "$HOME/.ssh/id_rsa" 2>/dev/null || true
+    
     # Test SSH connectivity once at the start of uploads
     print_info "Testing SSH connectivity to Kinsta server..."
-    if ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i ~/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>/dev/null; then
+    print_info "Using SSH key: $HOME/.ssh/id_rsa"
+    print_info "HOME directory: $HOME"
+    if ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>/dev/null; then
         print_error "SSH connectivity failed. Please check network connection and credentials."
-        # try this code manually to debug
-        print_info "Debug command: ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i ~/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
+        print_info "Debug command: ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i $HOME/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
+        print_info "Checking SSH key existence: $(test -f $HOME/.ssh/id_rsa && echo 'exists' || echo 'NOT FOUND')"
         exit 1
     fi
     print_success "SSH connectivity verified"
