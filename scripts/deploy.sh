@@ -160,28 +160,59 @@ upload_configs() {
         exit 1
     fi
     
-    # Ensure .ssh directory exists with proper permissions (critical for nobody user)
-    print_info "Ensuring SSH directory and key exist..."
-    if [[ ! -d "$HOME/.ssh" ]]; then
-        mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
-        print_info "Created $HOME/.ssh directory"
-    fi
-    
+    # Verify SSH key exists (should be created by setup.sh)
+    print_info "Verifying SSH credentials..."
     if [[ ! -f "$HOME/.ssh/id_rsa" ]]; then
-        print_error "SSH key not found at $HOME/.ssh/id_rsa"
-        print_info "Please generate SSH key with: ssh-keygen -t rsa -b 4096 -C 'kinsta-deployment' -f $HOME/.ssh/id_rsa -N ''"
+        print_error "═══════════════════════════════════════════════════════════════════"
+        print_error "SSH Key Not Found"
+        print_error "═══════════════════════════════════════════════════════════════════"
+        print_error ""
+        print_error "SSH key missing at: $HOME/.ssh/id_rsa"
+        print_error ""
+        print_error "This deployment requires SSH keys to be set up first."
+        print_error ""
+        print_error "To fix this, run the setup script:"
+        print_error "  bash setup.sh"
+        print_error ""
+        print_error "Then add the generated public key to your Kinsta account."
+        print_error "═══════════════════════════════════════════════════════════════════"
         exit 1
     fi
-    chmod 600 "$HOME/.ssh/id_rsa" 2>/dev/null || true
     
     # Test SSH connectivity once at the start of uploads
     print_info "Testing SSH connectivity to Kinsta server..."
     print_info "Using SSH key: $HOME/.ssh/id_rsa"
     print_info "HOME directory: $HOME"
     if ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>/dev/null; then
-        print_error "SSH connectivity failed. Please check network connection and credentials."
-        print_info "Debug command: ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i $HOME/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
-        print_info "Checking SSH key existence: $(test -f $HOME/.ssh/id_rsa && echo 'exists' || echo 'NOT FOUND')"
+        print_error "═══════════════════════════════════════════════════════════════════"
+        print_error "SSH Connection Failed - Cannot Connect to Kinsta"
+        print_error "═══════════════════════════════════════════════════════════════════"
+        print_error ""
+        print_error "The SSH public key has not been added to your Kinsta account."
+        print_error ""
+        print_error "To fix this:"
+        print_error "1. Display your public key:"
+        print_error "   cat $HOME/.ssh/id_rsa.pub"
+        print_error ""
+        print_error "2. Copy the entire output (starts with 'ssh-rsa' or 'ssh-ed25519')"
+        print_error ""
+        print_error "3. Add it to Kinsta:"
+        print_error "   → Go to: https://my.kinsta.com/account/ssh-keys"
+        print_error "   → Click 'Add SSH Key'"
+        print_error "   → Paste the public key"
+        print_error "   → Save"
+        print_error ""
+        print_error "4. Wait 1-2 minutes for the key to propagate, then retry"
+        print_error ""
+        print_error "Connection details:"
+        print_error "  Host: $KINSTA_HOST"
+        print_error "  Port: $KINSTA_PORT"
+        print_error "  User: $KINSTA_USER"
+        print_error "  Key:  $HOME/.ssh/id_rsa"
+        print_error ""
+        print_error "Debug command:"
+        print_error "  ssh -v -i $HOME/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
+        print_error "═══════════════════════════════════════════════════════════════════"
         exit 1
     fi
     print_success "SSH connectivity verified"

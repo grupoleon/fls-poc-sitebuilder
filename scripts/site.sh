@@ -5,15 +5,12 @@ set -euo pipefail
 # Load logging utilities
 source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
 
-# Install required extensions if not already installed
-extensions=("jq" "curl" "openssl" "openssh-client" "git")
-for ext in "${extensions[@]}"; do
-    if ! command -v "$ext" &> /dev/null; then
-        log_info "Installing missing extension: $ext"
-        apt-get update -qq && apt-get install -y -qq "$ext" > /dev/null 2>&1
-        log_success "Installed extension: $ext"
-    else
-        log_info "$ext is already installed"
+# Verify required dependencies (installed by setup.sh)
+required_tools=("jq" "curl" "openssl" "git")
+for tool in "${required_tools[@]}"; do
+    if ! command -v "$tool" &> /dev/null; then
+        log_error "Required tool '$tool' not found. Please run setup.sh first."
+        exit 1
     fi
 done
 

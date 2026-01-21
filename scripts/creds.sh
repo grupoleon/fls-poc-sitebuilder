@@ -22,10 +22,7 @@ check_dependencies() {
     
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         log_error "Missing required dependencies: ${missing_deps[*]}"
-        log_info "Please install missing dependencies:"
-        for dep in "${missing_deps[@]}"; do
-            echo "  brew install $dep"
-        done
+        log_error "Please run setup.sh first to install all required tools"
         exit 1
     fi
 }
@@ -255,6 +252,23 @@ store_github_secrets() {
     local public_key_response
     if ! public_key_response=$(api_request "github" "repos/$github_owner/$github_repo/actions/secrets/public-key" "GET" ""); then
         log_error "Failed to fetch repository public key"
+        log_error "═══════════════════════════════════════════════════════════════════"
+        log_error "GitHub API Authentication Failed (401 Unauthorized)"
+        log_error "═══════════════════════════════════════════════════════════════════"
+        log_error ""
+        log_error "Your GitHub token is either missing or doesn't have the required permissions."
+        log_error ""
+        log_error "To fix this:"
+        log_error "1. Go to: https://github.com/settings/tokens"
+        log_error "2. Click 'Generate new token (classic)'"
+        log_error "3. Select these scopes:"
+        log_error "   ✓ repo (Full control of private repositories)"
+        log_error "   ✓ workflow (Update GitHub Action workflows)"
+        log_error "4. Copy the token and add it to: config/git.json"
+        log_error "   \"token\": \"ghp_your_token_here\""
+        log_error ""
+        log_error "Note: Site credentials are saved locally, but GitHub secrets won't be set."
+        log_error "═══════════════════════════════════════════════════════════════════"
         return 1
     fi
     
@@ -264,6 +278,7 @@ store_github_secrets() {
     
     if [[ -z "$public_key" || -z "$key_id" ]]; then
         log_error "Failed to extract public key or key_id from response"
+        log_error "API Response: $public_key_response"
         return 1
     fi
     
