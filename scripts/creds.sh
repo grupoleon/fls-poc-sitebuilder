@@ -555,15 +555,17 @@ validate_site_data() {
 }
 
 # Function to find the correct SSH path by connecting to the server
+# Only used when web_root is empty from API
+# Searches for /www/{site_name}_{3_digits} pattern and appends /public
 find_ssh_path() {
     local site_name="$1"
     local ssh_host="$2"
     local ssh_port="$3"
     
-    log_info "Searching for correct SSH path on server..." >&2
+    log_info "Searching /www directory for ${site_name}_XXX pattern..." >&2
     
-    # Try to find directories matching the pattern /www/{sitename}_{3_digits}
-    # e.g., /www/pocsite_434
+    # Search for directories matching /www/{sitename}_{3_digits}
+    # Using site.name (e.g., "pocsite"), not display_name
     local ssh_command="find /www -maxdepth 1 -type d -name '${site_name}_[0-9][0-9][0-9]' 2>/dev/null | head -1"
     
     local found_path
@@ -575,13 +577,14 @@ find_ssh_path() {
                      "$ssh_command" 2>/dev/null | tr -d '[:space:]')
     
     if [[ -n "$found_path" ]]; then
-        # Append /public to the found path
+        # Append /public to the found directory
+        # Example: /www/pocsite_434 becomes /www/pocsite_434/public
         local full_path="${found_path}/public"
-        log_success "Found SSH path: $full_path" >&2
+        log_success "Found path: $full_path" >&2
         echo "$full_path"
         return 0
     else
-        log_error "Could not find directory matching pattern /www/${site_name}_XXX" >&2
+        log_error "Could not find directory matching /www/${site_name}_XXX" >&2
         return 1
     fi
 }
@@ -594,9 +597,10 @@ update_git_json() {
     local site_id="$4"
     local ssh_path="$5"
     
-    # Use API-provided path if available, otherwise try to find it via SSH
+    # web_root from API is the full path (includes /public), use it directly if available
+    # Only search via SSH if web_root is empty/null
     if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
-        log_warning "SSH path not provided by API, attempting to find via SSH connection..."
+        log_warning "web_root not provided by API, searching via SSH connection..."
         ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port")
         
         if [[ -z "$ssh_path" ]]; then
@@ -604,10 +608,10 @@ update_git_json() {
             exit 1
         fi
     else
-        log_success "Using SSH path from Kinsta API: $ssh_path"
+        log_success "Using web_root from Kinsta API: $ssh_path"
     fi
     
-    log_info "Final SSH path: $ssh_path"
+    log_info "Final path: $ssh_path"
     log_info "Updating git.json with site credentials..."
     
     # Create backup of original git.json
