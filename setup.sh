@@ -29,9 +29,20 @@ echo ""
 # Install required packages
 echo "▶ Installing required packages..."
 apt-get update -qq
-apt-get install -y -qq jq openssh-client openssl git curl rsync
+apt-get install -y -qq jq openssh-client openssl git curl rsync python3 python3-pip
 echo "  ✓ Packages installed"
 echo ""
+
+ # Check if PyNaCl is available, try to install if not
+if ! python3 -c "import nacl" &> /dev/null; then
+    echo "▶ Installing PyNaCl for SSH support..."
+    pip3 install --quiet pynacl
+    echo "  ✓ PyNaCl installed"
+    echo ""
+else
+    echo "  ✓ PyNaCl already installed"
+    echo ""
+fi
 
 # Create SSH directory
 echo "▶ Creating SSH directory..."
