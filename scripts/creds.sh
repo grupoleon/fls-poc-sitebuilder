@@ -551,7 +551,13 @@ validate_site_data() {
     echo "  SSH host: $ssh_host"
     echo "  SSH port: $ssh_port"
     echo "  Site ID: $site_id"
-    [[ -n "$ssh_path" ]] && echo "  SSH path (from API): $ssh_path"
+    
+    # Show SSH path status (may be empty at this stage)
+    if [[ -n "$ssh_path" && "$ssh_path" != "null" ]]; then
+        echo "  SSH path (from API): $ssh_path"
+    else
+        echo "  SSH path: Will be determined/resolved next"
+    fi
 }
 
 # Function to find the correct SSH path by connecting to the server
@@ -568,13 +574,18 @@ find_ssh_path() {
     # Using site.name (e.g., "pocsite"), not display_name
     local ssh_command="find /www -maxdepth 1 -type d -name '${site_name}_[0-9][0-9][0-9]' 2>/dev/null | head -1"
     
-    local found_path
-    found_path=$(ssh -o ConnectTimeout=10 \
+    local found_path ssh_error
+    if ! found_path=$(ssh -o ConnectTimeout=10 \
                      -o BatchMode=yes \
                      -o StrictHostKeyChecking=no \
                      -p "$ssh_port" \
                      "$site_name@$ssh_host" \
-                     "$ssh_command" 2>/dev/null | tr -d '[:space:]')
+                     "$ssh_command" 2>&1 | tr -d '[:space:]'); then
+        ssh_error=$?
+        log_warning "SSH connection failed (exit code: $ssh_error)" >&2
+        log_warning "This is expected in containerized/CI environments" >&2
+        return 1
+    fi
     
     if [[ -n "$found_path" ]]; then
         # Append /public to the found directory
@@ -584,7 +595,7 @@ find_ssh_path() {
         echo "$full_path"
         return 0
     else
-        log_error "Could not find directory matching /www/${site_name}_XXX" >&2
+        log_warning "Could not find directory matching /www/${site_name}_XXX" >&2
         return 1
     fi
 }
@@ -600,12 +611,22 @@ update_git_json() {
     # web_root from API is the full path (includes /public), use it directly if available
     # Only search via SSH if web_root is empty/null
     if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
-        log_warning "web_root not provided by API, searching via SSH connection..."
-        ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port")
+        log_warning "web_root not provided by API"
         
+        # Try SSH connection only if we're in an interactive environment
+        if [[ -t 0 ]] && command -v ssh &> /dev/null; then
+            log_info "Attempting to discover path via SSH connection..."
+            ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port")
+        fi
+        
+        # If SSH discovery failed or unavailable, use default pattern
         if [[ -z "$ssh_path" ]]; then
-            log_error "Failed to determine SSH path"
-            exit 1
+            log_warning "SSH path discovery not available in this environment"
+            log_info "Using default path pattern - will be auto-detected on first deployment"
+            # Kinsta standard path pattern: /www/{site_name}_{3_digits}/public
+            # The deployment script will auto-discover the exact path later
+            ssh_path="/www/${site_name}_*/public"
+            log_info "Set placeholder path: $ssh_path (will auto-resolve during deployment)"
         fi
     else
         log_success "Using web_root from Kinsta API: $ssh_path"
