@@ -460,7 +460,7 @@ parse_and_extract_site_details() {
         site_name=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .name // empty')
         ssh_host=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_ip.external_ip // empty')
         ssh_port=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_port // empty')
-        ssh_path=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.container_path // empty')
+        ssh_path=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].web_root // empty')
         site_id=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .id // empty')
     else
         log_info "No target site ID specified, using first available site"
@@ -469,7 +469,7 @@ parse_and_extract_site_details() {
         site_name=$(echo "$response" | jq -r '.company.sites[0].name // empty')
         ssh_host=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_ip.external_ip // empty')
         ssh_port=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_port // empty')
-        ssh_path=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.container_path // empty')
+        ssh_path=$(echo "$response" | jq -r '.company.sites[0].environments[0].web_root // empty')
         site_id=$(echo "$response" | jq -r '.company.sites[0].id // empty')
     fi
     
@@ -493,11 +493,11 @@ parse_and_extract_site_details() {
             if [[ -n "$target_site_id" ]]; then
                 ssh_host=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_ip.external_ip // empty')
                 ssh_port=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_port // empty')
-                ssh_path=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.container_path // empty')
+                ssh_path=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].web_root // empty')
             else
                 ssh_host=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_ip.external_ip // empty')
                 ssh_port=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_port // empty')
-                ssh_path=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.container_path // empty')
+                ssh_path=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].web_root // empty')
             fi
             
             if [[ -n "$ssh_host" && -n "$ssh_port" ]]; then
@@ -562,8 +562,9 @@ find_ssh_path() {
     
     log_info "Searching for correct SSH path on server..." >&2
     
-    # Try to find directories matching the pattern /www/{sitename}_*/public
-    local ssh_command="find /www -maxdepth 1 -type d -name '${site_name}_*' | head -1"
+    # Try to find directories matching the pattern /www/{sitename}_{3_digits}
+    # e.g., /www/pocsite_434
+    local ssh_command="find /www -maxdepth 1 -type d -name '${site_name}_[0-9][0-9][0-9]' 2>/dev/null | head -1"
     
     local found_path
     found_path=$(ssh -o ConnectTimeout=10 \
@@ -571,19 +572,17 @@ find_ssh_path() {
                      -o StrictHostKeyChecking=no \
                      -p "$ssh_port" \
                      "$site_name@$ssh_host" \
-                     "$ssh_command" | tr -d '[:space:]')
+                     "$ssh_command" 2>/dev/null | tr -d '[:space:]')
     
     if [[ -n "$found_path" ]]; then
+        # Append /public to the found path
         local full_path="${found_path}/public"
         log_success "Found SSH path: $full_path" >&2
         echo "$full_path"
         return 0
     else
-        # Fallback to the standard Kinsta path pattern
-        local fallback_path="/www/${site_name}/public"
-        log_success "Using standard Kinsta path: $fallback_path" >&2
-        echo "$fallback_path"
-        return 0
+        log_error "Could not find directory matching pattern /www/${site_name}_XXX" >&2
+        return 1
     fi
 }
 
