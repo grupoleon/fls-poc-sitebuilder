@@ -63,14 +63,20 @@ echo ""
 # Generate SSH key (skip if already exists)
 if [[ -f /app/.ssh/id_rsa ]]; then
     echo "⚠️  SSH key already exists at /app/.ssh/id_rsa"
-    echo "   Delete it first if you want to generate a new one: rm /app/.ssh/id_rsa*"
+    echo "   Fixing ownership and permissions..."
+    chown nobody:nogroup /app/.ssh/id_rsa /app/.ssh/id_rsa.pub 2>/dev/null || true
+    chmod 600 /app/.ssh/id_rsa
+    chmod 644 /app/.ssh/id_rsa.pub
+    echo "  ✓ Ownership and permissions updated"
     echo ""
 else
     echo "▶ Generating SSH key..."
     ssh-keygen -t rsa -b 4096 -C "kinsta-deployment" -f /app/.ssh/id_rsa -N ""
+    # CRITICAL: Set ownership to nobody:nogroup so PHP scripts can read it
+    chown nobody:nogroup /app/.ssh/id_rsa /app/.ssh/id_rsa.pub
     chmod 600 /app/.ssh/id_rsa
     chmod 644 /app/.ssh/id_rsa.pub
-    echo "  ✓ SSH key generated"
+    echo "  ✓ SSH key generated with proper ownership (nobody:nogroup)"
     echo ""
 fi
 
