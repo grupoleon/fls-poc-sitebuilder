@@ -439,6 +439,7 @@ parse_and_extract_site_details() {
     
     local site_name ssh_host ssh_port site_id
     
+    local ssh_path
     if [[ -n "$target_site_id" ]]; then
         log_info "Looking for specific site ID: $target_site_id"
         
@@ -459,6 +460,7 @@ parse_and_extract_site_details() {
         site_name=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .name // empty')
         ssh_host=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_ip.external_ip // empty')
         ssh_port=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_port // empty')
+        ssh_path=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.container_path // empty')
         site_id=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .id // empty')
     else
         log_info "No target site ID specified, using first available site"
@@ -467,6 +469,7 @@ parse_and_extract_site_details() {
         site_name=$(echo "$response" | jq -r '.company.sites[0].name // empty')
         ssh_host=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_ip.external_ip // empty')
         ssh_port=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_port // empty')
+        ssh_path=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.container_path // empty')
         site_id=$(echo "$response" | jq -r '.company.sites[0].id // empty')
     fi
     
@@ -490,13 +493,16 @@ parse_and_extract_site_details() {
             if [[ -n "$target_site_id" ]]; then
                 ssh_host=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_ip.external_ip // empty')
                 ssh_port=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_port // empty')
+                ssh_path=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.container_path // empty')
             else
                 ssh_host=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_ip.external_ip // empty')
                 ssh_port=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_port // empty')
+                ssh_path=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.container_path // empty')
             fi
             
             if [[ -n "$ssh_host" && -n "$ssh_port" ]]; then
                 log_success "SSH provisioning completed! Host: $ssh_host, Port: $ssh_port"
+                [[ -n "$ssh_path" ]] && log_success "SSH path from API: $ssh_path"
                 break
             fi
             
@@ -511,10 +517,10 @@ parse_and_extract_site_details() {
     fi
     
     # Validate extracted data
-    validate_site_data "$site_name" "$ssh_host" "$ssh_port" "$site_id"
+    validate_site_data "$site_name" "$ssh_host" "$ssh_port" "$site_id" "$ssh_path"
     
     # Update git.json with extracted data
-    update_git_json "$site_name" "$ssh_host" "$ssh_port" "$site_id"
+    update_git_json "$site_name" "$ssh_host" "$ssh_port" "$site_id" "$ssh_path"
 }
 
 # Function to validate extracted site data
@@ -523,6 +529,7 @@ validate_site_data() {
     local ssh_host="$2"
     local ssh_port="$3"
     local site_id="$4"
+    local ssh_path="$5"
     
     local errors=()
     
@@ -544,6 +551,7 @@ validate_site_data() {
     echo "  SSH host: $ssh_host"
     echo "  SSH port: $ssh_port"
     echo "  Site ID: $site_id"
+    [[ -n "$ssh_path" ]] && echo "  SSH path (from API): $ssh_path"
 }
 
 # Function to find the correct SSH path by connecting to the server
@@ -585,12 +593,22 @@ update_git_json() {
     local ssh_host="$2" 
     local ssh_port="$3"
     local site_id="$4"
+    local ssh_path="$5"
     
-    # Find the correct SSH path by connecting to the server
-    local ssh_path
-    ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port")
+    # Use API-provided path if available, otherwise try to find it via SSH
+    if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
+        log_warning "SSH path not provided by API, attempting to find via SSH connection..."
+        ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port")
+        
+        if [[ -z "$ssh_path" ]]; then
+            log_error "Failed to determine SSH path"
+            exit 1
+        fi
+    else
+        log_success "Using SSH path from Kinsta API: $ssh_path"
+    fi
     
-    log_info "Using SSH path: $ssh_path"
+    log_info "Final SSH path: $ssh_path"
     log_info "Updating git.json with site credentials..."
     
     # Create backup of original git.json
