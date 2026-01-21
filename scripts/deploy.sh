@@ -183,35 +183,44 @@ upload_configs() {
     print_info "Testing SSH connectivity to Kinsta server..."
     print_info "Using SSH key: $HOME/.ssh/id_rsa"
     print_info "HOME directory: $HOME"
-    if ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>/dev/null; then
+    
+    # Create .ssh directory for known_hosts if it doesn't exist
+    mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh" 2>/dev/null || true
+    
+    # Capture both stdout and stderr for better diagnostics
+    SSH_OUTPUT=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>&1)
+    SSH_EXIT_CODE=$?
+    
+    if [[ $SSH_EXIT_CODE -ne 0 ]]; then
         print_error "═══════════════════════════════════════════════════════════════════"
         print_error "SSH Connection Failed - Cannot Connect to Kinsta"
         print_error "═══════════════════════════════════════════════════════════════════"
         print_error ""
-        print_error "The SSH public key has not been added to your Kinsta account."
+        print_error "Connection failed with exit code: $SSH_EXIT_CODE"
+        print_error ""
+        print_error "Error details:"
+        echo "$SSH_OUTPUT" | head -10 >&2
+        print_error ""
+        print_error "Common causes:"
+        print_error "1. SSH public key not added to Kinsta account"
+        print_error "2. Wrong SSH key being used"
+        print_error "3. Network connectivity issues"
         print_error ""
         print_error "To fix this:"
-        print_error "1. Display your public key:"
+        print_error "1. Verify your public key:"
         print_error "   cat $HOME/.ssh/id_rsa.pub"
         print_error ""
-        print_error "2. Copy the entire output (starts with 'ssh-rsa' or 'ssh-ed25519')"
+        print_error "2. Ensure it's added to Kinsta:"
+        print_error "   → https://my.kinsta.com/account/ssh-keys"
         print_error ""
-        print_error "3. Add it to Kinsta:"
-        print_error "   → Go to: https://my.kinsta.com/account/ssh-keys"
-        print_error "   → Click 'Add SSH Key'"
-        print_error "   → Paste the public key"
-        print_error "   → Save"
-        print_error ""
-        print_error "4. Wait 1-2 minutes for the key to propagate, then retry"
+        print_error "3. Test manually:"
+        print_error "   ssh -v -i $HOME/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
         print_error ""
         print_error "Connection details:"
         print_error "  Host: $KINSTA_HOST"
         print_error "  Port: $KINSTA_PORT"
         print_error "  User: $KINSTA_USER"
         print_error "  Key:  $HOME/.ssh/id_rsa"
-        print_error ""
-        print_error "Debug command:"
-        print_error "  ssh -v -i $HOME/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
         print_error "═══════════════════════════════════════════════════════════════════"
         exit 1
     fi
