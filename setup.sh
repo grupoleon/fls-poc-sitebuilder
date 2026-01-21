@@ -33,11 +33,19 @@ apt-get install -y -qq jq openssh-client openssl git curl rsync python3 python3-
 echo "  ✓ Packages installed"
 echo ""
 
- # Check if PyNaCl is available, try to install if not
+# Check if PyNaCl is available, try to install if not
 if ! python3 -c "import nacl" &> /dev/null; then
     echo "▶ Installing PyNaCl for SSH support..."
-    pip3 install --quiet pynacl
-    echo "  ✓ PyNaCl installed"
+    
+    # Try apt first (recommended for Ubuntu 24.04+)
+    if apt-get install -y -qq python3-pynacl 2>/dev/null; then
+        echo "  ✓ PyNaCl installed via apt"
+    else
+        # Fallback to pip with --break-system-packages (safe in containers)
+        echo "  ⚠️  Falling back to pip installation..."
+        pip3 install --quiet --break-system-packages pynacl
+        echo "  ✓ PyNaCl installed via pip"
+    fi
     echo ""
 else
     echo "  ✓ PyNaCl already installed"
