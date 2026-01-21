@@ -184,47 +184,20 @@ upload_configs() {
     print_info "Using SSH key: $HOME/.ssh/id_rsa"
     print_info "HOME directory: $HOME"
     
-    # Create .ssh directory for known_hosts if it doesn't exist
+    # Create .ssh directory and known_hosts if needed
     mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh" 2>/dev/null || true
+    touch "$HOME/.ssh/known_hosts" 2>/dev/null || true
     
-    # Capture both stdout and stderr for better diagnostics
-    SSH_OUTPUT=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'SSH connectivity verified'" 2>&1)
-    SSH_EXIT_CODE=$?
+    # Add Kinsta host to known_hosts if not already there to avoid interactive prompt
+    ssh-keyscan -p "$KINSTA_PORT" -H "$KINSTA_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
     
-    if [[ $SSH_EXIT_CODE -ne 0 ]]; then
-        print_error "═══════════════════════════════════════════════════════════════════"
-        print_error "SSH Connection Failed - Cannot Connect to Kinsta"
-        print_error "═══════════════════════════════════════════════════════════════════"
-        print_error ""
-        print_error "Connection failed with exit code: $SSH_EXIT_CODE"
-        print_error ""
-        print_error "Error details:"
-        echo "$SSH_OUTPUT" | head -10 >&2
-        print_error ""
-        print_error "Common causes:"
-        print_error "1. SSH public key not added to Kinsta account"
-        print_error "2. Wrong SSH key being used"
-        print_error "3. Network connectivity issues"
-        print_error ""
-        print_error "To fix this:"
-        print_error "1. Verify your public key:"
-        print_error "   cat $HOME/.ssh/id_rsa.pub"
-        print_error ""
-        print_error "2. Ensure it's added to Kinsta:"
-        print_error "   → https://my.kinsta.com/account/ssh-keys"
-        print_error ""
-        print_error "3. Test manually:"
-        print_error "   ssh -v -i $HOME/.ssh/id_rsa -p $KINSTA_PORT ${KINSTA_USER}@${KINSTA_HOST}"
-        print_error ""
-        print_error "Connection details:"
-        print_error "  Host: $KINSTA_HOST"
-        print_error "  Port: $KINSTA_PORT"
-        print_error "  User: $KINSTA_USER"
-        print_error "  Key:  $HOME/.ssh/id_rsa"
-        print_error "═══════════════════════════════════════════════════════════════════"
-        exit 1
+    # Test connection with better error handling
+    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'Connected'" >/dev/null 2>&1; then
+        print_warning "SSH pre-check failed, but continuing anyway (connection will be tested during upload)"
+        print_info "If upload fails, verify SSH key is added to: https://my.kinsta.com/account/ssh-keys"
+    else
+        print_success "SSH connectivity verified"
     fi
-    print_success "SSH connectivity verified"
     
     print_info "Uploading configuration files..."
     print_info "Config file path: $CONFIG_JSON_FILE"
