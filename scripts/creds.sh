@@ -473,17 +473,21 @@ parse_and_extract_site_details() {
         site_id=$(echo "$response" | jq -r '.company.sites[0].id // empty')
     fi
     
-    # Check if SSH details are missing and wait for provisioning
-    if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
-        log_warning "SSH details not yet available - site may still be provisioning"
-        log_info "Waiting for SSH provisioning to complete..."
+    # Check if SSH details or path are missing and wait for provisioning
+    if [[ -z "$ssh_host" || -z "$ssh_port" || -z "$ssh_path" || "$ssh_path" == "null" ]]; then
+        if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
+            log_warning "SSH details not yet available - site may still be provisioning"
+        else
+            log_warning "SSH path (web_root) not yet available - site may still be setting up"
+        fi
+        log_info "Waiting for site provisioning to complete..."
         
-        # Poll for SSH details to become available (brief wait since operation completed)
-        local ssh_wait_attempts=6  # 1 minute total (6 * 10 seconds)
-        local ssh_attempt=1
+        # Poll for full site details to become available (extended wait for new sites)
+        local provision_wait_attempts=18  # 3 minutes total (18 * 10 seconds)
+        local provision_attempt=1
         
-        while [[ $ssh_attempt -le $ssh_wait_attempts ]]; do
-            log_info "Checking for SSH provisioning (attempt $ssh_attempt/$ssh_wait_attempts)..."
+        while [[ $provision_attempt -le $provision_wait_attempts ]]; do
+            log_info "Checking site provisioning status (attempt $provision_attempt/$provision_wait_attempts)..."
             sleep 10
             
             # Re-fetch site details
@@ -500,18 +504,33 @@ parse_and_extract_site_details() {
                 ssh_path=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].web_root // empty')
             fi
             
-            if [[ -n "$ssh_host" && -n "$ssh_port" ]]; then
-                log_success "SSH provisioning completed! Host: $ssh_host, Port: $ssh_port"
-                [[ -n "$ssh_path" ]] && log_success "SSH path from API: $ssh_path"
+            # Check if all required details are available
+            if [[ -n "$ssh_host" && -n "$ssh_port" && -n "$ssh_path" && "$ssh_path" != "null" ]]; then
+                log_success "Site fully provisioned!"
+                log_success "  SSH Host: $ssh_host"
+                log_success "  SSH Port: $ssh_port"
+                log_success "  Web Root: $ssh_path"
                 break
+            elif [[ -n "$ssh_host" && -n "$ssh_port" ]]; then
+                log_info "SSH available, waiting for web_root... (attempt $provision_attempt/$provision_wait_attempts)"
+            else
+                log_info "Waiting for SSH and web_root... (attempt $provision_attempt/$provision_wait_attempts)"
             fi
             
-            ((ssh_attempt++))
+            ((provision_attempt++))
         done
         
+        # Final validation after polling
         if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
-            log_error "SSH provisioning timed out after waiting $ssh_wait_attempts attempts"
+            log_error "SSH provisioning timed out after $provision_wait_attempts attempts"
             log_error "Site created but SSH access not yet available"
+            exit 1
+        fi
+        
+        if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
+            log_error "Web root (SSH path) not available after $provision_wait_attempts attempts"
+            log_error "This is unusual - the site may need more time to provision"
+            log_error "Try running the credentials step again in a few minutes"
             exit 1
         fi
     fi
@@ -608,29 +627,14 @@ update_git_json() {
     local site_id="$4"
     local ssh_path="$5"
     
-    # web_root from API is the full path (includes /public), use it directly if available
-    # Only search via SSH if web_root is empty/null
-    if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
-        log_warning "web_root not provided by API"
-        
-        # Try SSH connection only if we're in an interactive environment
-        if [[ -t 0 ]] && command -v ssh &> /dev/null; then
-            log_info "Attempting to discover path via SSH connection..."
-            ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port")
-        fi
-        
-        # If SSH discovery failed or unavailable, use default pattern
-        if [[ -z "$ssh_path" ]]; then
-            log_warning "SSH path discovery not available in this environment"
-            log_info "Using default path pattern - will be auto-detected on first deployment"
-            # Kinsta standard path pattern: /www/{site_name}_{3_digits}/public
-            # The deployment script will auto-discover the exact path later
-            ssh_path="/www/${site_name}_*/public"
-            log_info "Set placeholder path: $ssh_path (will auto-resolve during deployment)"
-        fi
-    else
-        log_success "Using web_root from Kinsta API: $ssh_path"
+    # Validate that we have a real path (not empty, null, or wildcard pattern)
+    if [[ -z "$ssh_path" || "$ssh_path" == "null" || "$ssh_path" == *"*"* ]]; then
+        log_error "Invalid or missing SSH path: '$ssh_path'"
+        log_error "Cannot proceed without a valid web root path"
+        exit 1
     fi
+    
+    log_success "Using web root from Kinsta API: $ssh_path"
     
     log_info "Final path: $ssh_path"
     log_info "Updating git.json with site credentials..."
