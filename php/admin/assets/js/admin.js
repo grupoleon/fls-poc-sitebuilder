@@ -712,9 +712,10 @@ class AdminInterface {
             }
         });
 
+
         if(deploymentStatusCard) {
-            deploymentStatusCard.style.display=inProgress? 'block':'none';
-            debugLog(`${inProgress? 'Shown':'Hidden'} deployment status card`);
+            deploymentStatusCard.style.display='block';
+            debugLog('Deployment status card always visible');
         }
 
         if(deploymentLogsCard) {
