@@ -532,7 +532,7 @@ parse_and_extract_site_details() {
             log_info "Web root not available from API after ${provision_wait_attempts} attempts"
             
             # Check if we're in a containerized/CI environment
-            if [[ -f /.dockerenv ]] || [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$USER" == "nobody" ]]; then
+            if [[ -f /.dockerenv ]] || [[ "${CI:-}" == "true" ]] || [[ "${GITHUB_ACTIONS:-}" == "true" ]] || [[ "$USER" == "nobody" ]]; then
                 log_info "Detected containerized/CI environment - SSH not available"
                 log_info "Using wildcard pattern for GitHub Actions to resolve..."
                 
