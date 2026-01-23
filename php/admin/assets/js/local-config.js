@@ -7,6 +7,8 @@ class LocalConfigManager {
     constructor() {
         this.logFiles=[];
         this.currentLogFile=null;
+        this.autoRefreshInterval=null;
+        this.autoRefreshEnabled=false;
         this.init();
     }
 
@@ -223,6 +225,9 @@ class LocalConfigManager {
 
         // Scroll to bottom of log
         contentDisplay.scrollTop=contentDisplay.scrollHeight;
+
+        // Start auto-refresh if not already running
+        this.startAutoRefresh();
     }
 
     hideLogViewer() {
@@ -233,6 +238,9 @@ class LocalConfigManager {
         if(emptyState) emptyState.style.display='flex';
 
         this.currentLogFile=null;
+
+        // Stop auto-refresh when hiding viewer
+        this.stopAutoRefresh();
     }
 
     async downloadLogFile() {
@@ -280,6 +288,28 @@ class LocalConfigManager {
             debugLog('Error copying log content: '+error.message,'error');
             this.showNotification('Failed to copy log content','error');
         }
+    }
+
+    startAutoRefresh() {
+        // Stop any existing interval
+        this.stopAutoRefresh();
+
+        // Start new interval (refresh every 3 seconds)
+        this.autoRefreshInterval=setInterval(() => {
+            if(this.currentLogFile) {
+                this.loadLogFile(this.currentLogFile);
+            }
+        },3000);
+
+        this.autoRefreshEnabled=true;
+    }
+
+    stopAutoRefresh() {
+        if(this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+            this.autoRefreshInterval=null;
+        }
+        this.autoRefreshEnabled=false;
     }
 
     showNotification(message,type='info') {

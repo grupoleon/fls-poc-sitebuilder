@@ -482,8 +482,8 @@ parse_and_extract_site_details() {
         fi
         log_info "Waiting for site provisioning to complete..."
         
-        # Poll for full site details to become available (extended wait for new sites)
-        local provision_wait_attempts=18  # 3 minutes total (18 * 10 seconds)
+        # Poll for full site details - but only wait 30 seconds before trying SSH fallback
+        local provision_wait_attempts=3  # 30 seconds total (3 * 10 seconds)
         local provision_attempt=1
         
         while [[ $provision_attempt -le $provision_wait_attempts ]]; do
@@ -527,11 +527,20 @@ parse_and_extract_site_details() {
             exit 1
         fi
         
+        # If web_root still not available from API, try SSH fallback method
         if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
-            log_error "Web root (SSH path) not available after $provision_wait_attempts attempts"
-            log_error "This is unusual - the site may need more time to provision"
-            log_error "Try running the credentials step again in a few minutes"
-            exit 1
+            log_info "Web root not available from API after ${provision_wait_attempts} attempts"
+            log_info "Attempting to find web root via SSH..."
+            
+            # Try to find the path via SSH
+            if ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port"); then
+                log_success "Found web root via SSH: $ssh_path"
+            else
+                log_error "Failed to determine web root path via SSH"
+                log_error "The site may need more time to fully provision"
+                log_error "Try running the credentials step again in a few minutes"
+                exit 1
+            fi
         fi
     fi
     
