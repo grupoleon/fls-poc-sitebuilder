@@ -590,8 +590,8 @@ find_ssh_path() {
     log_info "Searching /www directory for ${site_name}_XXX pattern..." >&2
     
     # Search for directories matching /www/{sitename}_{3_digits}
-    # Using site.name (e.g., "pocsite"), not display_name
-    local ssh_command="find /www -maxdepth 1 -type d -name '${site_name}_[0-9][0-9][0-9]' 2>/dev/null | head -1"
+    # Using site.name (e.g., "pocsite"), not display_name 
+    local ssh_command="find /www -type d -name '${site_name}_[0-9][0-9][0-9]' 2>/dev/null | head -1"
     
     local found_path ssh_error
     if ! found_path=$(ssh -o ConnectTimeout=10 \
