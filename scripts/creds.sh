@@ -473,17 +473,13 @@ parse_and_extract_site_details() {
         site_id=$(echo "$response" | jq -r '.company.sites[0].id // empty')
     fi
     
-    # Check if SSH details or path are missing and wait for provisioning
-    if [[ -z "$ssh_host" || -z "$ssh_port" || -z "$ssh_path" || "$ssh_path" == "null" ]]; then
-        if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
-            log_warning "SSH details not yet available - site may still be provisioning"
-        else
-            log_warning "SSH path (web_root) not yet available - site may still be setting up"
-        fi
-        log_info "Waiting for site provisioning to complete..."
+    # Check if SSH details or path are missing - only check API once since web_root is unreliable
+    if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
+        log_warning "SSH details not yet available - site may still be provisioning"
+        log_info "Waiting for SSH details to become available..."
         
-        # Poll for full site details - but only wait 30 seconds before trying SSH fallback
-        local provision_wait_attempts=3  # 30 seconds total (3 * 10 seconds)
+        # Poll only for SSH host/port (these are reliable), not web_root
+        local provision_wait_attempts=18  # 3 minutes total (18 * 10 seconds)
         local provision_attempt=1
         
         while [[ $provision_attempt -le $provision_wait_attempts ]]; do
@@ -497,64 +493,49 @@ parse_and_extract_site_details() {
             if [[ -n "$target_site_id" ]]; then
                 ssh_host=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_ip.external_ip // empty')
                 ssh_port=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_port // empty')
-                ssh_path=$(echo "$fresh_response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].web_root // empty')
             else
                 ssh_host=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_ip.external_ip // empty')
                 ssh_port=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_port // empty')
-                ssh_path=$(echo "$fresh_response" | jq -r '.company.sites[0].environments[0].web_root // empty')
             fi
             
-            # Check if all required details are available
-            if [[ -n "$ssh_host" && -n "$ssh_port" && -n "$ssh_path" && "$ssh_path" != "null" ]]; then
-                log_success "Site fully provisioned!"
+            # Check if SSH details are available
+            if [[ -n "$ssh_host" && -n "$ssh_port" ]]; then
+                log_success "SSH details now available!"
                 log_success "  SSH Host: $ssh_host"
                 log_success "  SSH Port: $ssh_port"
-                log_success "  Web Root: $ssh_path"
                 break
-            elif [[ -n "$ssh_host" && -n "$ssh_port" ]]; then
-                log_info "SSH available, waiting for web_root... (attempt $provision_attempt/$provision_wait_attempts)"
             else
-                log_info "Waiting for SSH and web_root... (attempt $provision_attempt/$provision_wait_attempts)"
+                log_info "Waiting for SSH details... (attempt $provision_attempt/$provision_wait_attempts)"
             fi
             
             ((provision_attempt++))
         done
         
-        # Final validation after polling
+        # Final validation for SSH details
         if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
             log_error "SSH provisioning timed out after $provision_wait_attempts attempts"
             log_error "Site created but SSH access not yet available"
             exit 1
         fi
+    fi
+    
+    # If web_root not available from API, find it via SSH directory search
+    # Note: Kinsta's web_root API field is unreliable, so we prefer SSH lookup
+    if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
+        log_info "Web root not available from API (this is expected - Kinsta API is unreliable for this field)"
+        log_info "Finding actual web root via SSH directory search..."
         
-        # If web_root still not available from API, try SSH fallback method
-        if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
-            log_info "Web root not available from API after ${provision_wait_attempts} attempts"
-            
-            # Check if we're in a containerized/CI environment
-            if [[ -f /.dockerenv ]] || [[ "${CI:-}" == "true" ]] || [[ "${GITHUB_ACTIONS:-}" == "true" ]] || [[ "$USER" == "nobody" ]]; then
-                log_info "Detected containerized/CI environment - SSH not available"
-                log_info "Using wildcard pattern for GitHub Actions to resolve..."
-                
-                # Use wildcard pattern that GitHub Actions can resolve on the actual server
-                # Kinsta uses pattern: /www/sitename_XXX/public where XXX is 3 digits
-                ssh_path="/www/${site_name}_*/public"
-                
-                log_success "Using wildcard path pattern: $ssh_path"
-                log_info "GitHub Actions will resolve this to the actual path during deployment"
-            else
-                log_info "Attempting to find web root via SSH..."
-                
-                # Try to find the path via SSH (local/non-containerized environment)
-                if ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port"); then
-                    log_success "Found web root via SSH: $ssh_path"
-                else
-                    log_warning "SSH fallback failed - using wildcard pattern"
-                    ssh_path="/www/${site_name}_*/public"
-                    log_info "Using wildcard path pattern: $ssh_path"
-                fi
-            fi
+        # Try SSH directory search to find the actual path
+        if ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port"); then
+            log_success "Found web root via SSH: $ssh_path"
+        else
+            log_error "Failed to find web root via SSH"
+            log_error "Cannot proceed without the actual web root path"
+            log_error "Please ensure SSH key is configured and the site is fully provisioned"
+            exit 1
         fi
+    else
+        log_success "Web root from API: $ssh_path"
     fi
     
     # Validate extracted data
@@ -609,24 +590,53 @@ find_ssh_path() {
     local ssh_host="$2"
     local ssh_port="$3"
     
-    log_info "Searching /www directory for ${site_name}_XXX pattern..." >&2
+    log_info "Searching /www directory for ${site_name}_* pattern via SSH..." >&2
     
+    # Build SSH options for reliable connection
+    local ssh_opts="-o ConnectTimeout=30 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+    
+    # Check for SSH key in common locations
+    local ssh_key=""
+    if [[ -f "/app/.ssh/id_rsa" ]]; then
+        ssh_key="/app/.ssh/id_rsa"
+    elif [[ -f "$HOME/.ssh/id_rsa" ]]; then
+        ssh_key="$HOME/.ssh/id_rsa"
+    elif [[ -f "${ROOT_DIR}/.ssh/id_rsa" ]]; then
+        ssh_key="${ROOT_DIR}/.ssh/id_rsa"
+    fi
+    
+    if [[ -n "$ssh_key" ]]; then
+        log_info "Using SSH key: $ssh_key" >&2
+        ssh_opts="$ssh_opts -i $ssh_key"
+    fi
+    
+    # Use find command to locate the site directory
+    # Pattern: /www/{site_name}_{digits} (e.g., /www/pocsite_164)
     local ssh_command="find /www -maxdepth 1 -type d -name '${site_name}_*' | head -1"
     
-    local found_path ssh_error
-    if ! found_path=$(ssh -o ConnectTimeout=10 \
-                     -o BatchMode=yes \
-                     -o StrictHostKeyChecking=no \
-                     -p "$ssh_port" \
-                     "$site_name@$ssh_host" \
-                     "$ssh_command" 2>&1 | tr -d '[:space:]'); then
-        ssh_error=$?
-        log_warning "SSH connection failed (exit code: $ssh_error)" >&2
-        log_warning "This is expected in containerized/CI environments" >&2
+    log_info "Executing: ssh $ssh_opts -p $ssh_port $site_name@$ssh_host \"$ssh_command\"" >&2
+    
+    local found_path
+    local ssh_output
+    local ssh_exit_code
+    
+    # Execute SSH command and capture output
+    ssh_output=$(ssh $ssh_opts -p "$ssh_port" "$site_name@$ssh_host" "$ssh_command" 2>&1)
+    ssh_exit_code=$?
+    
+    log_info "SSH exit code: $ssh_exit_code" >&2
+    log_info "SSH output: $ssh_output" >&2
+    
+    if [[ $ssh_exit_code -ne 0 ]]; then
+        log_warning "SSH connection failed (exit code: $ssh_exit_code)" >&2
+        log_warning "Output: $ssh_output" >&2
         return 1
     fi
     
-    if [[ -n "$found_path" ]]; then
+    # Clean the output (remove whitespace, newlines)
+    found_path=$(echo "$ssh_output" | tr -d '[:space:]')
+    
+    if [[ -n "$found_path" && "$found_path" == /www/* ]]; then
         # Append /public to the found directory
         # Example: /www/pocsite_434 becomes /www/pocsite_434/public
         local full_path="${found_path}/public"
@@ -634,7 +644,8 @@ find_ssh_path() {
         echo "$full_path"
         return 0
     else
-        log_warning "Could not find directory matching /www/${site_name}_XXX" >&2
+        log_warning "Could not find directory matching /www/${site_name}_*" >&2
+        log_warning "Raw output was: '$ssh_output'" >&2
         return 1
     fi
 }
@@ -647,22 +658,21 @@ update_git_json() {
     local site_id="$4"
     local ssh_path="$5"
     
-    # Validate that we have a path (allow wildcards for CI environments)
+    # Validate that we have an actual path (no wildcards or empty values)
     if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
         log_error "Invalid or missing SSH path: '$ssh_path'"
-        log_error "Cannot proceed without a web root path"
+        log_error "Cannot proceed without a valid web root path"
         exit 1
     fi
     
-    # Check if path contains wildcard (for CI/containerized environments)
+    # Reject wildcard patterns - only accept actual paths
     if [[ "$ssh_path" == *"*"* ]]; then
-        log_success "Using wildcard path pattern: $ssh_path"
-        log_info "This will be resolved to the actual path during GitHub Actions deployment"
-    else
-        log_success "Using web root from Kinsta API: $ssh_path"
+        log_error "Invalid path contains wildcard: '$ssh_path'"
+        log_error "Only actual resolved paths are allowed"
+        exit 1
     fi
     
-    log_info "Final path: $ssh_path"
+    log_success "Using web root: $ssh_path"
     log_info "Updating git.json with site credentials..."
     
     # Create backup of original git.json
