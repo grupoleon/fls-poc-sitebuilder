@@ -530,16 +530,29 @@ parse_and_extract_site_details() {
         # If web_root still not available from API, try SSH fallback method
         if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
             log_info "Web root not available from API after ${provision_wait_attempts} attempts"
-            log_info "Attempting to find web root via SSH..."
             
-            # Try to find the path via SSH
-            if ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port"); then
-                log_success "Found web root via SSH: $ssh_path"
+            # Check if we're in a containerized/CI environment
+            if [[ -f /.dockerenv ]] || [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$USER" == "nobody" ]]; then
+                log_info "Detected containerized/CI environment - SSH not available"
+                log_info "Using wildcard pattern for GitHub Actions to resolve..."
+                
+                # Use wildcard pattern that GitHub Actions can resolve on the actual server
+                # Kinsta uses pattern: /www/sitename_XXX/public where XXX is 3 digits
+                ssh_path="/www/${site_name}_*/public"
+                
+                log_success "Using wildcard path pattern: $ssh_path"
+                log_info "GitHub Actions will resolve this to the actual path during deployment"
             else
-                log_error "Failed to determine web root path via SSH"
-                log_error "The site may need more time to fully provision"
-                log_error "Try running the credentials step again in a few minutes"
-                exit 1
+                log_info "Attempting to find web root via SSH..."
+                
+                # Try to find the path via SSH (local/non-containerized environment)
+                if ssh_path=$(find_ssh_path "$site_name" "$ssh_host" "$ssh_port"); then
+                    log_success "Found web root via SSH: $ssh_path"
+                else
+                    log_warning "SSH fallback failed - using wildcard pattern"
+                    ssh_path="/www/${site_name}_*/public"
+                    log_info "Using wildcard path pattern: $ssh_path"
+                fi
             fi
         fi
     fi
@@ -634,14 +647,20 @@ update_git_json() {
     local site_id="$4"
     local ssh_path="$5"
     
-    # Validate that we have a real path (not empty, null, or wildcard pattern)
-    if [[ -z "$ssh_path" || "$ssh_path" == "null" || "$ssh_path" == *"*"* ]]; then
+    # Validate that we have a path (allow wildcards for CI environments)
+    if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
         log_error "Invalid or missing SSH path: '$ssh_path'"
-        log_error "Cannot proceed without a valid web root path"
+        log_error "Cannot proceed without a web root path"
         exit 1
     fi
     
-    log_success "Using web root from Kinsta API: $ssh_path"
+    # Check if path contains wildcard (for CI/containerized environments)
+    if [[ "$ssh_path" == *"*"* ]]; then
+        log_success "Using wildcard path pattern: $ssh_path"
+        log_info "This will be resolved to the actual path during GitHub Actions deployment"
+    else
+        log_success "Using web root from Kinsta API: $ssh_path"
+    fi
     
     log_info "Final path: $ssh_path"
     log_info "Updating git.json with site credentials..."
