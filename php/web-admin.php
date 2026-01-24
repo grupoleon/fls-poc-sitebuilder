@@ -112,11 +112,8 @@
                                 Your website is being deployed. You can monitor the progress below.
                             </div>
                             <div class="notice-actions mt-3">
-                                <button onclick="window.forceGitHubCompletion()" class="btn btn-sm btn-outline-light">
-                                    <i class="fas fa-refresh me-2"></i>Check Status
-                                </button>
                                 <button onclick="window.adminInterface.deployNewSite()"
-                                    class="btn btn-sm btn-outline-light ml-2">
+                                    class="btn btn-sm btn-outline-light">
                                     <i class="fas fa-rocket me-2"></i>Start Over
                                 </button>
                             </div>
@@ -182,189 +179,147 @@
                         <div class="card mb-6" id="deployment-progress-card" style="display: none;">
                             <div class="card-header text-white">
                                 <h2 class="card-title text-white mb-0">Deployment Progress</h2>
-                                    <div class="flex items-center gap-2">
-                                        <div
-                                            class="status-badge bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                                            READY</div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-6">
-                                    <!-- Compact Horizontal Steps (Default View) -->
-                                    <div id="deployment-status-compact" class="deployment-status-compact mb-4">
-                                        <div class="compact-steps-container">
-                                            <div class="compact-step pending" data-step="create-site">
-                                                <div class="step-icon"><i class="fas fa-server"></i></div>
-                                                <div class="step-label">Setup Kinsta</div>
-                                                <div class="step-status">pending</div>
-                                                <div class="step-time">Waiting...</div>
-                                            </div>
-                                            <div class="step-connector"></div>
-                                            <div class="compact-step pending" data-step="get-cred">
-                                                <div class="step-icon"><i class="fas fa-key"></i></div>
-                                                <div class="step-label">Credentials</div>
-                                                <div class="step-status">pending</div>
-                                                <div class="step-time">Waiting...</div>
-                                            </div>
-                                            <div class="step-connector"></div>
-                                            <div class="compact-step pending" data-step="trigger-deploy">
-                                                <div class="step-icon"><i class="fas fa-computer"></i></div>
-                                                <div class="step-label">Deploy</div>
-                                                <div class="step-status">pending</div>
-                                                <div class="step-time">Waiting...</div>
-                                            </div>
-                                            <div class="step-connector"></div>
-                                            <div class="compact-step pending" data-step="github-actions">
-                                                <div class="step-icon"><i class="fab fa-github"></i></div>
-                                                <div class="step-label">Actions</div>
-                                                <div class="step-status">pending</div>
-                                                <div class="step-time">Waiting...</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Detailed Vertical Steps (Hidden by Default) -->
-                                    <div id="deployment-status-list" class="space-y-4" style="display: none;">
-
-                                        <!-- Create Site Step -->
-                                        <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
-                                            data-step="create-site">
-                                            <div class="flex items-center space-x-4">
-                                                <div
-                                                    class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
-                                                    <i class="fas fa-plus-circle"></i>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h3
-                                                        class="status-step-title text-lg font-semibold text-emerald-800 mb-1">
-                                                        Initiate Site Creation</h3>
-                                                    <p class="status-step-desc text-gray-500 text-sm mb-2">Creating
-                                                        WordPress site on Kinsta platform</p>
-                                                    <div
-                                                        class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
-                                                        Waiting...</div>
-                                                </div>
-                                                <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Get Credentials Step -->
-                                        <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
-                                            data-step="get-cred">
-                                            <div class="flex items-center space-x-4">
-                                                <div
-                                                    class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
-                                                    <i class="fas fa-key"></i>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h3
-                                                        class="status-step-title text-lg font-semibold text-emerald-800 mb-1">
-                                                        Get Credentials</h3>
-                                                    <p class="status-step-desc text-gray-500 text-sm mb-2">Retrieving
-                                                        site
-                                                        access credentials</p>
-                                                    <div
-                                                        class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
-                                                        Waiting...</div>
-                                                </div>
-                                                <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Trigger Deploy Step -->
-                                        <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
-                                            data-step="trigger-deploy">
-                                            <div class="flex items-center space-x-4">
-                                                <div
-                                                    class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
-                                                    <i class="fas fa-computer"></i>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h3
-                                                        class="status-step-title text-lg font-semibold text-gray-600 mb-1">
-                                                        Trigger Deployment</h3>
-                                                    <p class="status-step-desc text-gray-500 text-sm mb-2">Deploying
-                                                        theme
-                                                        and content to site</p>
-                                                    <div
-                                                        class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
-                                                        Waiting...</div>
-                                                </div>
-                                                <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- GitHub Actions Step -->
-                                        <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
-                                            data-step="github-actions">
-                                            <div class="flex items-center space-x-4">
-                                                <div
-                                                    class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
-                                                    <i class="fab fa-github"></i>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h3
-                                                        class="status-step-title text-lg font-semibold text-gray-600 mb-1">
-                                                        GitHub Actions</h3>
-                                                    <p class="status-step-desc text-gray-500 text-sm mb-2">Monitoring
-                                                        GitHub
-                                                        Actions deployment status</p>
-                                                    <div
-                                                        class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
-                                                        Waiting...</div>
-                                                </div>
-                                                <div class="flex flex-col items-center space-y-2">
-                                                    <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
-                                                    <button onclick="window.adminInterface.forceRefreshGitHubStatus()"
-                                                        class="btn btn-xs btn-outline-primary github-refresh-btn"
-                                                        title="Refresh GitHub Actions status">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="status-badge bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                        READY</div>
                                 </div>
                             </div>
-
-                            <!-- Manual Control Panel -->
-                            <div class="card mb-4" id="manual-controls-card" style="display: none;">
-                                <div class="card-header">
-                                    <h2 class="card-title">Manual Controls</h2>
-                                    <p class="text-muted mb-0">Use these buttons if deployment appears stuck</p>
+                            <div class="card-body p-6">
+                                <!-- Compact Horizontal Steps (Default View) -->
+                                <div id="deployment-status-compact" class="deployment-status-compact mb-4">
+                                    <div class="compact-steps-container">
+                                        <div class="compact-step pending" data-step="create-site">
+                                            <div class="step-icon"><i class="fas fa-server"></i></div>
+                                            <div class="step-label">Setup Kinsta</div>
+                                            <div class="step-status">pending</div>
+                                            <div class="step-time">Waiting...</div>
+                                        </div>
+                                        <div class="step-connector"></div>
+                                        <div class="compact-step pending" data-step="get-cred">
+                                            <div class="step-icon"><i class="fas fa-key"></i></div>
+                                            <div class="step-label">Credentials</div>
+                                            <div class="step-status">pending</div>
+                                            <div class="step-time">Waiting...</div>
+                                        </div>
+                                        <div class="step-connector"></div>
+                                        <div class="compact-step pending" data-step="trigger-deploy">
+                                            <div class="step-icon"><i class="fas fa-computer"></i></div>
+                                            <div class="step-label">Deploy</div>
+                                            <div class="step-status">pending</div>
+                                            <div class="step-time">Waiting...</div>
+                                        </div>
+                                        <div class="step-connector"></div>
+                                        <div class="compact-step pending" data-step="github-actions">
+                                            <div class="step-icon"><i class="fab fa-github"></i></div>
+                                            <div class="step-label">Actions</div>
+                                            <div class="step-status">pending</div>
+                                            <div class="step-time">Waiting...</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="flex gap-3 flex-wrap">
-                                        <button onclick="window.forceGitHubCompletion()" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-refresh me-2"></i>Force Check GitHub Status
-                                        </button>
-                                        <button onclick="window.adminInterface.forceRefreshGitHubStatus()"
-                                            class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-sync-alt me-2"></i>Refresh Actions Status
-                                        </button>
-                                        <button onclick="window.forceHideDeploymentForm()"
-                                            class="btn btn-warning btn-sm">
-                                            <i class="fas fa-eye-slash me-2"></i>Hide Form (Fix UI)
-                                        </button>
-                                        <button onclick="window.resetGitHubState()"
-                                            class="btn btn-outline-warning btn-sm">
-                                            <i class="fas fa-undo me-2"></i>Reset GitHub State
-                                        </button>
-                                        <button onclick="window.adminInterface.deployNewSite()"
-                                            class="btn btn-outline-danger btn-sm">
-                                            <i class="fas fa-rocket me-2"></i>Start Over (Deploy New Site)
-                                        </button>
+                                <!-- Detailed Vertical Steps (Hidden by Default) -->
+                                <div id="deployment-status-list" class="space-y-4" style="display: none;">
+
+                                    <!-- Create Site Step -->
+                                    <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
+                                        data-step="create-site">
+                                        <div class="flex items-center space-x-4">
+                                            <div
+                                                class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+                                                <i class="fas fa-plus-circle"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h3
+                                                    class="status-step-title text-lg font-semibold text-emerald-800 mb-1">
+                                                    Initiate Site Creation</h3>
+                                                <p class="status-step-desc text-gray-500 text-sm mb-2">Creating
+                                                    WordPress site on Kinsta platform</p>
+                                                <div
+                                                    class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
+                                                    Waiting...</div>
+                                            </div>
+                                            <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
+                                        </div>
                                     </div>
-                                    <div class="mt-3">
-                                        <small class="text-muted">
-                                            <strong>Tip:</strong> If both form and progress are visible, click "Hide
-                                            Form
-                                            (Fix UI)" first, then "Force Check GitHub Status"
-                                        </small>
+
+                                    <!-- Get Credentials Step -->
+                                    <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
+                                        data-step="get-cred">
+                                        <div class="flex items-center space-x-4">
+                                            <div
+                                                class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+                                                <i class="fas fa-key"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h3
+                                                    class="status-step-title text-lg font-semibold text-emerald-800 mb-1">
+                                                    Get Credentials</h3>
+                                                <p class="status-step-desc text-gray-500 text-sm mb-2">Retrieving
+                                                    site
+                                                    access credentials</p>
+                                                <div
+                                                    class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
+                                                    Waiting...</div>
+                                            </div>
+                                            <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
+                                        </div>
                                     </div>
-                                    </small>
+
+                                    <!-- Trigger Deploy Step -->
+                                    <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
+                                        data-step="trigger-deploy">
+                                        <div class="flex items-center space-x-4">
+                                            <div
+                                                class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+                                                <i class="fas fa-computer"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h3 class="status-step-title text-lg font-semibold text-gray-600 mb-1">
+                                                    Trigger Deployment</h3>
+                                                <p class="status-step-desc text-gray-500 text-sm mb-2">Deploying
+                                                    theme
+                                                    and content to site</p>
+                                                <div
+                                                    class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
+                                                    Waiting...</div>
+                                            </div>
+                                            <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- GitHub Actions Step -->
+                                    <div class="status-step-card pending bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm opacity-60"
+                                        data-step="github-actions">
+                                        <div class="flex items-center space-x-4">
+                                            <div
+                                                class="status-icon-large bg-gradient-to-r from-gray-400 to-slate-400 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+                                                <i class="fab fa-github"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h3 class="status-step-title text-lg font-semibold text-gray-600 mb-1">
+                                                    GitHub Actions</h3>
+                                                <p class="status-step-desc text-gray-500 text-sm mb-2">Monitoring
+                                                    GitHub
+                                                    Actions deployment status</p>
+                                                <div
+                                                    class="status-step-time text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">
+                                                    Waiting...</div>
+                                            </div>
+                                            <div class="flex flex-col items-center space-y-2">
+                                                <div class="status-pending-icon text-gray-400 text-xl">WAIT</div>
+                                                <button onclick="window.adminInterface.forceRefreshGitHubStatus()"
+                                                    class="btn btn-xs btn-outline-primary github-refresh-btn"
+                                                    title="Refresh GitHub Actions status">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
-
+                        </div>
 
                         <div class="card" id="deployment-logs-card" style="display: none;">
                             <div class="card-header d-flex justify-content-between align-items-center gap-4">

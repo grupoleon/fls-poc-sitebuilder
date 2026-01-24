@@ -656,7 +656,6 @@ class AdminInterface {
 
         const quickDeployCard=document.getElementById('quick-deploy-card');
         const deploymentProgressCard=document.getElementById('deployment-progress-card');
-        const manualControlsCard=document.getElementById('manual-controls-card');
         const deploymentLogsCard=document.getElementById('deployment-logs-card');
         const progressNotice=document.getElementById('deployment-progress-notice');
         const deployBtn=document.querySelector('.deploy-btn');
@@ -707,15 +706,10 @@ class AdminInterface {
             resetBtn.classList.toggle('btn-disabled',inProgress);
         }
 
-        // Control visibility of deployment logs and manual controls cards
+        // Control visibility of deployment logs card
         if(deploymentLogsCard) {
             deploymentLogsCard.style.display=inProgress? 'block':'none';
             debugLog(`${inProgress? 'Shown':'Hidden'} deployment logs card`);
-        }
-
-        if(manualControlsCard) {
-            manualControlsCard.style.display=inProgress? 'block':'none';
-            debugLog(`${inProgress? 'Shown':'Hidden'} manual controls card`);
         }
     }
 
@@ -9491,48 +9485,6 @@ document.addEventListener('DOMContentLoaded',() => {
 
     // Expose test functions for debugging
     window.testPopup=() => adminInterface.testPopup();
-    // Manual refresh function for debugging GitHub Actions status
-    window.forceRefreshGitHubStatus=async () => {
-        debugLog('🔄 Manually forcing GitHub Actions status refresh...');
-        try {
-            const response=await fetch('?action=github_actions_status');
-            const data=await response.json();
-            debugLog('🔍 GitHub Actions API Response:',data);
-
-            if(data.success) {
-                debugLog('📊 GitHub Status Details:',{
-                    status: data.data.status,
-                    github_status: data.data.github_status,
-                    github_conclusion: data.data.github_conclusion,
-                    run_id: data.data.run_id,
-                    message: data.data.message
-                });
-
-                // Force update the UI
-                adminInterface.updateGitHubActionsDisplay(data.data);
-
-                // Check if completed and trigger completion handler
-                const isCompleted=data.data.status==='completed'||
-                    data.data.status==='success'||
-                    data.data.status==='failed'||
-                    data.data.status==='failure'||
-                    data.data.status==='cancelled'||
-                    data.data.status==='canceled'||
-                    data.data.github_conclusion==='success'||
-                    data.data.github_conclusion==='failure'||
-                    data.data.github_conclusion==='cancelled';
-
-                debugLog('✅ Is Completed:',isCompleted);
-
-                if(isCompleted) {
-                    debugLog('🎉 Triggering completion handler...');
-                    adminInterface.handleGitHubActionsCompletion(data.data);
-                }
-            }
-        } catch(error) {
-            debugLog('❌ Error refreshing GitHub status:',error,'error');
-        }
-    };
 
     window.testGitHubCompletion=(status) => adminInterface.testGitHubCompletion(status);
 
@@ -9661,25 +9613,7 @@ document.addEventListener('DOMContentLoaded',() => {
 
     // Debug functions for GitHub Actions
     window.testGitHubStatus=() => adminInterface.pollGitHubActionsStatus();
-    window.forceGitHubCompletion=() => {
-        debugLog('🔧 Forcing GitHub Actions completion check...');
-        adminInterface.githubActionsCompleted=false;
-        adminInterface.pollGitHubActionsStatus();
-        // Show user feedback
-        if(adminInterface.showAlert) {
-            adminInterface.showAlert('🔄 Checking GitHub Actions status...','info');
-        }
-    };
-    window.resetGitHubState=() => {
-        debugLog('🔄 Resetting GitHub Actions state...');
-        adminInterface.githubActionsCompleted=false;
-        adminInterface.githubActionsManuallyUpdated=false;
-        adminInterface.stopAllPolling();
-        // Show user feedback
-        if(adminInterface.showAlert) {
-            adminInterface.showAlert('✅ GitHub state reset successfully','success');
-        }
-    };
+
     window.forceCloseModal=() => {
         debugLog('🗂️ Force closing completion modal...');
         const modal=document.getElementById('deployment-completion-modal');
@@ -9701,11 +9635,7 @@ document.addEventListener('DOMContentLoaded',() => {
         if(modal) modal.remove();
         adminInterface.showAlert('Deployment marked as completed','success');
     };
-    window.forceHideDeploymentForm=() => {
-        debugLog('� Force hiding deployment form and showing progress sections...');
-        adminInterface.setDeploymentInProgress(true);
-        adminInterface.showAlert('✅ Fixed UI state - form hidden, progress visible','success');
-    };
+
     window.forceShowDeploymentForm=() => {
         debugLog('🔧 Force showing deployment form and hiding progress sections...');
         adminInterface.setDeploymentInProgress(false);
@@ -9714,7 +9644,6 @@ document.addEventListener('DOMContentLoaded',() => {
 
     debugLog('Debug mode controls: Call toggleDebug() or adminInterface.toggleDebug() to toggle logging');
     debugLog('Test functions: testDeployNewSite(), testDeployAgain(), testOpenSiteUrl()');
-    debugLog('GitHub debug: testGitHubStatus(), forceGitHubCompletion(), resetGitHubState()');
+    debugLog('GitHub debug: testGitHubStatus()');
     debugLog('Modal debug: forceCloseModal(), forceCompleteDeployment()');
-    debugLog('Status debug: Click "Force Check GitHub Status" button or call forceGitHubCompletion()');
 });
