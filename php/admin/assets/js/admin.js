@@ -6375,9 +6375,9 @@ class AdminInterface {
                 }
 
             } else {
-                const errorMsg = result.message || 'Reset failed';
-                debugLog('Reset system failed:', errorMsg, 'error');
-                this.showAlert(errorMsg + '. Check browser console for details.','error');
+                const errorMsg=result.message||'Reset failed';
+                debugLog('Reset system failed:',errorMsg,'error');
+                this.showAlert(errorMsg+'. Check browser console for details.','error');
             }
         } catch(error) {
             debugLog('Reset failed with exception:',error,'error');

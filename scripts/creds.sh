@@ -284,6 +284,13 @@ store_github_secrets() {
     
     log_success "Retrieved public key (ID: $key_id)"
     
+    # Get KINSTA_API_TOKEN from config
+    local kinsta_api_token
+    kinsta_api_token=$(jq -r '.site.kinsta_token // empty' "$ROOT_DIR/config/config.json")
+    if [[ -z "$kinsta_api_token" || "$kinsta_api_token" == "null" ]]; then
+        kinsta_api_token="${KINSTA_API_TOKEN:-}"
+    fi
+    
     # Store each credential as a separate secret
     local secrets=(
         "KINSTA_SITE_ID:$site_id"
@@ -294,6 +301,14 @@ store_github_secrets() {
         "KINSTA_USER:$site_name"
         "ACTIVE_THEME:$active_theme"
     )
+    
+    # Add KINSTA_API_TOKEN if available
+    if [[ -n "$kinsta_api_token" && "$kinsta_api_token" != "null" ]]; then
+        secrets+=("KINSTA_API_TOKEN:$kinsta_api_token")
+        log_info "Including Kinsta API token in secrets"
+    else
+        log_warning "Kinsta API token not found in config - cache clearing via API will not be available"
+    fi
     
     local success_count=0
     local total_secrets=${#secrets[@]}

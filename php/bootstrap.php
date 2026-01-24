@@ -583,14 +583,14 @@ function handleRequest()
                 // Clear temporary files, logs, and reset deployment status
                 try {
                     $resetSuccess = resetSystem();
-                    $message = $resetSuccess 
-                        ? 'System reset successfully' 
+                    $message      = $resetSuccess
+                        ? 'System reset successfully'
                         : 'System reset completed with some warnings. Check logs for details.';
-                    
+
                     echo json_encode([
-                        'success' => true, // Always return true since partial reset is still useful
-                        'message' => $message,
-                        'warnings' => !$resetSuccess,
+                        'success'  => true, // Always return true since partial reset is still useful
+                        'message'  => $message,
+                        'warnings' => ! $resetSuccess,
                     ]);
                 } catch (Exception $e) {
                     error_log("Critical reset error: " . $e->getMessage());
@@ -966,7 +966,7 @@ function resetSystem()
         $logsDir = __DIR__ . '/../logs';
 
         // Create logs directory if it doesn't exist
-        if (!is_dir($logsDir)) {
+        if (! is_dir($logsDir)) {
             try {
                 mkdir($logsDir, 0755, true);
             } catch (Exception $e) {
@@ -979,7 +979,7 @@ function resetSystem()
         $logSubdirs = ['api', 'deployment'];
         foreach ($logSubdirs as $subdir) {
             $subdirPath = $logsDir . '/' . $subdir;
-            if (!is_dir($subdirPath)) {
+            if (! is_dir($subdirPath)) {
                 try {
                     mkdir($subdirPath, 0755, true);
                 } catch (Exception $e) {
@@ -1366,7 +1366,7 @@ function deleteKinstaSite($siteId)
  */
 function removeDirectory($dir)
 {
-    if (!is_dir($dir)) {
+    if (! is_dir($dir)) {
         return false;
     }
 
