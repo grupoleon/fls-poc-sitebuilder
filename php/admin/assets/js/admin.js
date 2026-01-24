@@ -655,6 +655,9 @@ class AdminInterface {
         debugLog(`setDeploymentInProgress called with: ${inProgress}`);
 
         const quickDeployCard=document.getElementById('quick-deploy-card');
+        const deploymentProgressCard=document.getElementById('deployment-progress-card');
+        const manualControlsCard=document.getElementById('manual-controls-card');
+        const deploymentLogsCard=document.getElementById('deployment-logs-card');
         const progressNotice=document.getElementById('deployment-progress-notice');
         const deployBtn=document.querySelector('.deploy-btn');
         const resetBtn=document.querySelector('.reset-btn');
@@ -668,6 +671,19 @@ class AdminInterface {
                 // Show the quick deploy section
                 quickDeployCard.style.display='block';
                 debugLog('Shown deployment form');
+            }
+        }
+
+        // Show/hide the deployment progress card
+        if(deploymentProgressCard) {
+            if(inProgress) {
+                // Show the deployment progress card
+                deploymentProgressCard.style.display='block';
+                debugLog('Shown deployment progress card');
+            } else {
+                // Hide the deployment progress card
+                deploymentProgressCard.style.display='none';
+                debugLog('Hidden deployment progress card');
             }
         }
 
@@ -691,33 +707,7 @@ class AdminInterface {
             resetBtn.classList.toggle('btn-disabled',inProgress);
         }
 
-        // Control visibility of deployment status and logs cards
-        // Get all cards and filter by their content
-        const allCards=document.querySelectorAll('.card');
-        let deploymentStatusCard=null;
-        let deploymentLogsCard=null;
-        let manualControlsCard=null;
-
-        allCards.forEach(card => {
-            const titleElement=card.querySelector('h2.card-title, .card-title, h2');
-            if(titleElement) {
-                const titleText=titleElement.textContent||titleElement.innerText;
-                if(titleText.includes('Deployment Progress')) {
-                    deploymentStatusCard=card;
-                } else if(titleText.includes('Deployment Logs')) {
-                    deploymentLogsCard=card;
-                } else if(titleText.includes('Manual Controls')) {
-                    manualControlsCard=card;
-                }
-            }
-        });
-
-
-        if(deploymentStatusCard) {
-            deploymentStatusCard.style.display='block';
-            debugLog('Deployment status card always visible');
-        }
-
+        // Control visibility of deployment logs and manual controls cards
         if(deploymentLogsCard) {
             deploymentLogsCard.style.display=inProgress? 'block':'none';
             debugLog(`${inProgress? 'Shown':'Hidden'} deployment logs card`);

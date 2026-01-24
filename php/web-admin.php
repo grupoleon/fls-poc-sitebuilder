@@ -176,11 +176,12 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
 
-
-                            <div class="card mb-6">
-                                <div class="card-header text-white">
-                                    <h2 class="card-title text-white mb-0">Deployment Progress</h2>
+                        <!-- Deployment Progress Card (separate, hidden by default) -->
+                        <div class="card mb-6" id="deployment-progress-card" style="display: none;">
+                            <div class="card-header text-white">
+                                <h2 class="card-title text-white mb-0">Deployment Progress</h2>
                                     <div class="flex items-center gap-2">
                                         <div
                                             class="status-badge bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
@@ -326,7 +327,7 @@
                             </div>
 
                             <!-- Manual Control Panel -->
-                            <div class="card mb-4">
+                            <div class="card mb-4" id="manual-controls-card" style="display: none;">
                                 <div class="card-header">
                                     <h2 class="card-title">Manual Controls</h2>
                                     <p class="text-muted mb-0">Use these buttons if deployment appears stuck</p>
@@ -363,10 +364,9 @@
                                     </small>
                                 </div>
                             </div>
-                        </div>
 
 
-                        <div class="card">
+                        <div class="card" id="deployment-logs-card" style="display: none;">
                             <div class="card-header d-flex justify-content-between align-items-center gap-4">
                                 <h2 class="card-title mb-0">Deployment Logs</h2>
                                 <div class="d-flex gap-2">
