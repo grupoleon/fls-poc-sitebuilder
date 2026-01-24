@@ -4,3 +4,6 @@
 # environment files
 .env
 
+# .github directory
+.github/
+!.github/workflows/
