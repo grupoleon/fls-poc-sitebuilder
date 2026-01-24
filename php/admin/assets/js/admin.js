@@ -6375,11 +6375,13 @@ class AdminInterface {
                 }
 
             } else {
-                this.showAlert(result.message||'Reset failed','error');
+                const errorMsg = result.message || 'Reset failed';
+                debugLog('Reset system failed:', errorMsg, 'error');
+                this.showAlert(errorMsg + '. Check browser console for details.','error');
             }
         } catch(error) {
-            debugLog('Reset failed:',error,'error');
-            this.showAlert('Failed to reset system','error');
+            debugLog('Reset failed with exception:',error,'error');
+            this.showAlert('Failed to reset system. Please refresh the page and try again.','error');
         }
     }
 

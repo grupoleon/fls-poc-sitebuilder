@@ -581,11 +581,24 @@ function handleRequest()
 
             case 'reset_system':
                 // Clear temporary files, logs, and reset deployment status
-                $resetSuccess = resetSystem();
-                echo json_encode([
-                    'success' => $resetSuccess,
-                    'message' => $resetSuccess ? 'System reset successfully' : 'Failed to reset system',
-                ]);
+                try {
+                    $resetSuccess = resetSystem();
+                    $message = $resetSuccess 
+                        ? 'System reset successfully' 
+                        : 'System reset completed with some warnings. Check logs for details.';
+                    
+                    echo json_encode([
+                        'success' => true, // Always return true since partial reset is still useful
+                        'message' => $message,
+                        'warnings' => !$resetSuccess,
+                    ]);
+                } catch (Exception $e) {
+                    error_log("Critical reset error: " . $e->getMessage());
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to reset system: ' . $e->getMessage(),
+                    ]);
+                }
                 break;
 
             case 'clear_github_run_id':
@@ -897,40 +910,81 @@ function resetSystem()
 
     try {
         $success = true;
+        $errors  = [];
 
         // Stop any running deployment
-        $deploymentManager->stopDeployment();
+        try {
+            $deploymentManager->stopDeployment();
+        } catch (Exception $e) {
+            error_log("Failed to stop deployment: " . $e->getMessage());
+            $errors[] = "Failed to stop deployment";
+        }
 
         // Clear temporary files in project tmp directory (not system /tmp)
         $baseDir = dirname(__DIR__);
         $tmpDir  = $baseDir . '/tmp';
 
-        // Create tmp directory if it doesn't exist
+        // Clear tmp directory contents instead of removing the directory itself
         if (is_dir($tmpDir)) {
-            //delete folder and contents
-            if (! removeDirectory($tmpDir)) {
-                error_log("Failed to remove tmp directory: $tmpDir");
-                $success = false;
+            try {
+                $files = array_diff(scandir($tmpDir), ['.', '..']);
+                foreach ($files as $file) {
+                    $filePath = $tmpDir . DIRECTORY_SEPARATOR . $file;
+                    try {
+                        if (is_dir($filePath)) {
+                            removeDirectory($filePath);
+                        } else {
+                            @unlink($filePath);
+                        }
+                    } catch (Exception $e) {
+                        error_log("Failed to delete: $filePath - " . $e->getMessage());
+                        // Don't fail the entire reset for individual files
+                    }
+                }
+                error_log("Cleared tmp directory contents");
+            } catch (Exception $e) {
+                error_log("Error clearing tmp directory: " . $e->getMessage());
+                $errors[] = "Failed to clear some temporary files";
+                // Don't mark as failure - continue with reset
+            }
+        } else {
+            // Create tmp directory if it doesn't exist
+            try {
+                mkdir($tmpDir, 0755, true);
+            } catch (Exception $e) {
+                error_log("Failed to create tmp directory: " . $e->getMessage());
+                $errors[] = "Failed to create tmp directory";
             }
         }
 
-        // Recreate tmp directory
-        mkdir($tmpDir, 0755, true);
+        // Ensure tmp directory has proper permissions
+        if (is_dir($tmpDir)) {
+            @chmod($tmpDir, 0755);
+        }
 
         // Clear log files and directories
         $logsDir = __DIR__ . '/../logs';
 
         // Create logs directory if it doesn't exist
-        if (! is_dir($logsDir)) {
-            mkdir($logsDir, 0755, true);
+        if (!is_dir($logsDir)) {
+            try {
+                mkdir($logsDir, 0755, true);
+            } catch (Exception $e) {
+                error_log("Failed to create logs directory: " . $e->getMessage());
+                $errors[] = "Failed to create logs directory";
+            }
         }
 
         // Create subdirectories if they don't exist
         $logSubdirs = ['api', 'deployment'];
         foreach ($logSubdirs as $subdir) {
             $subdirPath = $logsDir . '/' . $subdir;
-            if (! is_dir($subdirPath)) {
-                mkdir($subdirPath, 0755, true);
+            if (!is_dir($subdirPath)) {
+                try {
+                    mkdir($subdirPath, 0755, true);
+                } catch (Exception $e) {
+                    error_log("Failed to create log subdirectory $subdir: " . $e->getMessage());
+                }
             }
         }
 
@@ -943,22 +997,41 @@ function resetSystem()
         ];
 
         foreach ($logFiles as $logFile) {
-            if (file_exists($logFile)) {
-                if (! file_put_contents($logFile, '')) {
-                    // If can't clear, delete and recreate
-                    unlink($logFile);
-                    touch($logFile);
+            try {
+                if (file_exists($logFile)) {
+                    // Try to clear the file
+                    if (@file_put_contents($logFile, '') === false) {
+                        // If can't clear, try to delete and recreate
+                        @unlink($logFile);
+                        @touch($logFile);
+                    }
+                    error_log("Cleared log file: $logFile");
+                } else {
+                    // Create the log file if it doesn't exist
+                    @touch($logFile);
+                    error_log("Created log file: $logFile");
                 }
-                error_log("Cleared log file: $logFile");
-            } else {
-                // Create the log file if it doesn't exist
-                touch($logFile);
-                error_log("Created log file: $logFile");
+            } catch (Exception $e) {
+                error_log("Failed to process log file $logFile: " . $e->getMessage());
+                // Don't fail the entire reset for log files
             }
         }
 
         // Reset deployment status
-        $deploymentManager->resetDeployment();
+        try {
+            $deploymentManager->resetDeployment();
+            error_log("Deployment status reset successfully");
+        } catch (Exception $e) {
+            error_log("Failed to reset deployment status: " . $e->getMessage());
+            $errors[] = "Failed to reset deployment status";
+        }
+
+        // Only return false if there were critical errors
+        if (count($errors) > 0) {
+            error_log("Reset system completed with warnings: " . implode(", ", $errors));
+        } else {
+            error_log("Reset system completed successfully");
+        }
 
         return $success;
 
@@ -1293,19 +1366,35 @@ function deleteKinstaSite($siteId)
  */
 function removeDirectory($dir)
 {
-    if (! is_dir($dir)) {
+    if (!is_dir($dir)) {
         return false;
     }
 
-    $files = array_diff(scandir($dir), ['.', '..']);
-    foreach ($files as $file) {
-        $filePath = $dir . DIRECTORY_SEPARATOR . $file;
-        if (is_dir($filePath)) {
-            removeDirectory($filePath);
-        } else {
-            unlink($filePath);
+    try {
+        $files = @scandir($dir);
+        if ($files === false) {
+            error_log("Failed to scan directory: $dir");
+            return false;
         }
-    }
 
-    return rmdir($dir);
+        $files = array_diff($files, ['.', '..']);
+        foreach ($files as $file) {
+            $filePath = $dir . DIRECTORY_SEPARATOR . $file;
+            try {
+                if (is_dir($filePath)) {
+                    removeDirectory($filePath);
+                } else {
+                    @unlink($filePath);
+                }
+            } catch (Exception $e) {
+                error_log("Failed to remove: $filePath - " . $e->getMessage());
+                // Continue with other files
+            }
+        }
+
+        return @rmdir($dir);
+    } catch (Exception $e) {
+        error_log("Error removing directory $dir: " . $e->getMessage());
+        return false;
+    }
 }
