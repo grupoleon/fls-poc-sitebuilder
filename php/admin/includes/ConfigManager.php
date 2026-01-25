@@ -118,6 +118,8 @@ class ConfigManager
         switch ($type) {
             case 'main':
                 return $this->validateMainConfig($data);
+            case 'local':
+                return $this->validateLocalConfig($data);
             case 'theme':
                 return $this->validateThemeConfig($data);
             case 'git':
@@ -141,6 +143,18 @@ class ConfigManager
             }
         }
         return true;
+    }
+
+    /**
+     * Validate local configuration
+     * Local config is flexible - can contain environment, logging, uploads, interface, integrations, etc.
+     * No required fields - allow any valid JSON structure
+     */
+    private function validateLocalConfig($data)
+    {
+        // Local config is flexible and has no strict requirements
+        // Just ensure it's an array
+        return is_array($data);
     }
 
     /**
