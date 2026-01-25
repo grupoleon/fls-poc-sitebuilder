@@ -22,6 +22,7 @@ class ConfigManager
     {
         $configFiles = [
             'main'  => 'config.json',
+            'local' => 'local-config.json',
             'theme' => 'theme-config.json',
             'git'   => 'git.json',
             'site'  => 'site.json',
@@ -77,6 +78,7 @@ class ConfigManager
     {
         $configFiles = [
             'main'  => 'config.json',
+            'local' => 'local-config.json',
             'theme' => 'theme-config.json',
             'git'   => 'git.json',
             'site'  => 'site.json',

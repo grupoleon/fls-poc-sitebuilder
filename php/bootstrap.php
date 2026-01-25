@@ -780,8 +780,8 @@ function handleRequest()
 
             case 'get_clickup_config':
                 try {
-                    $mainConfig    = $configManager->getConfig('config');
-                    $clickupConfig = $mainConfig['integrations']['clickup'] ?? [
+                    $localConfig   = $configManager->getConfig('local');
+                    $clickupConfig = $localConfig['integrations']['clickup'] ?? [
                         'api_token'       => '',
                         'team_id'         => '',
                         'webhook_enabled' => true,
@@ -812,22 +812,22 @@ function handleRequest()
                         throw new Exception('API Token is required');
                     }
 
-                    // Load current config
-                    $mainConfig = $configManager->getConfig('main');
+                    // Load current local config
+                    $localConfig = $configManager->getConfig('local');
 
-                    // Update ClickUp configuration
-                    if (! isset($mainConfig['integrations'])) {
-                        $mainConfig['integrations'] = [];
+                    // Update ClickUp configuration in local config
+                    if (! isset($localConfig['integrations'])) {
+                        $localConfig['integrations'] = [];
                     }
 
-                    $mainConfig['integrations']['clickup'] = [
+                    $localConfig['integrations']['clickup'] = [
                         'api_token'       => $apiToken,
                         'team_id'         => $teamId,
                         'webhook_enabled' => $webhookEnabled,
                     ];
 
-                    // Save config
-                    $configManager->updateConfig('main', $mainConfig);
+                    // Save to local config
+                    $configManager->updateConfig('local', $localConfig);
 
                     echo json_encode([
                         'success' => true,
