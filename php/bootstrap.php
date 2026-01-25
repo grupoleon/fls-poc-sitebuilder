@@ -813,7 +813,7 @@ function handleRequest()
                     }
 
                     // Load current config
-                    $mainConfig = $configManager->getConfig('config');
+                    $mainConfig = $configManager->getConfig('main');
 
                     // Update ClickUp configuration
                     if (! isset($mainConfig['integrations'])) {
@@ -827,7 +827,7 @@ function handleRequest()
                     ];
 
                     // Save config
-                    $configManager->updateConfig('config', $mainConfig);
+                    $configManager->updateConfig('main', $mainConfig);
 
                     echo json_encode([
                         'success' => true,
