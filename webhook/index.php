@@ -39,7 +39,7 @@ function logWebhook($message, $data = null)
 
 function getClickUpConfig()
 {
-    $configFile = __DIR__ . '/../config/config.json';
+    $configFile = __DIR__ . '/../config/local-config.json';
 
     if (! file_exists($configFile)) {
         sendResponse(false, 'Configuration file not found', null, 500);
