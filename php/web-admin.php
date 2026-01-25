@@ -2545,7 +2545,8 @@
                                             </label>
                                             <div class="config-input-group">
                                                 <input type="password" id="clickup-api-token-input" class="form-input"
-                                                    placeholder="pk_your_clickup_api_token">
+                                                    name="clickup_api_token" autocomplete="off"
+                                                    placeholder="Enter your ClickUp API Token" value="">
                                                 <button class="btn btn-sm btn-outline-primary"
                                                     onclick="window.localConfigManager.toggleClickUpTokenVisibility()">
                                                     <i class="fas fa-eye" id="clickup-token-eye-icon"></i>
@@ -2563,7 +2564,8 @@
                                                 <i class="fas fa-users"></i> Team ID (Optional)
                                             </label>
                                             <input type="text" id="clickup-team-id-input" class="form-input"
-                                                placeholder="Enter your ClickUp Team ID">
+                                                name="clickup_team_id" autocomplete="off"
+                                                placeholder="Enter your ClickUp Team ID" value="">
                                             <small class="form-help">
                                                 Find in ClickUp Settings → Workspace → Team ID
                                             </small>

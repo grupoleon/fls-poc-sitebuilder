@@ -323,14 +323,24 @@ class LocalConfigManager {
             const response=await fetch('/php/bootstrap.php?action=get_clickup_config');
             const data=await response.json();
 
+            debugLog('ClickUp API Response: '+JSON.stringify(data),'info');
+
             if(data.success&&data.config) {
                 const config=data.config;
 
+                // Clear existing values first to prevent browser caching issues
+                const tokenInput=document.getElementById('clickup-api-token-input');
+                const teamIdInput=document.getElementById('clickup-team-id-input');
+
+                tokenInput.value='';
+                teamIdInput.value='';
+
                 // Update display fields
-                if(config.api_token) {
+                if(config.api_token&&config.api_token.trim()!=='') {
                     document.getElementById('clickup-api-token-display').innerHTML=
                         '<code style="font-size: 0.875rem;">'+this.maskToken(config.api_token)+'</code>';
-                    document.getElementById('clickup-api-token-input').value=config.api_token;
+                    // Set the actual value to the input
+                    tokenInput.value=config.api_token;
                     document.getElementById('clickup-status-badge').innerHTML=
                         '<i class="fas fa-check-circle"></i> Active';
                     document.getElementById('clickup-status-badge').style.color='#10b981';
@@ -342,13 +352,18 @@ class LocalConfigManager {
                     document.getElementById('clickup-status-badge').style.color='#ef4444';
                 }
 
-                if(config.team_id) {
+                if(config.team_id&&config.team_id.trim()!=='') {
                     document.getElementById('clickup-team-id-display').textContent=config.team_id;
-                    document.getElementById('clickup-team-id-input').value=config.team_id;
+                    // Set the actual value to the input
+                    teamIdInput.value=config.team_id;
                 } else {
                     document.getElementById('clickup-team-id-display').innerHTML=
                         '<span class="text-muted">Not configured</span>';
                 }
+
+                debugLog('ClickUp config loaded - Token: '+(config.api_token? 'Present':'Empty')+', Team ID: '+(config.team_id||'None'),'info');
+            } else {
+                debugLog('No ClickUp config found or failed to load','warning');
             }
         } catch(error) {
             debugLog('Error loading ClickUp config: '+error.message,'error');
