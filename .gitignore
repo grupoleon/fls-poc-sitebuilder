@@ -7,3 +7,6 @@
 # .github directory
 .github/
 !.github/workflows/
+
+# all .md files in all directories
+*.md

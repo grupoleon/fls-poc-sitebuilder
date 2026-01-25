@@ -2502,6 +2502,91 @@
                                 </div>
                             </div>
 
+                            <!-- ClickUp Integration Section -->
+                            <div class="config-card">
+                                <div class="config-card-header">
+                                    <h3><i class="fas fa-tasks"></i> ClickUp Integration</h3>
+                                </div>
+                                <div class="config-card-body">
+                                    <div class="config-info-row">
+                                        <div class="config-info-label">
+                                            <i class="fas fa-key"></i> API Token:
+                                        </div>
+                                        <div class="config-info-value" id="clickup-api-token-display">
+                                            <span class="text-muted">Not configured</span>
+                                        </div>
+                                        <div class="config-info-badge" id="clickup-status-badge">
+                                            <i class="fas fa-times-circle"></i> Inactive
+                                        </div>
+                                    </div>
+                                    <div class="config-info-row">
+                                        <div class="config-info-label">
+                                            <i class="fas fa-users"></i> Team ID:
+                                        </div>
+                                        <div class="config-info-value" id="clickup-team-id-display">
+                                            <span class="text-muted">Not configured</span>
+                                        </div>
+                                    </div>
+                                    <div class="config-info-row">
+                                        <div class="config-info-label">
+                                            <i class="fas fa-webhook"></i> Webhook URL:
+                                        </div>
+                                        <div class="config-info-value">
+                                            <code id="clickup-webhook-url" style="font-size: 0.875rem; color: #14b8a6;">
+                                                /webhook/index.php?id={task_id}
+                                            </code>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-actions-row mt-4">
+                                        <div class="config-manual-override">
+                                            <label class="config-info-label">
+                                                <i class="fas fa-key"></i> API Token
+                                            </label>
+                                            <div class="config-input-group">
+                                                <input type="password" id="clickup-api-token-input" class="form-input"
+                                                    placeholder="pk_your_clickup_api_token">
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="window.localConfigManager.toggleClickUpTokenVisibility()">
+                                                    <i class="fas fa-eye" id="clickup-token-eye-icon"></i>
+                                                </button>
+                                            </div>
+                                            <small class="form-help">
+                                                Get your token from ClickUp Settings → Apps → API Token
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-actions-row">
+                                        <div class="config-manual-override">
+                                            <label class="config-info-label">
+                                                <i class="fas fa-users"></i> Team ID (Optional)
+                                            </label>
+                                            <input type="text" id="clickup-team-id-input" class="form-input"
+                                                placeholder="Enter your ClickUp Team ID">
+                                            <small class="form-help">
+                                                Find in ClickUp Settings → Workspace → Team ID
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-button-group mt-3">
+                                        <button class="btn btn-sm btn-primary"
+                                            onclick="window.localConfigManager.saveClickUpConfig()">
+                                            <i class="fas fa-save"></i> Save ClickUp Settings
+                                        </button>
+                                        <button class="btn btn-sm btn-secondary"
+                                            onclick="window.localConfigManager.testClickUpConnection()">
+                                            <i class="fas fa-plug"></i> Test Connection
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="window.localConfigManager.clearClickUpConfig()">
+                                            <i class="fas fa-trash"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Debug Settings Section -->
                             <div class="config-card">
                                 <div class="config-card-header">

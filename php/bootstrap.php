@@ -778,6 +778,118 @@ function handleRequest()
                 }
                 break;
 
+            case 'get_clickup_config':
+                try {
+                    $mainConfig    = $configManager->getConfig('config');
+                    $clickupConfig = $mainConfig['integrations']['clickup'] ?? [
+                        'api_token'       => '',
+                        'team_id'         => '',
+                        'webhook_enabled' => true,
+                    ];
+
+                    echo json_encode([
+                        'success' => true,
+                        'config'  => $clickupConfig,
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'save_clickup_config':
+                try {
+                    $postData = json_decode(file_get_contents('php://input'), true);
+
+                    if (! $postData) {
+                        throw new Exception('Invalid request data');
+                    }
+
+                    $apiToken       = trim($postData['api_token'] ?? '');
+                    $teamId         = trim($postData['team_id'] ?? '');
+                    $webhookEnabled = $postData['webhook_enabled'] ?? true;
+
+                    if (empty($apiToken)) {
+                        throw new Exception('API Token is required');
+                    }
+
+                    // Load current config
+                    $mainConfig = $configManager->getConfig('config');
+
+                    // Update ClickUp configuration
+                    if (! isset($mainConfig['integrations'])) {
+                        $mainConfig['integrations'] = [];
+                    }
+
+                    $mainConfig['integrations']['clickup'] = [
+                        'api_token'       => $apiToken,
+                        'team_id'         => $teamId,
+                        'webhook_enabled' => $webhookEnabled,
+                    ];
+
+                    // Save config
+                    $configManager->updateConfig('config', $mainConfig);
+
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'ClickUp configuration saved successfully',
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'test_clickup_connection':
+                try {
+                    $postData = json_decode(file_get_contents('php://input'), true);
+
+                    if (! $postData || empty($postData['api_token'])) {
+                        throw new Exception('API Token is required');
+                    }
+
+                    $apiToken = trim($postData['api_token']);
+
+                    // Test connection by fetching authenticated user info
+                    $ch = curl_init('https://api.clickup.com/api/v2/user');
+                    curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER     => [
+                            "Authorization: {$apiToken}",
+                            "Content-Type: application/json",
+                        ],
+                        CURLOPT_TIMEOUT        => 10,
+                        CURLOPT_SSL_VERIFYPEER => true,
+                    ]);
+
+                    $response = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $error    = curl_error($ch);
+                    curl_close($ch);
+
+                    if ($error) {
+                        throw new Exception("Connection error: {$error}");
+                    }
+
+                    if ($httpCode !== 200) {
+                        $responseData = json_decode($response, true);
+                        $errorMsg     = $responseData['err'] ?? 'Authentication failed';
+                        throw new Exception($errorMsg);
+                    }
+
+                    $userData = json_decode($response, true);
+
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Connection successful',
+                        'user'    => [
+                            'username' => $userData['user']['username'] ?? 'Unknown',
+                            'email'    => $userData['user']['email'] ?? null,
+                        ],
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
             case 'import_config':
                 try {
                     // Check if file was uploaded

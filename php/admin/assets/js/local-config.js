@@ -16,6 +16,9 @@ class LocalConfigManager {
         // Load PHP configuration
         this.loadPHPConfig();
 
+        // Load ClickUp configuration
+        this.loadClickUpConfig();
+
         // Setup console logging toggle
         this.setupConsoleLoggingToggle();
 
@@ -310,6 +313,157 @@ class LocalConfigManager {
             this.autoRefreshInterval=null;
         }
         this.autoRefreshEnabled=false;
+    }
+
+    // ClickUp Configuration Methods
+    async loadClickUpConfig() {
+        try {
+            debugLog('Loading ClickUp configuration...','info');
+
+            const response=await fetch('/php/bootstrap.php?action=get_clickup_config');
+            const data=await response.json();
+
+            if(data.success&&data.config) {
+                const config=data.config;
+
+                // Update display fields
+                if(config.api_token) {
+                    document.getElementById('clickup-api-token-display').innerHTML=
+                        '<code style="font-size: 0.875rem;">'+this.maskToken(config.api_token)+'</code>';
+                    document.getElementById('clickup-api-token-input').value=config.api_token;
+                    document.getElementById('clickup-status-badge').innerHTML=
+                        '<i class="fas fa-check-circle"></i> Active';
+                    document.getElementById('clickup-status-badge').style.color='#10b981';
+                } else {
+                    document.getElementById('clickup-api-token-display').innerHTML=
+                        '<span class="text-muted">Not configured</span>';
+                    document.getElementById('clickup-status-badge').innerHTML=
+                        '<i class="fas fa-times-circle"></i> Inactive';
+                    document.getElementById('clickup-status-badge').style.color='#ef4444';
+                }
+
+                if(config.team_id) {
+                    document.getElementById('clickup-team-id-display').textContent=config.team_id;
+                    document.getElementById('clickup-team-id-input').value=config.team_id;
+                } else {
+                    document.getElementById('clickup-team-id-display').innerHTML=
+                        '<span class="text-muted">Not configured</span>';
+                }
+            }
+        } catch(error) {
+            debugLog('Error loading ClickUp config: '+error.message,'error');
+        }
+    }
+
+    maskToken(token) {
+        if(!token||token.length<8) return '••••••••';
+        return token.substring(0,8)+'••••••••';
+    }
+
+    toggleClickUpTokenVisibility() {
+        const input=document.getElementById('clickup-api-token-input');
+        const icon=document.getElementById('clickup-token-eye-icon');
+
+        if(input.type==='password') {
+            input.type='text';
+            icon.className='fas fa-eye-slash';
+        } else {
+            input.type='password';
+            icon.className='fas fa-eye';
+        }
+    }
+
+    async saveClickUpConfig() {
+        const apiToken=document.getElementById('clickup-api-token-input').value.trim();
+        const teamId=document.getElementById('clickup-team-id-input').value.trim();
+
+        if(!apiToken) {
+            this.showNotification('API Token is required','warning');
+            return;
+        }
+
+        try {
+            debugLog('Saving ClickUp configuration...','info');
+
+            const response=await fetch('/php/bootstrap.php?action=save_clickup_config',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    api_token: apiToken,
+                    team_id: teamId,
+                    webhook_enabled: true
+                })
+            });
+
+            const data=await response.json();
+
+            if(data.success) {
+                this.showNotification('ClickUp configuration saved successfully','success');
+                await this.loadClickUpConfig();
+            } else {
+                this.showNotification(data.message||'Failed to save ClickUp configuration','error');
+            }
+        } catch(error) {
+            debugLog('Error saving ClickUp config: '+error.message,'error');
+            this.showNotification('Failed to save ClickUp configuration','error');
+        }
+    }
+
+    async testClickUpConnection() {
+        const apiToken=document.getElementById('clickup-api-token-input').value.trim();
+
+        if(!apiToken) {
+            this.showNotification('API Token is required to test connection','warning');
+            return;
+        }
+
+        try {
+            debugLog('Testing ClickUp connection...','info');
+            this.showNotification('Testing ClickUp connection...','info');
+
+            const response=await fetch('/php/bootstrap.php?action=test_clickup_connection',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    api_token: apiToken
+                })
+            });
+
+            const data=await response.json();
+
+            if(data.success) {
+                this.showNotification('✓ ClickUp connection successful! User: '+
+                    (data.user?.username||'Unknown'),'success');
+            } else {
+                this.showNotification('✗ Connection failed: '+(data.message||'Unknown error'),'error');
+            }
+        } catch(error) {
+            debugLog('Error testing ClickUp connection: '+error.message,'error');
+            this.showNotification('Failed to test ClickUp connection','error');
+        }
+    }
+
+    async clearClickUpConfig() {
+        if(!confirm('Are you sure you want to clear ClickUp configuration?')) {
+            return;
+        }
+
+        try {
+            debugLog('Clearing ClickUp configuration...','info');
+
+            document.getElementById('clickup-api-token-input').value='';
+            document.getElementById('clickup-team-id-input').value='';
+
+            await this.saveClickUpConfig();
+            this.showNotification('ClickUp configuration cleared','success');
+        } catch(error) {
+            debugLog('Error clearing ClickUp config: '+error.message,'error');
+            this.showNotification('Failed to clear ClickUp configuration','error');
+        }
     }
 
     showNotification(message,type='info') {
