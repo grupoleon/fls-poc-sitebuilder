@@ -379,7 +379,7 @@
                                 </div>
                                 <div class="card-body">
                                     <form id="git-config-form">
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">API Tokens</h3>
                                             <div class="alert alert-info mb-3"
                                                 style="padding: 12px; background: #e8f4fd; border-left: 4px solid #1e90ff; border-radius: 4px;">
@@ -422,7 +422,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Repository Settings</h3>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
@@ -492,7 +492,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Server Connection</h3>
                                             <div class="grid grid-cols-3 gap-4 mb-4">
                                                 <div class="form-group">
@@ -531,7 +531,7 @@
                                 </div>
                                 <div class="card-body">
                                     <form id="site-config-form">
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">API Access</h3>
                                             <div class="alert alert-info mb-3"
                                                 style="padding: 12px; background: #e8f4fd; border-left: 4px solid #1e90ff; border-radius: 4px;">
@@ -604,7 +604,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">Site Title</label>
@@ -619,7 +619,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">Admin Email</label>
@@ -655,7 +655,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <div class="grid grid-cols-1 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">Region</label>
@@ -694,7 +694,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
                                                     <div class="toggle-container">
@@ -771,14 +771,14 @@
                                 </div>
                                 <div class="card-body">
                                     <form id="security-config-form">
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">Master Security Control</h3>
-                                            <div class="form-group">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">Master Security Control</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
-                                                            id="security-enabled-toggle"
-                                                            data-path="security.enabled">
+                                                            id="security-enabled-toggle" data-path="security.enabled">
                                                         <div class="toggle-switch"></div>
                                                     </div>
                                                     <label class="toggle-label" for="security-enabled-toggle">
@@ -786,13 +786,14 @@
                                                         Enable Security Features
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Master toggle to enable/disable all security features</div>
                                             </div>
+                                            <div class="form-help mb-4">Master toggle to enable/disable all security
+                                                features</div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Admin Credentials</h3>
                                             <div
                                                 class="form-help mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -859,7 +860,7 @@
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Access Control</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -943,14 +944,29 @@
 
                                             <div class="form-group mt-3">
                                                 <label class="form-label">Emergency Access Code</label>
-                                                <input type="text" class="form-input config-input"
-                                                    data-path="security.geo_blocking.emergency_access_code"
-                                                    placeholder="fls-1718">
-                                                <div class="form-help">Access code to bypass geo-blocking (e.g., add ?access=code to URL)</div>
+                                                <div style="display: flex; gap: 0.5rem;">
+                                                    <input type="text" class="form-input config-input"
+                                                        id="emergency-access-code-input"
+                                                        data-path="security.geo_blocking.emergency_access_code"
+                                                        placeholder="fls-1718" style="flex: 1;">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        onclick="generateRandomAccessCode()"
+                                                        style="white-space: nowrap; padding: 0.5rem 1rem;">
+                                                        <i class="fas fa-random"></i> Generate
+                                                    </button>
+                                                </div>
+                                                <div class="form-help">Access code to bypass geo-blocking (e.g., add
+                                                    ?access=code to URL)</div>
+                                                <div class="alert alert-warning mt-2"
+                                                    style="padding: 8px 12px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; font-size: 0.875rem;">
+                                                    <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
+                                                    <strong>Developer Note:</strong> This option is for development and
+                                                    testing purposes only. Not intended for client use.
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <div class="form-group">
                                                 <label class="form-label">Allowed Countries</label>
                                                 <div class="dynamic-list country-list" id="countries-list"
@@ -1035,7 +1051,7 @@
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Admin Protection</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -1085,13 +1101,13 @@
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">WP Security Audit Log</h3>
-
-                                            <div class="form-group mb-4">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">WP Security Audit Log</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="audit-log-enabled-toggle"
@@ -1103,8 +1119,9 @@
                                                         Enable Security Audit Logging
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Master toggle to enable/disable all security audit logging features</div>
                                             </div>
+                                            <div class="form-help mb-4">Master toggle to enable/disable all security
+                                                audit logging features</div>
 
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
@@ -1243,7 +1260,7 @@
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">WPS Hide Login Protection</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -1280,22 +1297,30 @@
 
                                             <div class="form-group">
                                                 <label class="form-label">Custom Login URL Slug</label>
-                                                <input type="text" class="form-input config-input"
-                                                    data-path="security.login_protection.custom_login_url"
-                                                    placeholder="fls-login">
+                                                <div style="display: flex; gap: 0.5rem;">
+                                                    <input type="text" class="form-input config-input"
+                                                        id="custom-login-slug-input"
+                                                        data-path="security.login_protection.custom_login_url"
+                                                        placeholder="fls-login" style="flex: 1;">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        onclick="generateRandomLoginSlug()"
+                                                        style="white-space: nowrap; padding: 0.5rem 1rem;">
+                                                        <i class="fas fa-random"></i> Generate
+                                                    </button>
+                                                </div>
                                                 <div class="form-help">Enter custom slug for login page (e.g., fls-login
                                                     becomes
                                                     yoursite.com/fls-login)</div>
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">WordPress Hardening</h3>
-
-                                            <div class="form-group mb-4">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">WordPress Hardening</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="wordpress-hardening-toggle"
@@ -1307,7 +1332,8 @@
                                                         Enable WordPress Hardening
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Master toggle for WordPress hardening features</div>
+                                            </div>
+                                            <div class="form-help mb-4">Master toggle for WordPress hardening features
                                             </div>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -1388,13 +1414,13 @@
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">reCAPTCHA Protection</h3>
-
-                                            <div class="form-group mb-4">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">reCAPTCHA Protection</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="recaptcha-protection-toggle"
@@ -1406,8 +1432,8 @@
                                                         Enable reCAPTCHA Protection
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Protect your site with Google reCAPTCHA</div>
                                             </div>
+                                            <div class="form-help mb-4">Protect your site with Google reCAPTCHA</div>
 
                                             <div class="grid grid-cols-2 gap-4 mb-4">
                                                 <div class="form-group">
@@ -1425,7 +1451,8 @@
                                                         <i class="fas fa-lock text-gray-500 mr-2"></i>
                                                         reCAPTCHA Secret Key
                                                     </label>
-                                                    <div style="position: relative; display: flex; align-items: center; gap: 8px;">
+                                                    <div
+                                                        style="position: relative; display: flex; align-items: center; gap: 8px;">
                                                         <input type="password" id="recaptcha-secret-input"
                                                             class="form-input config-input token-field"
                                                             data-path="authentication.api_keys.recaptcha.secret_key"
@@ -1434,13 +1461,16 @@
                                                             style="flex: 1;">
                                                         <button type="button"
                                                             class="btn btn-sm btn-outline-primary edit-field-btn"
-                                                            data-target="recaptcha-secret-input" title="Edit Secret Key">
+                                                            data-target="recaptcha-secret-input"
+                                                            title="Edit Secret Key">
                                                             <i class="fas fa-edit"></i> Edit
                                                         </button>
                                                     </div>
                                                     <div class="form-help mt-1">
                                                         <small class="text-muted">
-                                                            Your Google reCAPTCHA secret key. <a href="https://www.google.com/recaptcha/admin" target="_blank" class="text-blue-600">Get keys here</a>
+                                                            Your Google reCAPTCHA secret key. <a
+                                                                href="https://www.google.com/recaptcha/admin"
+                                                                target="_blank" class="text-blue-600">Get keys here</a>
                                                         </small>
                                                     </div>
                                                 </div>
@@ -1455,7 +1485,8 @@
                                                                 data-path="security.recaptcha_protection.protect_forms">
                                                             <div class="toggle-switch"></div>
                                                         </div>
-                                                        <label class="toggle-label" for="recaptcha-protect-forms-toggle">
+                                                        <label class="toggle-label"
+                                                            for="recaptcha-protect-forms-toggle">
                                                             <i class="fas fa-file-alt toggle-icon"></i>
                                                             Protect Forms
                                                         </label>
@@ -1470,7 +1501,8 @@
                                                                 data-path="security.recaptcha_protection.protect_login">
                                                             <div class="toggle-switch"></div>
                                                         </div>
-                                                        <label class="toggle-label" for="recaptcha-protect-login-toggle">
+                                                        <label class="toggle-label"
+                                                            for="recaptcha-protect-login-toggle">
                                                             <i class="fas fa-sign-in-alt toggle-icon"></i>
                                                             Protect Login
                                                         </label>
@@ -1485,7 +1517,8 @@
                                                                 data-path="security.recaptcha_protection.protect_comments">
                                                             <div class="toggle-switch"></div>
                                                         </div>
-                                                        <label class="toggle-label" for="recaptcha-protect-comments-toggle">
+                                                        <label class="toggle-label"
+                                                            for="recaptcha-protect-comments-toggle">
                                                             <i class="fas fa-comment toggle-icon"></i>
                                                             Protect Comments
                                                         </label>
@@ -1495,13 +1528,13 @@
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">Vulnerability Monitoring</h3>
-
-                                            <div class="form-group mb-4">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">Vulnerability Monitoring</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="vulnerability-monitoring-toggle"
@@ -1513,8 +1546,9 @@
                                                         Enable Vulnerability Monitoring
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Monitor plugins and themes for known vulnerabilities</div>
                                             </div>
+                                            <div class="form-help mb-4">Monitor plugins and themes for known
+                                                vulnerabilities</div>
 
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
@@ -1588,17 +1622,18 @@
                                                     <option value="high">High</option>
                                                     <option value="critical">Critical</option>
                                                 </select>
-                                                <div class="form-help">Only alert on vulnerabilities at or above this severity</div>
+                                                <div class="form-help">Only alert on vulnerabilities at or above this
+                                                    severity</div>
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">Malware Protection</h3>
-
-                                            <div class="form-group mb-4">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">Malware Protection</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="malware-protection-toggle"
@@ -1610,7 +1645,8 @@
                                                         Enable Malware Protection
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Comprehensive malware scanning and protection</div>
+                                            </div>
+                                            <div class="form-help mb-4">Comprehensive malware scanning and protection
                                             </div>
 
                                             <div class="grid grid-cols-2 gap-4 mb-3">
@@ -1808,18 +1844,19 @@
                                                 </div>
                                                 <div class="form-help text-warning">
                                                     <i class="fas fa-exclamation-triangle"></i>
-                                                    <strong>Warning:</strong> This option must be used carefully. Auto-cleaning can remove infected files automatically.
+                                                    <strong>Warning:</strong> This option must be used carefully.
+                                                    Auto-cleaning can remove infected files automatically.
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">Brute Force Protection</h3>
-
-                                            <div class="form-group mb-4">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">Brute Force Protection</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="brute-force-protection-toggle"
@@ -1831,8 +1868,8 @@
                                                         Enable Brute Force Protection
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Protect against brute force login attacks</div>
                                             </div>
+                                            <div class="form-help mb-4">Protect against brute force login attacks</div>
 
                                             <div class="grid grid-cols-3 gap-4">
                                                 <div class="form-group">
@@ -1869,7 +1906,7 @@
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Two-Factor Authentication</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -1972,7 +2009,7 @@
                                 </div>
                                 <div class="card-body">
                                     <form id="integrations-config-form">
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Analytics Integration</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -1999,13 +2036,13 @@
                                             </div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
 
-                                        <div class="config-section">
-                                            <h3 class="font-semibold mb-3">Theme Customization</h3>
-
-                                            <div class="form-group">
-                                                <div class="toggle-container">
+                                        <div class="config-section mb-8">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">Theme Customization</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
                                                         <input type="checkbox" class="config-input toggle-input"
                                                             id="theme-customization-toggle"
@@ -2017,13 +2054,14 @@
                                                         Enable Theme Customization
                                                     </label>
                                                 </div>
-                                                <div class="form-help">Apply custom theme modifications and branding</div>
+                                            </div>
+                                            <div class="form-help mb-4">Apply custom theme modifications and branding
                                             </div>
                                         </div>
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Forms Integration</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -2069,7 +2107,7 @@
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Social Media Links</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -2130,7 +2168,7 @@
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
-                                        <div class="config-section">
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Google Maps Integration</h3>
 
                                             <div class="grid grid-cols-3 gap-4">

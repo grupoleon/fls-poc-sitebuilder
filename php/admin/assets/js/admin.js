@@ -9519,327 +9519,76 @@ function initializeToggleSwitches() {
             }
         });
     });
-
-    // Initialize subsection visibility based on master toggles
-    initializeSubsectionToggles();
 }
 
 // Handle master toggle -> subsection visibility
-function initializeSubsectionToggles() {
-    // Define master toggles and their dependent elements (elements that should be disabled when master is off)
-    const masterToggleConfig=[
-        {
-            masterId: 'geo-blocking-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                // Get all elements after the first grid (which contains the master toggle)
-                const firstGrid=section.querySelector('.grid');
-                let subsections=[];
-                let sibling=firstGrid.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')||sibling.classList.contains('form-group')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'wordpress-hardening-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                // Get all grids after the master toggle's form-group
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'recaptcha-protection-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                // Get all elements after master toggle within same section
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')||sibling.classList.contains('form-group')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'vulnerability-monitoring-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')||sibling.classList.contains('form-group')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'malware-protection-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')||sibling.classList.contains('form-group')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'brute-force-protection-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'two-factor-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const firstGrid=section.querySelector('.grid');
-                let subsections=[];
-                let sibling=firstGrid.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'audit-log-enabled-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        },
-        {
-            masterId: 'analytics-toggle',
-            findSubsections: (toggle) => {
-                // The Google Analytics ID field is in the same grid, find it
-                const grid=toggle.closest('.grid');
-                if(grid) {
-                    const analyticsInput=grid.querySelector('input[data-path="authentication.api_keys.google_analytics"]');
-                    if(analyticsInput) {
-                        return [analyticsInput.closest('.form-group')];
-                    }
-                }
-                return [];
-            }
-        },
-        {
-            masterId: 'forms-integration-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                let subsections=[];
-
-                // Get the auto-find toggle in the same grid
-                const grid=toggle.closest('.grid');
-                const autoFindGroup=grid?.querySelector('#forms-auto-find-toggle')?.closest('.form-group');
-                if(autoFindGroup) subsections.push(autoFindGroup);
-
-                // Find the dynamic forms container (comes after the grid)
-                let sibling=grid?.nextElementSibling;
-                while(sibling) {
-                    if(sibling.id==='dynamic-forms-container') {
-                        subsections.push(sibling);
-                        break;
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-
-                return subsections;
-            }
-        },
-        {
-            masterId: 'social-links-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                // Find the social links container
-                const container=section.querySelector('#social-links-container');
-                // Also include the placement selector
-                const grid=toggle.closest('.grid');
-                const placementGroup=grid? grid.querySelector('select[data-path="integrations.social_links.placement"]')?.closest('.form-group'):null;
-                let subsections=container? [container]:[];
-                if(placementGroup) subsections.unshift(placementGroup);
-                return subsections;
-            }
-        },
-        {
-            masterId: 'maps-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const firstGrid=section.querySelector('.grid');
-                // Get all elements after the first grid
-                let subsections=[];
-                let sibling=firstGrid.nextElementSibling;
-                while(sibling&&!sibling.classList.contains('config-section')) {
-                    if(sibling.classList.contains('grid')||sibling.classList.contains('form-group')||sibling.classList.contains('card')) {
-                        subsections.push(sibling);
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                // Also disable API key and placement in the same grid
-                const apiKeyGroup=firstGrid.querySelector('input[data-path="authentication.api_keys.google_maps"]')?.closest('.form-group');
-                const placementGroup=firstGrid.querySelector('select[data-path="integrations.maps.placement"]')?.closest('.form-group');
-                if(apiKeyGroup) subsections.unshift(apiKeyGroup);
-                if(placementGroup) subsections.unshift(placementGroup);
-                return subsections;
-            }
-        },
-        {
-            masterId: 'theme-customization-toggle',
-            findSubsections: (toggle) => {
-                // No subsections for this one, just the toggle itself
-                return [];
-            }
-        },
-        {
-            masterId: 'realtime-scanning-toggle',
-            findSubsections: (toggle) => {
-                const grid=toggle.closest('.grid');
-                if(grid) {
-                    const sensitivityGroup=grid.querySelector('select[data-path="security.malware_protection.real_time_scanning.sensitivity"]')?.closest('.form-group');
-                    return sensitivityGroup? [sensitivityGroup]:[];
-                }
-                return [];
-            }
-        },
-        {
-            masterId: 'scheduled-scans-toggle',
-            findSubsections: (toggle) => {
-                const grid=toggle.closest('.grid');
-                if(grid) {
-                    let subsections=[];
-                    const frequencyGroup=grid.querySelector('select[data-path="security.malware_protection.scheduled_scans.frequency"]')?.closest('.form-group');
-                    const hourGroup=grid.querySelector('input[data-path="security.malware_protection.scheduled_scans.scan_hour"]')?.closest('.form-group');
-                    if(frequencyGroup) subsections.push(frequencyGroup);
-                    if(hourGroup) subsections.push(hourGroup);
-                    return subsections;
-                }
-                return [];
-            }
-        },
-        {
-            masterId: 'email-alerts-toggle',
-            findSubsections: (toggle) => {
-                const section=toggle.closest('.config-section');
-                const masterGroup=toggle.closest('.form-group');
-                // Find the next grid (with checkboxes) and the grid after that (with frequency/threshold)
-                let subsections=[];
-                let sibling=masterGroup.nextElementSibling;
-                let count=0;
-                while(sibling&&!sibling.classList.contains('config-section')&&count<2) {
-                    if(sibling.classList.contains('grid')) {
-                        subsections.push(sibling);
-                        count++;
-                    }
-                    sibling=sibling.nextElementSibling;
-                }
-                return subsections;
-            }
-        }
-    ];
-
-    // Set up each master toggle
-    masterToggleConfig.forEach(config => {
-        const toggle=document.getElementById(config.masterId);
-        if(toggle) {
-            // Get subsections using the finder function
-            const subsections=config.findSubsections(toggle);
-
-            // Initialize state on page load
-            toggleSubsectionsState(subsections,toggle.checked);
-
-            // Add change listener
-            toggle.addEventListener('change',(e) => {
-                toggleSubsectionsState(subsections,e.target.checked);
-            });
-        }
-    });
-}
-
-function toggleSubsectionsState(subsections,isEnabled) {
-    subsections.forEach(subsection => {
-        if(!subsection) return;
-
-        if(isEnabled) {
-            subsection.style.opacity='1';
-            subsection.style.pointerEvents='auto';
-            subsection.style.transition='opacity 0.3s ease';
-            // Re-enable all inputs except those with edit buttons (which manage their own state)
-            subsection.querySelectorAll('input, select, textarea, button').forEach(input => {
-                // Don't re-enable inputs that have an edit button managing them
-                const hasEditButton=input.classList.contains('token-field')&&input.disabled&&
-                    input.parentElement?.querySelector('.edit-field-btn');
-                if(!hasEditButton) {
-                    input.disabled=false;
-                }
-            });
-        } else {
-            subsection.style.opacity='0.5';
-            subsection.style.pointerEvents='none';
-            subsection.style.transition='opacity 0.3s ease';
-            // Disable all inputs
-            subsection.querySelectorAll('input, select, textarea, button').forEach(input => {
-                input.disabled=true;
-            });
-        }
-    });
-}
-
-function toggleSubsectionState(element,isEnabled) {
-    // Wrapper for single element (backward compatibility)
-    toggleSubsectionsState([element],isEnabled);
-}
-
 // Modern Dynamic List Functions
+function generateRandomLoginSlug() {
+    // Generate completely random URL-safe string (lowercase letters, numbers, hyphens only)
+    const chars='abcdefghijklmnopqrstuvwxyz0123456789';
+    const length=12;
+    let slug='';
+
+    // Use crypto.getRandomValues for cryptographically secure randomness
+    const randomValues=new Uint8Array(length);
+    crypto.getRandomValues(randomValues);
+
+    for(let i=0;i<length;i++) {
+        slug+=chars[randomValues[i]%chars.length];
+    }
+
+    // Format as: xxxx-xxxx-xxxx for better readability (e.g., a7k2-m9p3-q8n4)
+    const formatted=`${slug.slice(0,4)}-${slug.slice(4,8)}-${slug.slice(8,12)}`;
+
+    const input=document.getElementById('custom-login-slug-input');
+    if(input) {
+        input.value=formatted;
+        // Trigger change event to mark as modified
+        input.dispatchEvent(new Event('input',{bubbles: true}));
+        input.dispatchEvent(new Event('change',{bubbles: true}));
+
+        // Visual feedback
+        input.style.transition='background-color 0.3s ease';
+        input.style.backgroundColor='#d1fae5';
+        setTimeout(() => {
+            input.style.backgroundColor='';
+        },1000);
+    }
+}
+
+function generateRandomAccessCode() {
+    // Generate truly random, URL-safe, secure access code
+    const chars='abcdefghijklmnopqrstuvwxyz0123456789';
+    const length=16; // Long enough for security
+    let code='';
+
+    // Use crypto.getRandomValues for cryptographically secure randomness
+    const randomValues=new Uint8Array(length);
+    crypto.getRandomValues(randomValues);
+
+    for(let i=0;i<length;i++) {
+        code+=chars[randomValues[i]%chars.length];
+    }
+
+    // Format as: xxx-xxxx-xxxx-xxx for readability
+    const formatted=`${code.slice(0,3)}-${code.slice(3,7)}-${code.slice(7,11)}-${code.slice(11,16)}`;
+
+    const input=document.getElementById('emergency-access-code-input');
+    if(input) {
+        input.value=formatted;
+        // Trigger change event to mark as modified
+        input.dispatchEvent(new Event('input',{bubbles: true}));
+        input.dispatchEvent(new Event('change',{bubbles: true}));
+
+        // Visual feedback
+        input.style.transition='background-color 0.3s ease';
+        input.style.backgroundColor='#d1fae5';
+        setTimeout(() => {
+            input.style.backgroundColor='';
+        },1000);
+    }
+}
+
 function toggleCountryInput() {
     const inputGroup=document.getElementById('country-input-group');
     const isVisible=inputGroup.style.display!=='none';
