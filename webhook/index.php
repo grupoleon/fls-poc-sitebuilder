@@ -223,9 +223,18 @@ function processTaskData($taskData)
                     break;
 
                 case 'Website Brief':
-                    // Store attachments array
+                    // Store only essential attachment fields
                     if (is_array($fieldValue)) {
-                        $processed['website_brief_attachments'] = $fieldValue;
+                        foreach ($fieldValue as $attachment) {
+                            $processed['website_brief_attachments'][] = [
+                                'url'       => $attachment['url'] ?? null,
+                                'title'     => $attachment['title'] ?? null,
+                                'extension' => $attachment['extension'] ?? null,
+                                'mimetype'  => $attachment['mimetype'] ?? null,
+                                'is_folder' => $attachment['is_folder'] ?? null,
+                                'size'      => $attachment['size'] ?? null,
+                            ];
+                        }
                     }
                     break;
 
