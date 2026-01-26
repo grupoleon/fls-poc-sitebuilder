@@ -51,15 +51,30 @@ function getClickUpConfig()
         sendResponse(false, 'ClickUp API token not configured', null, 500);
     }
 
+    $apiToken = trim($config['integrations']['clickup']['api_token']);
+
+    if (empty($apiToken)) {
+        sendResponse(false, 'ClickUp API token is empty', null, 500);
+    }
+
     return [
-        'api_token' => $config['integrations']['clickup']['api_token'],
-        'team_id'   => $config['integrations']['clickup']['team_id'] ?? null,
+        'api_token' => $apiToken,
+        'team_id'   => isset($config['integrations']['clickup']['team_id'])
+            ? trim($config['integrations']['clickup']['team_id'])
+            : null,
     ];
 }
 
 function fetchClickUpTask($taskId, $apiToken)
 {
     $url = "https://api.clickup.com/api/v2/task/{$taskId}";
+
+    // Log the token length for debugging (never log the full token)
+    logWebhook("Making ClickUp API request", [
+        'url'          => $url,
+        'token_length' => strlen($apiToken),
+        'token_prefix' => substr($apiToken, 0, 8) . '...',
+    ]);
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -75,7 +90,6 @@ function fetchClickUpTask($taskId, $apiToken)
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error    = curl_error($ch);
-    curl_close($ch);
 
     if ($error) {
         logWebhook("cURL error fetching task {$taskId}", ['error' => $error]);
@@ -83,13 +97,24 @@ function fetchClickUpTask($taskId, $apiToken)
     }
 
     if ($httpCode !== 200) {
+        $responseData = json_decode($response, true);
         logWebhook("ClickUp API error for task {$taskId}", [
             'http_code' => $httpCode,
-            'response'  => $response,
+            'response'  => $responseData,
         ]);
+
+        // Provide more helpful error message for authentication issues
+        if ($httpCode === 401) {
+            sendResponse(false, "ClickUp API authentication failed. Please verify your API token is valid.", [
+                'http_code' => $httpCode,
+                'response'  => $responseData,
+                'hint'      => 'Get your token from ClickUp Settings > Apps > API Token',
+            ], 502);
+        }
+
         sendResponse(false, "ClickUp API returned HTTP {$httpCode}", [
             'http_code' => $httpCode,
-            'response'  => json_decode($response, true),
+            'response'  => $responseData,
         ], 502);
     }
 

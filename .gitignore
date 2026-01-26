@@ -10,3 +10,6 @@
 
 # all .md files in all directories
 *.md
+
+# all files inside webhook/tasks/ directory
+webhook/tasks/*
