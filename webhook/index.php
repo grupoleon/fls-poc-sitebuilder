@@ -264,6 +264,10 @@ try {
 
     $taskId = trim($_GET['id']);
 
+    if (! preg_match('/^[a-zA-Z0-9]+$/', $taskId)) {
+        sendResponse(false, 'Invalid Task ID format', null, 400);
+    }
+
     logWebhook("Task webhook triggered", ['task_id' => $taskId, 'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
 
     $clickupConfig = getClickUpConfig();
@@ -276,7 +280,7 @@ try {
 
     logWebhook("Task successfully processed", [
         'task_id' => $taskId,
-        'file'    => $fileInfo['filename'],
+        'file'    => $fileInfo['processed_file'],
     ]);
 
     sendResponse(true, 'Task data fetched and saved successfully', [
