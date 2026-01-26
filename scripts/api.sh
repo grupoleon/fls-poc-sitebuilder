@@ -94,7 +94,7 @@ api_request() {
     curl_cmd="$curl_cmd \"$url\""
     log_debug "Curl command: $curl_cmd" "API"
     
-    # Retry logic with exponential backoff for rate limiting (429) and server errors (5xx)
+    # Retry logic with intelligent backoff for rate limiting (429) and server errors (5xx)
     local max_retries=3
     local retry_count=0
     local base_delay=5
@@ -142,11 +142,29 @@ api_request() {
             fi
         fi
         
-        # Check if we got a rate limit (429) or server error (5xx) response
-        if [[ "$http_code" == "429" ]] || [[ "$http_code" =~ ^5[0-9]{2}$ ]]; then
+        # Check if we got a rate limit (429) response - special handling
+        if [[ "$http_code" == "429" ]]; then
+            if [[ $retry_count -eq 0 ]]; then
+                # First 429 - fail immediately with clear message
+                log_error "API Rate Limit Exceeded (429)" "API"
+                log_error "Kinsta API allows 60 requests per hour" "API"
+                log_error "You must wait before trying again" "API"
+                log_error "" "API"
+                log_error "SOLUTIONS:" "API"
+                log_error "  1. Wait at least 1 hour before retrying" "API"
+                log_error "  2. Check if you have other scripts/processes making API calls" "API"
+                log_error "  3. Reduce the frequency of deployment attempts" "API"
+                log_error "" "API"
+                log_error "Response: $response_body" "API"
+                break
+            fi
+        fi
+        
+        # Check if we got a server error (5xx) response
+        if [[ "$http_code" =~ ^5[0-9]{2}$ ]]; then
             if [[ $retry_count -lt $max_retries ]]; then
                 local delay=$((base_delay * (2 ** retry_count)))
-                log_warning "Received $http_code response, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                log_warning "Server error ($http_code), retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
                 sleep "$delay"
                 ((retry_count++))
                 continue
