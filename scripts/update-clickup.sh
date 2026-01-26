@@ -38,9 +38,15 @@ log_info "Found ClickUp Task ID: $TASK_ID"
 
 # Read site configuration for URLs and credentials
 SITE_CONFIG="$PROJECT_ROOT/config/site.json"
+CONFIG_FILE="$PROJECT_ROOT/config/config.json"
 
 if [[ ! -f "$SITE_CONFIG" ]]; then
     log_error "Site configuration file not found: $SITE_CONFIG"
+    exit 1
+fi
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    log_error "Main configuration file not found: $CONFIG_FILE"
     exit 1
 fi
 
@@ -70,7 +76,20 @@ fi
 
 # Construct admin URL
 if [[ -n "$SITE_URL" ]]; then
-    ADMIN_URL="${SITE_URL}/wp-admin"
+    # Check if security is enabled first
+    SECURITY_ENABLED=$(jq -r '.security.enabled // false' "$CONFIG_FILE")
+    HIDE_LOGIN_ENABLED=$(jq -r '.security.login_protection.hide_login_page // false' "$CONFIG_FILE")
+    CUSTOM_LOGIN_SLUG=$(jq -r '.security.login_protection.custom_login_url // empty' "$CONFIG_FILE")
+    
+    if [[ "$SECURITY_ENABLED" == "true" && "$HIDE_LOGIN_ENABLED" == "true" && -n "$CUSTOM_LOGIN_SLUG" && "$CUSTOM_LOGIN_SLUG" != "null" ]]; then
+        # Use custom login URL (security enabled + custom login configured)
+        ADMIN_URL="${SITE_URL}/${CUSTOM_LOGIN_SLUG}"
+        log_info "Using custom login URL: ${CUSTOM_LOGIN_SLUG}"
+    else
+        # Use default wp-admin
+        ADMIN_URL="${SITE_URL}/wp-admin"
+        log_info "Using default login URL: wp-admin"
+    fi
 else
     ADMIN_URL=""
 fi
