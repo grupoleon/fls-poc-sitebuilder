@@ -1665,6 +1665,105 @@ class AdminInterface {
         }
     }
 
+    async loadClickUpTasks() {
+        try {
+            debugLog('Loading ClickUp tasks...');
+            const response=await fetch('/php/api/clickup-tasks.php?action=list');
+            const data=await response.json();
+            debugLog('ClickUp tasks API response:',data);
+
+            if(data.success&&data.tasks) {
+                this.populateClickUpTasksSelect(data.tasks);
+            } else {
+                debugLog('No ClickUp tasks found or API error');
+            }
+        } catch(error) {
+            debugLog('Failed to load ClickUp tasks:',error,'error');
+        }
+    }
+
+    populateClickUpTasksSelect(tasks) {
+        const taskSelect=document.getElementById('clickup-task-select');
+        if(!taskSelect) return;
+
+        // Keep the default option
+        taskSelect.innerHTML='<option value="">-- Select a ClickUp task to prefill --</option>';
+
+        if(tasks&&tasks.length>0) {
+            tasks.forEach(task => {
+                const option=document.createElement('option');
+                option.value=task.task_id;
+                option.textContent=`${task.task_name} ${task.website_url? '('+task.website_url+')':''}`;
+                taskSelect.appendChild(option);
+            });
+
+            // Add change event listener
+            taskSelect.addEventListener('change',async (e) => {
+                const taskId=e.target.value;
+                if(taskId) {
+                    await this.loadTaskDataAndPrefill(taskId);
+                }
+            });
+        }
+    }
+
+    async loadTaskDataAndPrefill(taskId) {
+        try {
+            debugLog(`Loading task data for: ${taskId}`);
+            const response=await fetch(`/php/api/clickup-tasks.php?action=get&id=${taskId}`);
+            const data=await response.json();
+            debugLog('Task data:',data);
+
+            if(data.success&&data.task) {
+                this.prefillDeploymentForm(data.task);
+            } else {
+                debugLog('Failed to load task data','error');
+            }
+        } catch(error) {
+            debugLog('Failed to load task data:',error,'error');
+        }
+    }
+
+    prefillDeploymentForm(taskData) {
+        debugLog('Prefilling form with task data:',taskData);
+
+        // Prefill site title with website URL or task name
+        const siteTitleInput=document.getElementById('deployment-site-title');
+        if(siteTitleInput) {
+            const siteTitle=taskData.website_url||taskData.task_name;
+            if(siteTitle) {
+                siteTitleInput.value=siteTitle;
+                // Trigger site existence check
+                this.checkSiteExistence(siteTitle);
+            }
+        }
+
+        // Prefill theme
+        const themeSelect=document.getElementById('deployment-theme-select');
+        if(themeSelect&&taskData.theme) {
+            // Map theme names (handle variations)
+            const themeMapping={
+                'Political WP': 'Political',
+                'Candidates': 'Candidate',
+                // Add more mappings as needed
+            };
+            const themeName=themeMapping[taskData.theme]||taskData.theme;
+
+            // Try to select the theme
+            const option=Array.from(themeSelect.options).find(opt => opt.value===themeName);
+            if(option) {
+                themeSelect.value=themeName;
+                localStorage.setItem('deploymentTheme',themeName);
+                this.saveActiveTheme(themeName);
+                this.updatePageOptionsForTheme(themeName);
+                this.updatePageThemeSelect(themeName);
+            }
+        }
+
+        // Show notification about prefilled data
+        this.showNotification('Form prefilled with ClickUp task data','success');
+    }
+
     async populateThemeSelect(themes) {
         const pageThemeSelect=document.getElementById('page-theme-select');
         const deploymentThemeSelect=document.getElementById('deployment-theme-select');
@@ -6220,6 +6319,9 @@ class AdminInterface {
 
         // Load themes for the deployment form
         await this.loadThemes();
+
+        // Load ClickUp tasks for the deployment form
+        await this.loadClickUpTasks();
 
         // Load configuration data
         await this.loadConfiguration();

@@ -124,6 +124,13 @@
                                 <h2 class="card-title">Deploy Your Website</h2>
                             </div>
                             <div class="card-body" id="quick-deploy-body">
+                                <div class="form-group mb-4">
+                                    <label class="form-label">Load from ClickUp Task (Optional)</label>
+                                    <select id="clickup-task-select" class="form-select">
+                                        <option value="">-- Select a ClickUp task to prefill --</option>
+                                    </select>
+                                    <div class="form-help">Select a ClickUp task to automatically fill in site details</div>
+                                </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="form-group">
                                         <label class="form-label">Site Title</label>

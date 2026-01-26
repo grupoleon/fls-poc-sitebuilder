@@ -136,6 +136,77 @@ function sanitizeFilename($name)
     return $name ?: 'untitled-task';
 }
 
+function processTaskData($taskData)
+{
+    $processed = [
+        'task_id'           => $taskData['id'] ?? null,
+        'task_name'         => $taskData['name'] ?? null,
+        'task_url'          => $taskData['url'] ?? null,
+        'status'            => $taskData['status']['status'] ?? null,
+        'website_url'       => null,
+        'theme'             => null,
+        'selected_services' => [],
+        'credentials'       => [],
+        'required_inputs'   => [],
+    ];
+
+    // Extract custom fields
+    if (isset($taskData['custom_fields']) && is_array($taskData['custom_fields'])) {
+        foreach ($taskData['custom_fields'] as $field) {
+            $fieldName  = $field['name'] ?? '';
+            $fieldValue = $field['value'] ?? null;
+
+            switch ($fieldName) {
+                case 'Website URL':
+                    $processed['website_url'] = $fieldValue;
+                    break;
+
+                case 'Template Selection':
+                    // Map dropdown value to theme name
+                    if (isset($field['type_config']['options']) && is_numeric($fieldValue)) {
+                        foreach ($field['type_config']['options'] as $option) {
+                            if ($option['orderindex'] === $fieldValue) {
+                                $processed['theme'] = $option['name'] ?? null;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+
+                case 'Services Needed':
+                    // Extract service labels from IDs
+                    if (is_array($fieldValue) && isset($field['type_config']['options'])) {
+                        $serviceMap = [];
+                        foreach ($field['type_config']['options'] as $option) {
+                            $serviceMap[$option['id']] = $option['label'];
+                        }
+                        foreach ($fieldValue as $serviceId) {
+                            if (isset($serviceMap[$serviceId])) {
+                                $processed['selected_services'][] = $serviceMap[$serviceId];
+                            }
+                        }
+                    }
+                    break;
+
+                case 'Email':
+                case 'Google Drive':
+                case 'Privacy or Policy Information':
+                    $processed['credentials'][$fieldName] = $fieldValue;
+                    break;
+
+                default:
+                    // Store other custom fields as required inputs
+                    if ($fieldValue !== null && $fieldValue !== '') {
+                        $processed['required_inputs'][$fieldName] = $fieldValue;
+                    }
+                    break;
+            }
+        }
+    }
+
+    return $processed;
+}
+
 function saveTaskToFile($taskData)
 {
     $tasksDir = __DIR__ . '/tasks';
@@ -146,25 +217,36 @@ function saveTaskToFile($taskData)
         }
     }
 
-    $taskName = sanitizeFilename($taskData['name'] ?? 'task-' . $taskData['id']);
-    $filename = "{$tasksDir}/{$taskName}.json";
-
-    // If file exists, append timestamp
-    if (file_exists($filename)) {
-        $taskName = $taskName . '-' . time();
-        $filename = "{$tasksDir}/{$taskName}.json";
+    $taskId = $taskData['id'] ?? null;
+    if (! $taskId) {
+        sendResponse(false, 'Task ID not found in task data', null, 500);
     }
 
-    $success = file_put_contents($filename, json_encode($taskData, JSON_PRETTY_PRINT));
+    // Save raw JSON with task-id
+    $rawFilename = "{$tasksDir}/{$taskId}-raw.json";
+    $rawSuccess  = file_put_contents($rawFilename, json_encode($taskData, JSON_PRETTY_PRINT));
 
-    if (! $success) {
-        sendResponse(false, 'Failed to save task data to file', null, 500);
+    if (! $rawSuccess) {
+        sendResponse(false, 'Failed to save raw task data to file', null, 500);
+    }
+
+    // Process and save simplified JSON
+    $processedData     = processTaskData($taskData);
+    $processedFilename = "{$tasksDir}/{$taskId}.json";
+    $processedSuccess  = file_put_contents($processedFilename, json_encode($processedData, JSON_PRETTY_PRINT));
+
+    if (! $processedSuccess) {
+        sendResponse(false, 'Failed to save processed task data to file', null, 500);
     }
 
     return [
-        'filename' => basename($filename),
-        'path'     => $filename,
-        'size'     => filesize($filename),
+        'task_id'        => $taskId,
+        'raw_file'       => basename($rawFilename),
+        'processed_file' => basename($processedFilename),
+        'raw_path'       => $rawFilename,
+        'processed_path' => $processedFilename,
+        'raw_size'       => filesize($rawFilename),
+        'processed_size' => filesize($processedFilename),
     ];
 }
 
@@ -198,13 +280,13 @@ try {
     ]);
 
     sendResponse(true, 'Task data fetched and saved successfully', [
-        'task' => [
+        'task'  => [
             'id'     => $taskData['id'],
             'name'   => $taskData['name'] ?? 'N/A',
             'status' => $taskData['status']['status'] ?? 'N/A',
             'url'    => $taskData['url'] ?? null,
         ],
-        'file' => $fileInfo,
+        'files' => $fileInfo,
     ], 200);
 
 } catch (Exception $e) {
