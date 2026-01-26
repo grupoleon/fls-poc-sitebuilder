@@ -371,6 +371,23 @@ try {
         writeDeploymentLog("Completed step: {$stepInfo['name']}", 'SUCCESS', $stepKey);
     }
 
+    // After all deployment steps complete successfully, update ClickUp task
+    writeDeploymentLog('All deployment steps completed. Updating ClickUp task...', 'INFO');
+
+    $updateClickUpScript = $scriptPath . '/scripts/update-clickup.sh';
+    if (file_exists($updateClickUpScript)) {
+        writeDeploymentLog('Running ClickUp task update script...', 'INFO');
+        $clickupCommand = "cd " . escapeshellarg($scriptPath) . " && bash scripts/update-clickup.sh 2>&1";
+        $clickupOutput  = shell_exec($clickupCommand);
+
+        if ($clickupOutput) {
+            writeDeploymentLog("ClickUp Update Output:", 'INFO');
+            writeDeploymentLog($clickupOutput, 'INFO');
+        }
+    } else {
+        writeDeploymentLog('ClickUp update script not found. Skipping task update.', 'WARNING');
+    }
+
     updateDeploymentStatus('completed');
     writeDeploymentLog('Deployment completed successfully!', 'SUCCESS');
     error_log("BACKGROUND-DEPLOY: Script completed successfully at " . date('Y-m-d H:i:s'));

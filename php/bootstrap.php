@@ -423,6 +423,19 @@ function handleRequest()
                         $configManager->updateConfig('site', $siteConfig);
                     }
 
+                    // Save ClickUp task ID if provided
+                    if (isset($input['clickup_task_id'])) {
+                        $statusFile = __DIR__ . '/../tmp/deployment_status.json';
+                        $status     = [];
+
+                        if (file_exists($statusFile)) {
+                            $status = json_decode(file_get_contents($statusFile), true) ?: [];
+                        }
+
+                        $status['clickup_task_id'] = $input['clickup_task_id'];
+                        file_put_contents($statusFile, json_encode($status, JSON_PRETTY_PRINT));
+                    }
+
                     $result = $deploymentManager->triggerDeployment($step, $force);
                     echo json_encode(['success' => true, 'data' => $result, 'step' => $step, 'force' => $force]);
                 } catch (Exception $e) {

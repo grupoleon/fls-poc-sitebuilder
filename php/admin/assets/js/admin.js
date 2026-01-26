@@ -4241,6 +4241,15 @@ class AdminInterface {
     }
 
     async handleDeployment(action,step=null) {
+        // Validate ClickUp task selection (mandatory)
+        const taskSelect=document.getElementById('clickup-task-select');
+        const selectedTaskId=taskSelect? taskSelect.value:'';
+
+        if(!selectedTaskId) {
+            this.showAlert('Please select a ClickUp task before deploying. This is required to track deployment progress.','error');
+            return;
+        }
+
         // Check if user wants to delete existing site first
         const deleteCheckbox=document.getElementById('delete-existing-site-checkbox');
         const shouldDeleteExisting=deleteCheckbox&&deleteCheckbox.checked;
@@ -4430,6 +4439,11 @@ class AdminInterface {
         if(siteTitleInput&&siteTitleInput.value) {
             data.site_title=siteTitleInput.value;
             data.display_name=this.slugify(siteTitleInput.value);
+        }
+
+        // Save ClickUp task ID for tracking and updates
+        if(selectedTaskId) {
+            data.clickup_task_id=selectedTaskId;
         }
 
         try {

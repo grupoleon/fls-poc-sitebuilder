@@ -125,11 +125,13 @@
                             </div>
                             <div class="card-body" id="quick-deploy-body">
                                 <div class="form-group mb-4">
-                                    <label class="form-label">Load from ClickUp Task (Optional)</label>
-                                    <select id="clickup-task-select" class="form-select">
-                                        <option value="">-- Select a ClickUp task to prefill --</option>
+                                    <label class="form-label">ClickUp Task <span
+                                            style="color: #dc2626; font-weight: 600;">*</span></label>
+                                    <select id="clickup-task-select" class="form-select" required>
+                                        <option value="">-- Select a ClickUp task (Required) --</option>
                                     </select>
-                                    <div class="form-help">Select a ClickUp task to automatically fill in site details</div>
+                                    <div class="form-help">Select a ClickUp task to track deployment progress and
+                                        automatically fill in site details</div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="form-group">
