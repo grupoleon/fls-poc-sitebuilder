@@ -11,5 +11,12 @@
 # all .md files in all directories
 *.md
 
-# all files inside webhook/tasks/ directory
-webhook/tasks/*
+# json files inside webhook/tasks/ directory
+webhook/tasks/*.json
+
+# log files
+logs/*.log
+
+# temporary files
+tmp/*
+

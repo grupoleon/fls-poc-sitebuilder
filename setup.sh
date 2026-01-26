@@ -19,7 +19,7 @@ fi
 
 # Fix ownership of directories (only if they exist and we have permission)
 echo "▶ Setting directory permissions..."
-for dir in config logs tmp; do
+for dir in config logs tmp webhook/tasks; do
     if [[ -d "$dir" ]]; then
         chown -R nobody:nogroup "$dir" 2>/dev/null && echo "  ✓ $dir" || echo "  ⚠️  $dir (skipped)"
     fi
