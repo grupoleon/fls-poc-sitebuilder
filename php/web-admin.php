@@ -790,6 +790,8 @@
                                             </div>
                                         </div>
 
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Admin Credentials</h3>
                                             <div
@@ -854,6 +856,8 @@
                                                 <div class="password-strength" id="admin-password-strength"></div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Access Control</h3>
@@ -1029,6 +1033,8 @@
                                             </div>
                                         </div>
 
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Admin Protection</h3>
 
@@ -1078,6 +1084,8 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">WP Security Audit Log</h3>
@@ -1233,6 +1241,8 @@
                                             </div>
                                         </div>
 
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">WPS Hide Login Protection</h3>
 
@@ -1278,6 +1288,8 @@
                                                     yoursite.com/fls-login)</div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">WordPress Hardening</h3>
@@ -1375,6 +1387,8 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">reCAPTCHA Protection</h3>
@@ -1481,6 +1495,8 @@
                                             </div>
                                         </div>
 
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Vulnerability Monitoring</h3>
 
@@ -1575,6 +1591,8 @@
                                                 <div class="form-help">Only alert on vulnerabilities at or above this severity</div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Malware Protection</h3>
@@ -1795,6 +1813,8 @@
                                             </div>
                                         </div>
 
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Brute Force Protection</h3>
 
@@ -1846,6 +1866,8 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Two-Factor Authentication</h3>
@@ -1951,40 +1973,6 @@
                                 <div class="card-body">
                                     <form id="integrations-config-form">
                                         <div class="config-section">
-                                            <h3 class="font-semibold mb-3">ClickUp Integration</h3>
-
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div class="form-group">
-                                                    <div class="toggle-container">
-                                                        <div class="toggle-wrapper">
-                                                            <input type="checkbox" class="config-input toggle-input"
-                                                                id="clickup-webhook-toggle"
-                                                                data-path="integrations.clickup.webhook_enabled">
-                                                            <div class="toggle-switch"></div>
-                                                        </div>
-                                                        <label class="toggle-label" for="clickup-webhook-toggle">
-                                                            <i class="fas fa-webhook toggle-icon"></i>
-                                                            Enable ClickUp Webhook
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-help">Enable webhook integration with ClickUp</div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label class="form-label">ClickUp API Token</label>
-                                                    <input type="password" class="form-input config-input"
-                                                        data-path="integrations.clickup.api_token"
-                                                        placeholder="Enter ClickUp API token">
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="form-label">ClickUp Team ID</label>
-                                                <input type="text" class="form-input config-input"
-                                                    data-path="integrations.clickup.team_id"
-                                                    placeholder="Enter team ID">
-                                            </div>
-                                        </div>
-
-                                        <div class="config-section">
                                             <h3 class="font-semibold mb-3">Analytics Integration</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -2011,6 +1999,8 @@
                                             </div>
                                         </div>
 
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Theme Customization</h3>
 
@@ -2030,6 +2020,8 @@
                                                 <div class="form-help">Apply custom theme modifications and branding</div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Forms Integration</h3>
@@ -2074,6 +2066,8 @@
                                                 <i class="fas fa-spinner fa-spin"></i> Loading forms...
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Social Media Links</h3>
@@ -2133,6 +2127,8 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">Google Maps Integration</h3>
