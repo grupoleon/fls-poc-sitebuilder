@@ -139,15 +139,21 @@ function sanitizeFilename($name)
 function processTaskData($taskData)
 {
     $processed = [
-        'task_id'           => $taskData['id'] ?? null,
-        'task_name'         => $taskData['name'] ?? null,
-        'task_url'          => $taskData['url'] ?? null,
-        'status'            => $taskData['status']['status'] ?? null,
-        'website_url'       => null,
-        'theme'             => null,
-        'selected_services' => [],
-        'credentials'       => [],
-        'required_inputs'   => [],
+        'task_id'                   => $taskData['id'] ?? null,
+        'task_name'                 => $taskData['name'] ?? null,
+        'task_url'                  => $taskData['url'] ?? null,
+        'status'                    => $taskData['status']['status'] ?? null,
+        'website_url'               => null,
+        'theme'                     => null,
+        'email'                     => null,
+        'google_analytics_token'    => null,
+        'google_map_key'            => null,
+        'privacy_policy_info'       => null,
+        'recaptcha_secret'          => null,
+        'recaptcha_site_key'        => null,
+        'google_drive'              => null,
+        'selected_services'         => [],
+        'website_brief_attachments' => [],
     ];
 
     // Extract custom fields
@@ -189,16 +195,42 @@ function processTaskData($taskData)
                     break;
 
                 case 'Email':
-                case 'Google Drive':
+                    $processed['email'] = $fieldValue;
+                    break;
+
+                case 'Google Analytics Token':
+                    $processed['google_analytics_token'] = $fieldValue;
+                    break;
+
+                case 'Google Map key':
+                    $processed['google_map_key'] = $fieldValue;
+                    break;
+
                 case 'Privacy or Policy Information':
-                    $processed['credentials'][$fieldName] = $fieldValue;
+                    $processed['privacy_policy_info'] = $fieldValue;
+                    break;
+
+                case 'ReCaptcha Secret':
+                    $processed['recaptcha_secret'] = $fieldValue;
+                    break;
+
+                case 'ReCaptcha Site Key':
+                    $processed['recaptcha_site_key'] = $fieldValue;
+                    break;
+
+                case 'Google Drive':
+                    $processed['google_drive'] = $fieldValue;
+                    break;
+
+                case 'Website Brief':
+                    // Store attachments array
+                    if (is_array($fieldValue)) {
+                        $processed['website_brief_attachments'] = $fieldValue;
+                    }
                     break;
 
                 default:
-                    // Store other custom fields as required inputs
-                    if ($fieldValue !== null && $fieldValue !== '') {
-                        $processed['required_inputs'][$fieldName] = $fieldValue;
-                    }
+                    // Skip other fields
                     break;
             }
         }
