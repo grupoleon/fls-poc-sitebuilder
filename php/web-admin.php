@@ -772,6 +772,25 @@
                                 <div class="card-body">
                                     <form id="security-config-form">
                                         <div class="config-section">
+                                            <h3 class="font-semibold mb-3">Master Security Control</h3>
+                                            <div class="form-group">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="security-enabled-toggle"
+                                                            data-path="security.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="security-enabled-toggle">
+                                                        <i class="fas fa-shield-alt toggle-icon"></i>
+                                                        Enable Security Features
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Master toggle to enable/disable all security features</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
                                             <h3 class="font-semibold mb-3">Admin Credentials</h3>
                                             <div
                                                 class="form-help mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -868,6 +887,62 @@
                                                         </label>
                                                     </div>
                                                 </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 gap-4 mt-3">
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="geo-block-admin-toggle"
+                                                                data-path="security.geo_blocking.block_admin_area">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="geo-block-admin-toggle">
+                                                            <i class="fas fa-lock toggle-icon"></i>
+                                                            Block Admin Area
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Apply geo-blocking to admin area</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="geo-block-frontend-toggle"
+                                                                data-path="security.geo_blocking.block_frontend">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="geo-block-frontend-toggle">
+                                                            <i class="fas fa-desktop toggle-icon"></i>
+                                                            Block Frontend
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Apply geo-blocking to frontend</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="geo-emergency-access-toggle"
+                                                                data-path="security.geo_blocking.emergency_access">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="geo-emergency-access-toggle">
+                                                            <i class="fas fa-exclamation-triangle toggle-icon"></i>
+                                                            Emergency Access
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Allow emergency access bypass</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group mt-3">
+                                                <label class="form-label">Emergency Access Code</label>
+                                                <input type="text" class="form-input config-input"
+                                                    data-path="security.geo_blocking.emergency_access_code"
+                                                    placeholder="fls-1718">
+                                                <div class="form-help">Access code to bypass geo-blocking (e.g., add ?access=code to URL)</div>
                                             </div>
                                         </div>
 
@@ -1006,6 +1081,22 @@
 
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">WP Security Audit Log</h3>
+
+                                            <div class="form-group mb-4">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="audit-log-enabled-toggle"
+                                                            data-path="wp_security_audit_log.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="audit-log-enabled-toggle">
+                                                        <i class="fas fa-clipboard-list toggle-icon"></i>
+                                                        Enable Security Audit Logging
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Master toggle to enable/disable all security audit logging features</div>
+                                            </div>
 
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
@@ -1191,6 +1282,22 @@
                                         <div class="config-section">
                                             <h3 class="font-semibold mb-3">WordPress Hardening</h3>
 
+                                            <div class="form-group mb-4">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="wordpress-hardening-toggle"
+                                                            data-path="security.wordpress_hardening.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="wordpress-hardening-toggle">
+                                                        <i class="fas fa-hammer toggle-icon"></i>
+                                                        Enable WordPress Hardening
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Master toggle for WordPress hardening features</div>
+                                            </div>
+
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
                                                     <div class="toggle-container">
@@ -1265,6 +1372,477 @@
                                                             Enable Security Headers
                                                         </label>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">reCAPTCHA Protection</h3>
+
+                                            <div class="form-group mb-4">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="recaptcha-protection-toggle"
+                                                            data-path="security.recaptcha_protection.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="recaptcha-protection-toggle">
+                                                        <i class="fas fa-robot toggle-icon"></i>
+                                                        Enable reCAPTCHA Protection
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Protect your site with Google reCAPTCHA</div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        <i class="fas fa-key text-gray-500 mr-2"></i>
+                                                        reCAPTCHA Site Key
+                                                    </label>
+                                                    <input type="text" class="form-input config-input"
+                                                        data-path="authentication.api_keys.recaptcha.site_key"
+                                                        placeholder="6LcybYwrAAAAAJpqHkRj-Q0vPdLKOAISfEj-p_g6">
+                                                    <div class="form-help">Your Google reCAPTCHA site key</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        <i class="fas fa-lock text-gray-500 mr-2"></i>
+                                                        reCAPTCHA Secret Key
+                                                    </label>
+                                                    <div style="position: relative; display: flex; align-items: center; gap: 8px;">
+                                                        <input type="password" id="recaptcha-secret-input"
+                                                            class="form-input config-input token-field"
+                                                            data-path="authentication.api_keys.recaptcha.secret_key"
+                                                            disabled
+                                                            placeholder="••••••••••••••••••••••••••••••••••••••••"
+                                                            style="flex: 1;">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-primary edit-field-btn"
+                                                            data-target="recaptcha-secret-input" title="Edit Secret Key">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </button>
+                                                    </div>
+                                                    <div class="form-help mt-1">
+                                                        <small class="text-muted">
+                                                            Your Google reCAPTCHA secret key. <a href="https://www.google.com/recaptcha/admin" target="_blank" class="text-blue-600">Get keys here</a>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 gap-4">
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="recaptcha-protect-forms-toggle"
+                                                                data-path="security.recaptcha_protection.protect_forms">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="recaptcha-protect-forms-toggle">
+                                                            <i class="fas fa-file-alt toggle-icon"></i>
+                                                            Protect Forms
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Add reCAPTCHA to forms</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="recaptcha-protect-login-toggle"
+                                                                data-path="security.recaptcha_protection.protect_login">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="recaptcha-protect-login-toggle">
+                                                            <i class="fas fa-sign-in-alt toggle-icon"></i>
+                                                            Protect Login
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Add reCAPTCHA to login page</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="recaptcha-protect-comments-toggle"
+                                                                data-path="security.recaptcha_protection.protect_comments">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="recaptcha-protect-comments-toggle">
+                                                            <i class="fas fa-comment toggle-icon"></i>
+                                                            Protect Comments
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Add reCAPTCHA to comments</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">Vulnerability Monitoring</h3>
+
+                                            <div class="form-group mb-4">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="vulnerability-monitoring-toggle"
+                                                            data-path="security.vulnerability_monitoring.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="vulnerability-monitoring-toggle">
+                                                        <i class="fas fa-bug toggle-icon"></i>
+                                                        Enable Vulnerability Monitoring
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Monitor plugins and themes for known vulnerabilities</div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">Notification Email</label>
+                                                    <input type="email" class="form-input config-input"
+                                                        data-path="security.vulnerability_monitoring.notification_email"
+                                                        placeholder="security@example.com">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Check Frequency</label>
+                                                    <select class="form-select config-input"
+                                                        data-path="security.vulnerability_monitoring.check_frequency">
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 gap-4 mt-3">
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="vuln-check-plugins-toggle"
+                                                                data-path="security.vulnerability_monitoring.check_plugins">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="vuln-check-plugins-toggle">
+                                                            <i class="fas fa-plug toggle-icon"></i>
+                                                            Check Plugins
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="vuln-check-themes-toggle"
+                                                                data-path="security.vulnerability_monitoring.check_themes">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="vuln-check-themes-toggle">
+                                                            <i class="fas fa-palette toggle-icon"></i>
+                                                            Check Themes
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="vuln-auto-update-toggle"
+                                                                data-path="security.vulnerability_monitoring.auto_update_minor">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="vuln-auto-update-toggle">
+                                                            <i class="fas fa-sync toggle-icon"></i>
+                                                            Auto-Update Minor
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group mt-3">
+                                                <label class="form-label">Severity Threshold</label>
+                                                <select class="form-select config-input"
+                                                    data-path="security.vulnerability_monitoring.severity_threshold">
+                                                    <option value="low">Low</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="high">High</option>
+                                                    <option value="critical">Critical</option>
+                                                </select>
+                                                <div class="form-help">Only alert on vulnerabilities at or above this severity</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">Malware Protection</h3>
+
+                                            <div class="form-group mb-4">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="malware-protection-toggle"
+                                                            data-path="security.malware_protection.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="malware-protection-toggle">
+                                                        <i class="fas fa-virus toggle-icon"></i>
+                                                        Enable Malware Protection
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Comprehensive malware scanning and protection</div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="realtime-scanning-toggle"
+                                                                data-path="security.malware_protection.real_time_scanning.enabled">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="realtime-scanning-toggle">
+                                                            <i class="fas fa-eye toggle-icon"></i>
+                                                            Real-Time Scanning
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Sensitivity Level</label>
+                                                    <select class="form-select config-input"
+                                                        data-path="security.malware_protection.real_time_scanning.sensitivity">
+                                                        <option value="low">Low</option>
+                                                        <option value="medium">Medium</option>
+                                                        <option value="high">High</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 gap-4 mb-3">
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="scheduled-scans-toggle"
+                                                                data-path="security.malware_protection.scheduled_scans.enabled">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="scheduled-scans-toggle">
+                                                            <i class="fas fa-calendar toggle-icon"></i>
+                                                            Scheduled Scans
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Scan Frequency</label>
+                                                    <select class="form-select config-input"
+                                                        data-path="security.malware_protection.scheduled_scans.frequency">
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Scan Hour (0-23)</label>
+                                                    <input type="number" class="form-input config-input"
+                                                        data-path="security.malware_protection.scheduled_scans.scan_hour"
+                                                        min="0" max="23" placeholder="2">
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Scan Options</label>
+                                                <div class="grid grid-cols-4 gap-2">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_malware">
+                                                        Scan Malware
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_file_changes">
+                                                        File Changes
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_core_files">
+                                                        Core Files
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_plugins">
+                                                        Plugins
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_themes">
+                                                        Themes
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_images">
+                                                        Images
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_comments">
+                                                        Comments
+                                                    </label>
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" class="config-checkbox"
+                                                            data-path="security.malware_protection.scan_options.scan_posts">
+                                                        Posts
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group mb-3">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="email-alerts-toggle"
+                                                            data-path="security.malware_protection.email_alerts.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="email-alerts-toggle">
+                                                        <i class="fas fa-envelope toggle-icon"></i>
+                                                        Enable Email Alerts
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-4 gap-2 mb-3">
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.scan_issues">
+                                                    Scan Issues
+                                                </label>
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.blocking_events">
+                                                    Blocking Events
+                                                </label>
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.login_lockouts">
+                                                    Login Lockouts
+                                                </label>
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.admin_logins">
+                                                    Admin Logins
+                                                </label>
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.breach_attempts">
+                                                    Breach Attempts
+                                                </label>
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.plugin_deactivation">
+                                                    Plugin Deactivation
+                                                </label>
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" class="config-checkbox"
+                                                        data-path="security.malware_protection.email_alerts.file_changes">
+                                                    File Changes
+                                                </label>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                                <div class="form-group">
+                                                    <label class="form-label">Alert Frequency</label>
+                                                    <select class="form-select config-input"
+                                                        data-path="security.malware_protection.email_alerts.alert_frequency">
+                                                        <option value="immediately">Immediately</option>
+                                                        <option value="hourly">Hourly</option>
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Alert Threshold</label>
+                                                    <select class="form-select config-input"
+                                                        data-path="security.malware_protection.email_alerts.alert_threshold">
+                                                        <option value="low">Low</option>
+                                                        <option value="medium">Medium</option>
+                                                        <option value="high">High</option>
+                                                        <option value="critical">Critical</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="auto-cleaning-toggle"
+                                                            data-path="security.malware_protection.auto_cleaning.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="auto-cleaning-toggle">
+                                                        <i class="fas fa-broom toggle-icon"></i>
+                                                        Enable Auto-Cleaning
+                                                    </label>
+                                                </div>
+                                                <div class="form-help text-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    <strong>Warning:</strong> This option must be used carefully. Auto-cleaning can remove infected files automatically.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">Brute Force Protection</h3>
+
+                                            <div class="form-group mb-4">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="brute-force-protection-toggle"
+                                                            data-path="security.brute_force_protection.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="brute-force-protection-toggle">
+                                                        <i class="fas fa-user-shield toggle-icon"></i>
+                                                        Enable Brute Force Protection
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Protect against brute force login attacks</div>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 gap-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">Login Attempt Threshold</label>
+                                                    <input type="number" class="form-input config-input"
+                                                        data-path="security.brute_force_protection.login_attempt_threshold"
+                                                        min="1" max="10" placeholder="3">
+                                                    <div class="form-help">Failed attempts before blocking</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Block Duration (hours)</label>
+                                                    <input type="number" class="form-input config-input"
+                                                        data-path="security.brute_force_protection.block_duration_hours"
+                                                        min="1" max="168" placeholder="24">
+                                                    <div class="form-help">How long to block IP</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="immediate-ip-blocking-toggle"
+                                                                data-path="security.brute_force_protection.immediate_ip_blocking">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="immediate-ip-blocking-toggle">
+                                                            <i class="fas fa-ban toggle-icon"></i>
+                                                            Immediate IP Blocking
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Block immediately on threshold</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1373,6 +1951,40 @@
                                 <div class="card-body">
                                     <form id="integrations-config-form">
                                         <div class="config-section">
+                                            <h3 class="font-semibold mb-3">ClickUp Integration</h3>
+
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="form-group">
+                                                    <div class="toggle-container">
+                                                        <div class="toggle-wrapper">
+                                                            <input type="checkbox" class="config-input toggle-input"
+                                                                id="clickup-webhook-toggle"
+                                                                data-path="integrations.clickup.webhook_enabled">
+                                                            <div class="toggle-switch"></div>
+                                                        </div>
+                                                        <label class="toggle-label" for="clickup-webhook-toggle">
+                                                            <i class="fas fa-webhook toggle-icon"></i>
+                                                            Enable ClickUp Webhook
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-help">Enable webhook integration with ClickUp</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">ClickUp API Token</label>
+                                                    <input type="password" class="form-input config-input"
+                                                        data-path="integrations.clickup.api_token"
+                                                        placeholder="Enter ClickUp API token">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">ClickUp Team ID</label>
+                                                <input type="text" class="form-input config-input"
+                                                    data-path="integrations.clickup.team_id"
+                                                    placeholder="Enter team ID">
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
                                             <h3 class="font-semibold mb-3">Analytics Integration</h3>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -1396,6 +2008,26 @@
                                                         data-path="authentication.api_keys.google_analytics"
                                                         placeholder="G-XXXXXXXXXX">
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="config-section">
+                                            <h3 class="font-semibold mb-3">Theme Customization</h3>
+
+                                            <div class="form-group">
+                                                <div class="toggle-container">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="theme-customization-toggle"
+                                                            data-path="integrations.theme_customization.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="theme-customization-toggle">
+                                                        <i class="fas fa-paint-brush toggle-icon"></i>
+                                                        Enable Theme Customization
+                                                    </label>
+                                                </div>
+                                                <div class="form-help">Apply custom theme modifications and branding</div>
                                             </div>
                                         </div>
 

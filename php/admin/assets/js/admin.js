@@ -78,6 +78,9 @@ class AdminInterface {
         this.realtimeLogsEnabled=false;
         this.logPollInterval=null;
 
+        // Store current ClickUp task data for prefilling
+        this.currentTaskData=null;
+
         this.init();
     }
 
@@ -1107,7 +1110,12 @@ class AdminInterface {
                     if(!document.querySelector('.subtab-content.active')) {
                         this.switchSubTab('git-config');
                     }
-                },100);
+                    // Apply task configs if available
+                    if(this.currentTaskData) {
+                        debugLog('Applying task configs after configuration tab load');
+                        this.prefillServicesAndConfigs(this.currentTaskData);
+                    }
+                },500);
                 break;
             case 'contents':
                 this.loadOtherContents();
@@ -1712,12 +1720,13 @@ class AdminInterface {
             debugLog(`Loading task data for: ${taskId}`);
             const response=await fetch(`/php/api/clickup-tasks.php?action=get&id=${taskId}`);
             const data=await response.json();
-            debugLog('Task data:',data);
+            console.log('Raw API Response:',JSON.stringify(data,null,2));
 
             if(data.success&&data.task) {
+                console.log('Task object:',JSON.stringify(data.task,null,2));
                 this.prefillDeploymentForm(data.task);
             } else {
-                debugLog('Failed to load task data','error');
+                debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
             }
         } catch(error) {
             debugLog('Failed to load task data:',error,'error');
@@ -1725,17 +1734,55 @@ class AdminInterface {
     }
 
     prefillDeploymentForm(taskData) {
-        debugLog('Prefilling form with task data:',taskData);
+        console.log('=== PREFILLING FORM ===');
+        console.log('Full task data received:',JSON.stringify(taskData,null,2));
 
-        // Prefill site title with website URL or task name
+        // Store task data for later use
+        this.currentTaskData=taskData;
+
+        // Prefill site title with task_name
         const siteTitleInput=document.getElementById('deployment-site-title');
-        if(siteTitleInput) {
-            const siteTitle=taskData.website_url||taskData.task_name;
-            if(siteTitle) {
-                siteTitleInput.value=siteTitle;
-                // Trigger site existence check
-                this.checkSiteExistence(siteTitle);
-            }
+        console.log('Site title input element exists:',!!siteTitleInput);
+        console.log('task_name value:',taskData.task_name);
+        console.log('typeof task_name:',typeof taskData.task_name);
+
+        if(siteTitleInput&&taskData.task_name) {
+            siteTitleInput.value=taskData.task_name;
+            console.log('✅ Site title set to:',siteTitleInput.value);
+
+            // Watch for any changes to the input value
+            const observer=new MutationObserver(() => {
+                if(siteTitleInput.value!==taskData.task_name) {
+                    console.warn('⚠️ Site title was changed from:',taskData.task_name,'to:',siteTitleInput.value);
+                    console.trace('Stack trace of who changed it:');
+                }
+            });
+            observer.observe(siteTitleInput,{
+                attributes: true,
+                attributeFilter: ['value']
+            });
+
+            // Also watch for direct value changes
+            const originalValue=siteTitleInput.value;
+            setTimeout(() => {
+                if(siteTitleInput.value!==originalValue) {
+                    console.warn('⚠️ Site title was cleared/changed after 50ms. Original:',originalValue,'Current:',siteTitleInput.value);
+                }
+            },50);
+            setTimeout(() => {
+                if(siteTitleInput.value!==originalValue) {
+                    console.warn('⚠️ Site title was cleared/changed after 200ms. Original:',originalValue,'Current:',siteTitleInput.value);
+                }
+            },200);
+
+            // Trigger site existence check
+            this.checkSiteExistence(taskData.task_name);
+        } else {
+            console.error('❌ Could not set site title:',{
+                hasInput: !!siteTitleInput,
+                hasTaskName: !!taskData.task_name,
+                taskNameValue: taskData.task_name
+            });
         }
 
         // Prefill theme
@@ -1757,11 +1804,108 @@ class AdminInterface {
                 this.saveActiveTheme(themeName);
                 this.updatePageOptionsForTheme(themeName);
                 this.updatePageThemeSelect(themeName);
+
+                // Re-apply site title after theme operations (they may have cleared it)
+                setTimeout(() => {
+                    if(siteTitleInput&&taskData.task_name) {
+                        siteTitleInput.value=taskData.task_name;
+                        console.log('🔄 Site title re-applied after theme operations:',taskData.task_name);
+                    }
+                },100);
             }
         }
 
+        // Enable services based on selected_services and prefill API keys
+        this.prefillServicesAndConfigs(taskData);
+
         // Show notification about prefilled data
         this.showNotification('Form prefilled with ClickUp task data','success');
+    }
+
+    prefillServicesAndConfigs(taskData) {
+        debugLog('Prefilling services and configs with task data');
+
+        // Service name to config toggle mapping
+        const serviceToggleMap={
+            'Google Analytics': 'analytics-toggle',
+            'Map View': 'maps-toggle',
+            'Captcha': null, // reCAPTCHA is handled per-form
+            'Contact Form': 'forms-integration-toggle',
+            'Document Upload': 'forms-integration-toggle',
+            'Social Links': 'social-links-toggle',
+            'Donation Key/API': null, // No specific toggle
+            'Custom Privacy Policy': null,
+            'Comprehensive Security': null,
+            'Email Template': null,
+        };
+
+        // Enable service toggles based on selected_services
+        if(taskData.selected_services&&Array.isArray(taskData.selected_services)) {
+            debugLog('Selected services:',taskData.selected_services);
+            taskData.selected_services.forEach(service => {
+                const toggleId=serviceToggleMap[service];
+                if(toggleId) {
+                    const toggle=document.getElementById(toggleId);
+                    debugLog(`Looking for toggle ${toggleId}:`,toggle);
+                    if(toggle&&!toggle.checked) {
+                        toggle.checked=true;
+                        debugLog(`Enabled toggle: ${toggleId}`);
+                        // Trigger change event to update dependent UI
+                        toggle.dispatchEvent(new Event('change',{bubbles: true}));
+                    } else if(!toggle) {
+                        debugLog(`Toggle ${toggleId} not found in DOM yet`,'warn');
+                    }
+                }
+            });
+        }
+
+        // Prefill Google Analytics Token
+        if(taskData.google_analytics_token) {
+            const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
+            debugLog('Analytics input element:',analyticsInput);
+            if(analyticsInput) {
+                analyticsInput.value=taskData.google_analytics_token;
+                debugLog('Set analytics token:',taskData.google_analytics_token);
+            } else {
+                debugLog('Analytics input not found in DOM yet','warn');
+            }
+        }
+
+        // Prefill Google Maps API Key
+        if(taskData.google_map_key) {
+            const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
+            debugLog('Maps input element:',mapsInput);
+            if(mapsInput) {
+                mapsInput.value=taskData.google_map_key;
+                debugLog('Set maps API key:',taskData.google_map_key);
+                // Trigger change event to potentially load map preview
+                mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
+            } else {
+                debugLog('Maps input not found in DOM yet','warn');
+            }
+        }
+
+        // Store reCAPTCHA keys for later form configuration
+        // These will be available when user configures forms
+        if(taskData.recaptcha_site_key||taskData.recaptcha_secret) {
+            sessionStorage.setItem('clickup_recaptcha_site_key',taskData.recaptcha_site_key||'');
+            sessionStorage.setItem('clickup_recaptcha_secret',taskData.recaptcha_secret||'');
+        }
+
+        // Store email for later use
+        if(taskData.email) {
+            sessionStorage.setItem('clickup_email',taskData.email);
+        }
+
+        // Store privacy policy info
+        if(taskData.privacy_policy_info) {
+            sessionStorage.setItem('clickup_privacy_policy',taskData.privacy_policy_info);
+        }
+
+        // Store Google Drive info
+        if(taskData.google_drive) {
+            sessionStorage.setItem('clickup_google_drive',taskData.google_drive);
+        }
     }
 
     async populateThemeSelect(themes) {
