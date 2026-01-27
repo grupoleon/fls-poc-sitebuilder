@@ -1925,6 +1925,50 @@
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section mb-8">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                                <h3 class="font-semibold mb-0">IP Blocking</h3>
+                                                <div class="toggle-container" style="margin-left: auto;">
+                                                    <div class="toggle-wrapper">
+                                                        <input type="checkbox" class="config-input toggle-input"
+                                                            id="ip-blocking-toggle"
+                                                            data-path="security.ip_blocking.enabled">
+                                                        <div class="toggle-switch"></div>
+                                                    </div>
+                                                    <label class="toggle-label" for="ip-blocking-toggle">
+                                                        <i class="fas fa-shield-alt toggle-icon"></i>
+                                                        Enable IP Blocking
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="form-help mb-4">Block or allow specific IP addresses from accessing your site</div>
+
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">Allowed IP Addresses</label>
+                                                    <textarea class="form-input config-input" rows="5"
+                                                        data-path="security.ip_blocking.allowed_ips"
+                                                        placeholder="Enter one IP per line&#10;192.168.1.100&#10;10.0.0.50&#10;203.0.113.0/24"></textarea>
+                                                    <div class="form-help">Whitelist IPs that should always have access. Supports CIDR notation (e.g., 192.168.1.0/24)</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Blocked IP Addresses</label>
+                                                    <textarea class="form-input config-input" rows="5"
+                                                        data-path="security.ip_blocking.blocked_ips"
+                                                        placeholder="Enter one IP per line&#10;192.168.1.200&#10;172.16.0.100&#10;198.51.100.0/24"></textarea>
+                                                    <div class="form-help">Blacklist IPs that should be blocked. Supports CIDR notation</div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="form-help text-info">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    <strong>Note:</strong> Allowed IPs take precedence over blocked IPs. Use carefully to avoid locking yourself out.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
+                                        <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Two-Factor Authentication</h3>
 
                                             <div class="grid grid-cols-2 gap-4">

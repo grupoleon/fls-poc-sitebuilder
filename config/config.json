@@ -63,7 +63,7 @@
       "google_maps": "",
       "google_analytics": "G-XXXXXXXXXX",
       "recaptcha": {
-        "site_key": "6LcybYwrAAAAAJpqHkRj-Q0vPdLKOAISfEj-p_g6",
+        "site_key": "",
         "secret_key": ""
       },
       "security": {
@@ -74,6 +74,11 @@
   },
   "security": {
     "enabled": true,
+    "ip_blocking": {
+      "enabled": false,
+      "allowed_ips": [],
+      "blocked_ips": []
+    },
     "geo_blocking": {
       "enabled": true,
       "allowed_countries": [
