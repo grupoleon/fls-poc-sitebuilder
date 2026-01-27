@@ -14,11 +14,12 @@ MAIN_CONFIG="$CONFIG_DIR/config.json"
 # Read tokens from JSON configuration files with environment variable fallbacks
 KINSTA_API_TOKEN="${KINSTA_API_TOKEN:-$(jq -r '.site.kinsta_token // empty' "$MAIN_CONFIG")}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-$(jq -r '.token // empty' "$GIT_CONFIG")}"
+CLICKUP_API_TOKEN="${CLICKUP_API_TOKEN:-$(jq -r '.integrations.clickup.api_token // empty' "$MAIN_CONFIG")}"
 COMPANY_ID="${COMPANY_ID:-$(jq -r '.company // empty' "$SITE_CONFIG")}"
 
 # API logging is always enabled
 
-# Check if tokens are set
+# Check if tokens are set (only for mandatory services)
 if [[ -z "$GITHUB_TOKEN" ]]; then
     log_error "GITHUB_TOKEN is not set. Please set the token in $GIT_CONFIG or set the GITHUB_TOKEN environment variable. Example: export GITHUB_TOKEN='your_github_personal_access_token'" "API"
     exit 1
@@ -28,6 +29,8 @@ if [[ -z "$KINSTA_API_TOKEN" ]]; then
     log_error "KINSTA_API_TOKEN is not set. Please set site.kinsta_token in $MAIN_CONFIG or set the KINSTA_API_TOKEN environment variable. Example: export KINSTA_API_TOKEN='your_kinsta_api_token'" "API"
     exit 1
 fi
+
+# ClickUp token is optional - checked when needed
 
 api_request() {
     local service="$1"
@@ -50,6 +53,17 @@ api_request() {
             base_url="https://api.kinsta.com/v2"
             accept_header="application/json"
             ;;
+        clickup)
+            token="$CLICKUP_API_TOKEN"
+            base_url="https://api.clickup.com/api/v2"
+            accept_header="application/json"
+            
+            # Validate ClickUp token when needed
+            if [[ -z "$token" ]]; then
+                log_error "CLICKUP_API_TOKEN is not set. Please set integrations.clickup.api_token in $MAIN_CONFIG" "API"
+                exit 1
+            fi
+            ;;
         *)
             log_error "Unknown service: $service" "API"
             exit 1
@@ -65,13 +79,21 @@ api_request() {
     local curl_opts=(
         --silent
         --location
-        --header "Authorization: Bearer $token"
         --header "Content-Type: application/json"
         --header "Accept: $accept_header"
         --request "$method"
     )
-
-    [[ "$service" == "github" ]] && curl_opts+=(--header "X-GitHub-Api-Version: 2022-11-28")
+    
+    # Service-specific headers
+    if [[ "$service" == "github" ]]; then
+        curl_opts+=(--header "Authorization: Bearer $token")
+        curl_opts+=(--header "X-GitHub-Api-Version: 2022-11-28")
+    elif [[ "$service" == "kinsta" ]]; then
+        curl_opts+=(--header "Authorization: Bearer $token")
+    elif [[ "$service" == "clickup" ]]; then
+        # ClickUp uses a different authorization format
+        curl_opts+=(--header "Authorization: $token")
+    fi
 
     if [[ "$method" == "GET" && -n "$data" ]]; then
         local query

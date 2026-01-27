@@ -14,6 +14,14 @@ else
     log_warning() { echo "[WARNING] $1"; }
 fi
 
+# Load API utilities for proper logging
+if [[ -f "$SCRIPT_DIR/api.sh" ]]; then
+    source "$SCRIPT_DIR/api.sh"
+else
+    log_error "API utilities not found: $SCRIPT_DIR/api.sh"
+    exit 1
+fi
+
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "Updating ClickUp Task with Deployment Details"
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -101,62 +109,116 @@ log_info "Site URL: ${SITE_URL:-'N/A'}"
 log_info "Admin URL: ${ADMIN_URL:-'N/A'}"
 log_info "Admin User: ${ADMIN_USER:-'N/A'}"
 
-# Prepare JSON payload for API call
-JSON_PAYLOAD=$(jq -n \
-    --arg task_id "$TASK_ID" \
-    --arg site_url "${SITE_URL:-}" \
-    --arg admin_url "${ADMIN_URL:-}" \
-    --arg admin_user "${ADMIN_USER:-}" \
-    --arg admin_pass "${ADMIN_PASS:-}" \
-    --arg deployment_date "$DEPLOYMENT_DATE" \
+# Prepare comment text with deployment information
+COMMENT_TEXT="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+COMMENT_TEXT+="✅ **DEPLOYMENT COMPLETED**\n"
+COMMENT_TEXT+="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+COMMENT_TEXT+="**Deployment Date:** ${DEPLOYMENT_DATE}\n\n"
+
+if [[ -n "$SITE_URL" ]]; then
+    COMMENT_TEXT+="**🌐 Site URL:** [${SITE_URL}](https://${SITE_URL})\n"
+fi
+
+if [[ -n "$ADMIN_URL" ]]; then
+    COMMENT_TEXT+="**🔐 Admin URL:** [${ADMIN_URL}](https://${ADMIN_URL})\n"
+fi
+
+if [[ -n "$ADMIN_USER" || -n "$ADMIN_PASS" ]]; then
+    COMMENT_TEXT+="\n**Login Credentials:**\n"
+    if [[ -n "$ADMIN_USER" ]]; then
+        COMMENT_TEXT+="- **Username:** \`${ADMIN_USER}\`\n"
+    fi
+    if [[ -n "$ADMIN_PASS" ]]; then
+        COMMENT_TEXT+="- **Password:** \`${ADMIN_PASS}\`\n"
+    fi
+fi
+
+COMMENT_TEXT+="\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+# Prepare JSON payload for comment
+COMMENT_PAYLOAD=$(jq -n \
+    --arg text "$COMMENT_TEXT" \
     '{
-        task_id: $task_id,
-        site_url: $site_url,
-        admin_url: $admin_url,
-        admin_user: $admin_user,
-        admin_pass: $admin_pass,
-        deployment_date: $deployment_date
+        comment_text: $text,
+        notify_all: true
     }')
 
-log_info "Sending update request to ClickUp API..."
+log_info "Posting deployment comment to ClickUp task..."
 
-# Call the PHP API endpoint to update ClickUp
-RESPONSE=$(curl -s -X POST \
-    "https://$(hostname)/php/api/update-clickup-task.php" \
-    -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" \
-    2>&1)
+# Post comment to task using api_request (with automatic logging)
+COMMENT_RESPONSE=$(api_request "clickup" "task/${TASK_ID}/comment" "POST" "$COMMENT_PAYLOAD")
+COMMENT_EXIT_CODE=$?
 
-CURL_EXIT_CODE=$?
-
-if [[ $CURL_EXIT_CODE -ne 0 ]]; then
-    log_error "Failed to send update request (curl exit code: $CURL_EXIT_CODE)"
-    log_error "Response: $RESPONSE"
+if [[ $COMMENT_EXIT_CODE -ne 0 ]]; then
+    log_error "Failed to post comment to ClickUp task"
     exit 1
 fi
 
 # Check if response is valid JSON
-if ! echo "$RESPONSE" | jq empty 2>/dev/null; then
-    log_error "Invalid JSON response from API"
-    log_error "Response: $RESPONSE"
+if ! echo "$COMMENT_RESPONSE" | jq empty 2>/dev/null; then
+    log_error "Invalid JSON response from ClickUp API when posting comment"
+    log_error "Response: $COMMENT_RESPONSE"
     exit 1
 fi
 
-# Check success status
-SUCCESS=$(echo "$RESPONSE" | jq -r '.success // false')
-
-if [[ "$SUCCESS" == "true" ]]; then
-    log_success "✓ ClickUp task updated successfully!"
-    log_success "Task ID: $TASK_ID"
-    log_success "Site URL: $SITE_URL"
-else
-    ERROR_MSG=$(echo "$RESPONSE" | jq -r '.message // "Unknown error"')
-    log_error "Failed to update ClickUp task: $ERROR_MSG"
+# Check for ClickUp API error in response
+CLICKUP_ERROR=$(echo "$COMMENT_RESPONSE" | jq -r '.err // .error // empty')
+if [[ -n "$CLICKUP_ERROR" && "$CLICKUP_ERROR" != "null" ]]; then
+    log_error "ClickUp API error: $CLICKUP_ERROR"
     exit 1
+fi
+
+log_success "✓ Comment posted to ClickUp task successfully"
+
+# Update Website URL custom field if site URL is available
+if [[ -n "$SITE_URL" ]]; then
+    log_info "Updating Website URL custom field..."
+    
+    # First, get task details to find custom field ID
+    TASK_DETAILS=$(api_request "clickup" "task/${TASK_ID}" "GET")
+    TASK_EXIT_CODE=$?
+    
+    if [[ $TASK_EXIT_CODE -ne 0 ]]; then
+        log_warning "Failed to fetch task details for custom field update"
+    else
+        # Find Website URL custom field ID
+        WEBSITE_FIELD_ID=$(echo "$TASK_DETAILS" | jq -r '.custom_fields[] | select(.name == "Website URL") | .id // empty')
+        
+        if [[ -n "$WEBSITE_FIELD_ID" && "$WEBSITE_FIELD_ID" != "null" ]]; then
+            log_info "Found Website URL custom field: $WEBSITE_FIELD_ID"
+            
+            # Prepare update payload
+            UPDATE_PAYLOAD=$(jq -n \
+                --arg field_id "$WEBSITE_FIELD_ID" \
+                --arg value "$SITE_URL" \
+                '{
+                    custom_fields: [
+                        {
+                            id: $field_id,
+                            value: $value
+                        }
+                    ]
+                }')
+            
+            # Update custom field using api_request (with automatic logging)
+            UPDATE_RESPONSE=$(api_request "clickup" "task/${TASK_ID}" "PUT" "$UPDATE_PAYLOAD")
+            UPDATE_EXIT_CODE=$?
+            
+            if [[ $UPDATE_EXIT_CODE -eq 0 ]]; then
+                log_success "✓ Website URL custom field updated successfully"
+            else
+                log_warning "Failed to update Website URL custom field (non-critical)"
+            fi
+        else
+            log_info "Website URL custom field not found in task (skipping)"
+        fi
+    fi
 fi
 
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_success "ClickUp Task Update Complete"
+log_success "Task ID: $TASK_ID"
+log_success "Site URL: $SITE_URL"
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 exit 0
