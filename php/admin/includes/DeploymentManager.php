@@ -61,7 +61,7 @@ class DeploymentManager
         // Log which PHP binary will be used for background runners (helpful for debugging)
         error_log("DeploymentManager: Selected PHP binary for background runner: " . $phpBinary);
 
-        $shellContent = "#!/bin/bash\n" . $command . "\n";
+        $shellContent  = "#!/bin/bash\n" . $command . "\n";
 
         // Ensure tmp directory exists
         if (! is_dir($this->scriptDir . '/tmp')) {
@@ -81,8 +81,13 @@ class DeploymentManager
         // Create initial deployment status
         $this->resetDeployment();
 
-        // Update status to starting
-        $statusFile    = $this->scriptDir . '/tmp/deployment_status.json';
+        // Update status to starting (preserve clickup_task_id if exists)
+        $statusFile     = $this->scriptDir . '/tmp/deployment_status.json';
+        $existingStatus = [];
+        if (file_exists($statusFile)) {
+            $existingStatus = json_decode(file_get_contents($statusFile), true) ?: [];
+        }
+
         $initialStatus = [
             'status'    => 'starting',
             'step'      => 'initializing',
@@ -90,6 +95,13 @@ class DeploymentManager
             'timestamp' => time(),
             'logs'      => ['Deployment requested from web interface'],
         ];
+
+        // Preserve clickup_task_id if it exists
+        if (isset($existingStatus['clickup_task_id']) && ! empty($existingStatus['clickup_task_id'])) {
+            $initialStatus['clickup_task_id'] = $existingStatus['clickup_task_id'];
+            error_log("DeploymentManager: Preserving ClickUp Task ID in initial status: {$existingStatus['clickup_task_id']}");
+        }
+
         file_put_contents($statusFile, json_encode($initialStatus, JSON_PRETTY_PRINT));
 
         // Create log file for debugging
@@ -202,8 +214,13 @@ class DeploymentManager
         // Create initial deployment status
         $this->resetDeployment();
 
-        // Update status to starting
-        $statusFile    = $this->scriptDir . '/tmp/deployment_status.json';
+        // Update status to starting (preserve clickup_task_id if exists)
+        $statusFile     = $this->scriptDir . '/tmp/deployment_status.json';
+        $existingStatus = [];
+        if (file_exists($statusFile)) {
+            $existingStatus = json_decode(file_get_contents($statusFile), true) ?: [];
+        }
+
         $initialStatus = [
             'status'    => 'starting',
             'step'      => 'deploy',
@@ -211,6 +228,13 @@ class DeploymentManager
             'timestamp' => time(),
             'logs'      => ['Deploy Again requested from web interface'],
         ];
+
+        // Preserve clickup_task_id if it exists
+        if (isset($existingStatus['clickup_task_id']) && ! empty($existingStatus['clickup_task_id'])) {
+            $initialStatus['clickup_task_id'] = $existingStatus['clickup_task_id'];
+            error_log("DeploymentManager: Preserving ClickUp Task ID in deploy again: {$existingStatus['clickup_task_id']}");
+        }
+
         file_put_contents($statusFile, json_encode($initialStatus, JSON_PRETTY_PRINT));
 
         // Create log file for debugging
@@ -673,7 +697,19 @@ class DeploymentManager
      */
     public function resetDeployment()
     {
-        $statusFile  = $this->scriptDir . '/tmp/deployment_status.json';
+        $statusFile = $this->scriptDir . '/tmp/deployment_status.json';
+
+        // IMPORTANT: Preserve clickup_task_id if it exists
+        // This is set by the web interface before deployment starts
+        $clickupTaskId = null;
+        if (file_exists($statusFile)) {
+            $existingStatus = json_decode(file_get_contents($statusFile), true);
+            if (isset($existingStatus['clickup_task_id']) && ! empty($existingStatus['clickup_task_id'])) {
+                $clickupTaskId = $existingStatus['clickup_task_id'];
+                error_log("DeploymentManager: Preserving ClickUp Task ID during reset: {$clickupTaskId}");
+            }
+        }
+
         $resetStatus = [
             'status'    => 'idle',
             'step'      => '',
@@ -681,6 +717,11 @@ class DeploymentManager
             'timestamp' => time(),
             'logs'      => [],
         ];
+
+        // Add clickup_task_id back if it was present
+        if ($clickupTaskId) {
+            $resetStatus['clickup_task_id'] = $clickupTaskId;
+        }
 
         file_put_contents($statusFile, json_encode($resetStatus, JSON_PRETTY_PRINT));
 

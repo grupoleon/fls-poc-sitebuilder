@@ -55,6 +55,14 @@ function updateDeploymentStatus($status, $step = null)
     // Use UTC timezone for consistent logging across all operations
     $currentStatus['last_update'] = gmdate('Y-m-d H:i:s');
 
+    // IMPORTANT: Preserve clickup_task_id if it exists
+    // This is set by the web interface before deployment starts
+    // and must persist throughout the entire deployment process
+    if (isset($currentStatus['clickup_task_id']) && ! empty($currentStatus['clickup_task_id'])) {
+        // Keep existing clickup_task_id - do nothing, it's already in $currentStatus
+        writeDeploymentLog("Preserving ClickUp Task ID: {$currentStatus['clickup_task_id']}", 'INFO');
+    }
+
     if ($step) {
         $currentStatus['current_step'] = $step;
 
