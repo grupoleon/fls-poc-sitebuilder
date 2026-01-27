@@ -161,27 +161,52 @@ class LocalConfigManager {
         // Group by category
         const grouped={};
         this.logFiles.forEach(file => {
-            if(!grouped[file.category]) {
-                grouped[file.category]=[];
+            const category=file.category||'Other';
+            if(!grouped[category]) {
+                grouped[category]=[];
             }
-            grouped[file.category].push(file);
+            grouped[category].push(file);
         });
 
-        // Add options grouped by category
+        // Define category order
+        const categoryOrder=['Temporary Status','Logs','api','deployment'];
+
+        // Add options grouped by category in specified order
+        categoryOrder.forEach(category => {
+            if(grouped[category]) {
+                const optgroup=document.createElement('optgroup');
+                optgroup.label=category.charAt(0).toUpperCase()+category.slice(1);
+
+                grouped[category].forEach(file => {
+                    const option=document.createElement('option');
+                    option.value=file.path;
+                    const sizeKB=(file.size/1024).toFixed(2);
+                    const date=new Date(file.modified*1000).toLocaleString();
+                    option.textContent=`${file.name} (${sizeKB} KB - ${date})`;
+                    optgroup.appendChild(option);
+                });
+
+                logSelect.appendChild(optgroup);
+            }
+        });
+
+        // Add any remaining categories not in the order list
         Object.keys(grouped).sort().forEach(category => {
-            const optgroup=document.createElement('optgroup');
-            optgroup.label=category==='root'? 'Root Logs':category;
+            if(!categoryOrder.includes(category)) {
+                const optgroup=document.createElement('optgroup');
+                optgroup.label=category.charAt(0).toUpperCase()+category.slice(1);
 
-            grouped[category].forEach(file => {
-                const option=document.createElement('option');
-                option.value=file.path;
-                const sizeKB=(file.size/1024).toFixed(2);
-                const date=new Date(file.modified*1000).toLocaleString();
-                option.textContent=`${file.name} (${sizeKB} KB - ${date})`;
-                optgroup.appendChild(option);
-            });
+                grouped[category].forEach(file => {
+                    const option=document.createElement('option');
+                    option.value=file.path;
+                    const sizeKB=(file.size/1024).toFixed(2);
+                    const date=new Date(file.modified*1000).toLocaleString();
+                    option.textContent=`${file.name} (${sizeKB} KB - ${date})`;
+                    optgroup.appendChild(option);
+                });
 
-            logSelect.appendChild(optgroup);
+                logSelect.appendChild(optgroup);
+            }
         });
     }
 

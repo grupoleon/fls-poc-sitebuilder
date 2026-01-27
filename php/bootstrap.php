@@ -487,10 +487,11 @@ function handleRequest()
             case 'list_log_files':
                 try {
                     $logsDir  = __DIR__ . '/../logs';
+                    $tmpDir   = __DIR__ . '/../tmp';
                     $logFiles = [];
 
                     // Recursive function to scan directories
-                    $scanDirectory = function ($dir, $prefix = '') use (&$scanDirectory, &$logFiles, $logsDir) {
+                    $scanDirectory = function ($dir, $prefix = '', $category = 'Logs') use (&$scanDirectory, &$logFiles, $logsDir) {
                         if (! is_dir($dir)) {
                             return;
                         }
@@ -505,20 +506,44 @@ function handleRequest()
                             $relativePath = $prefix . $item;
 
                             if (is_dir($fullPath)) {
-                                $scanDirectory($fullPath, $relativePath . '/');
+                                $scanDirectory($fullPath, $relativePath . '/', $category);
                             } elseif (is_file($fullPath)) {
                                 $logFiles[] = [
                                     'name'     => $item,
                                     'path'     => $relativePath,
+                                    'fullPath' => $fullPath,
                                     'size'     => filesize($fullPath),
                                     'modified' => filemtime($fullPath),
-                                    'category' => $prefix ? rtrim($prefix, '/') : 'root',
+                                    'category' => $category,
                                 ];
                             }
                         }
                     };
 
-                    $scanDirectory($logsDir);
+                    // Scan logs directory
+                    $scanDirectory($logsDir, '', 'Logs');
+
+                    // Scan tmp directory for status JSON files
+                    if (is_dir($tmpDir)) {
+                        $tmpItems = scandir($tmpDir);
+                        foreach ($tmpItems as $item) {
+                            if ($item === '.' || $item === '..') {
+                                continue;
+                            }
+
+                            $fullPath = $tmpDir . '/' . $item;
+                            if (is_file($fullPath)) {
+                                $logFiles[] = [
+                                    'name'     => $item,
+                                    'path'     => 'tmp/' . $item,
+                                    'fullPath' => $fullPath,
+                                    'size'     => filesize($fullPath),
+                                    'modified' => filemtime($fullPath),
+                                    'category' => 'Temporary Status',
+                                ];
+                            }
+                        }
+                    }
 
                     // Sort by modified time (newest first)
                     usort($logFiles, function ($a, $b) {
@@ -545,11 +570,22 @@ function handleRequest()
                         throw new Exception('File path is required');
                     }
 
-                    // Security: ensure the path is within logs directory
-                    $logsDir       = realpath(__DIR__ . '/../logs');
-                    $requestedFile = realpath($logsDir . '/' . $filePath);
+                    $baseDir = __DIR__ . '/..';
+                    $logsDir = realpath($baseDir . '/logs');
+                    $tmpDir  = realpath($baseDir . '/tmp');
 
-                    if ($requestedFile === false || strpos($requestedFile, $logsDir) !== 0) {
+                    // Determine which directory to use based on path
+                    if (strpos($filePath, 'tmp/') === 0) {
+                        $allowedDir    = $tmpDir;
+                        $relativePath  = substr($filePath, 4); // Remove 'tmp/' prefix
+                        $requestedFile = realpath($tmpDir . '/' . $relativePath);
+                    } else {
+                        $allowedDir    = $logsDir;
+                        $requestedFile = realpath($logsDir . '/' . $filePath);
+                    }
+
+                    // Security: ensure the path is within allowed directories
+                    if ($requestedFile === false || strpos($requestedFile, $allowedDir) !== 0) {
                         throw new Exception('Invalid file path');
                     }
 
@@ -559,6 +595,14 @@ function handleRequest()
 
                     // Read file content
                     $content = file_get_contents($requestedFile);
+
+                    // If it's a JSON file, pretty format it
+                    if (pathinfo($requestedFile, PATHINFO_EXTENSION) === 'json') {
+                        $jsonData = json_decode($content, true);
+                        if ($jsonData !== null) {
+                            $content = json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                        }
+                    }
 
                     echo json_encode([
                         'success' => true,

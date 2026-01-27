@@ -139,7 +139,8 @@
                                         <div style="flex: 1;">
                                             <input type="text" id="manual-task-id-input" class="form-input"
                                                 placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
-                                            <div class="form-help">Can't find your task in the dropdown? Enter the task ID to fetch it directly from ClickUp</div>
+                                            <div class="form-help">Can't find your task in the dropdown? Enter the task
+                                                ID to fetch it directly from ClickUp</div>
                                         </div>
                                         <button type="button" class="btn btn-outline-primary" id="fetch-manual-task-btn"
                                             style="white-space: nowrap; margin-top: 0;">
