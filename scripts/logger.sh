@@ -204,13 +204,31 @@ end_deployment_session() {
     local status_file="$ROOT_DIR/tmp/deployment_status.json"
     mkdir -p "$(dirname "$status_file")"
     
-    cat > "$status_file" << EOF
+    # Preserve existing clickup_task_id if present
+    local clickup_task_id=""
+    if [[ -f "$status_file" ]]; then
+        clickup_task_id=$(jq -r '.clickup_task_id // empty' "$status_file" 2>/dev/null)
+    fi
+    
+    # Build JSON with optional clickup_task_id
+    if [[ -n "$clickup_task_id" && "$clickup_task_id" != "null" ]]; then
+        cat > "$status_file" << EOF
+{
+    "status": "$(echo "$status" | tr '[:upper:]' '[:lower:]')",
+    "timestamp": $timestamp,
+    "last_update": "$last_update",
+    "clickup_task_id": "$clickup_task_id"
+}
+EOF
+    else
+        cat > "$status_file" << EOF
 {
     "status": "$(echo "$status" | tr '[:upper:]' '[:lower:]')",
     "timestamp": $timestamp,
     "last_update": "$last_update"
 }
 EOF
+    fi
     
     log_info "Deployment session status updated: $status"
 }
