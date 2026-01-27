@@ -133,6 +133,23 @@
                                     <div class="form-help">Select a ClickUp task to track deployment progress and
                                         automatically fill in site details</div>
                                 </div>
+                                <div class="form-group mb-4">
+                                    <label class="form-label">If Not Found in the List, Fetch It Directly</label>
+                                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                        <div style="flex: 1;">
+                                            <input type="text" id="manual-task-id-input" class="form-input"
+                                                placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
+                                            <div class="form-help">Can't find your task in the dropdown? Enter the task ID to fetch it directly from ClickUp</div>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary" id="fetch-manual-task-btn"
+                                            style="white-space: nowrap; margin-top: 0;">
+                                            <i class="fas fa-download me-1"></i>Fetch Task
+                                        </button>
+                                    </div>
+                                    <div id="manual-task-status" class="mt-2" style="display: none;">
+                                        <div class="alert" id="manual-task-alert"></div>
+                                    </div>
+                                </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="form-group">
                                         <label class="form-label">Site Title</label>

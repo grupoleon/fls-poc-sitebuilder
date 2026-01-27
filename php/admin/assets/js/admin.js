@@ -538,6 +538,22 @@ class AdminInterface {
                 e.preventDefault();
                 this.saveAllContents();
             }
+
+            // Manual ClickUp task fetch button
+            if(e.target.id==='fetch-manual-task-btn'||e.target.closest('#fetch-manual-task-btn')) {
+                e.preventDefault();
+                debugLog('Fetch manual task button clicked');
+                this.fetchManualTask();
+            }
+        });
+
+        // Allow Enter key to trigger manual task fetch
+        document.addEventListener('keypress',(e) => {
+            if(e.target.id==='manual-task-id-input'&&e.key==='Enter') {
+                e.preventDefault();
+                debugLog('Enter key pressed on manual task input');
+                this.fetchManualTask();
+            }
         });
     }
 
@@ -1906,6 +1922,128 @@ class AdminInterface {
         if(taskData.google_drive) {
             sessionStorage.setItem('clickup_google_drive',taskData.google_drive);
         }
+    }
+
+    async fetchManualTask() {
+        debugLog('fetchManualTask() called');
+        const taskIdInput=document.getElementById('manual-task-id-input');
+        const fetchBtn=document.getElementById('fetch-manual-task-btn');
+        const statusDiv=document.getElementById('manual-task-status');
+        const alertDiv=document.getElementById('manual-task-alert');
+        const taskSelect=document.getElementById('clickup-task-select');
+
+        debugLog('Elements found:',{
+            taskIdInput: !!taskIdInput,
+            fetchBtn: !!fetchBtn,
+            statusDiv: !!statusDiv,
+            alertDiv: !!alertDiv,
+            taskSelect: !!taskSelect
+        });
+
+        if(!taskIdInput||!fetchBtn) {
+            debugLog('Required elements not found!','error');
+            return;
+        }
+
+        const taskId=taskIdInput.value.trim();
+        debugLog('Task ID entered:',taskId);
+
+        if(!taskId) {
+            this.showManualTaskStatus('Please enter a task ID','error');
+            return;
+        }
+
+        // Validate task ID format
+        if(!/^[a-z0-9\-]+$/i.test(taskId)) {
+            this.showManualTaskStatus('Invalid task ID format. Use only letters, numbers, and hyphens.','error');
+            return;
+        }
+
+        // Show loading state
+        fetchBtn.disabled=true;
+        fetchBtn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Fetching...';
+        this.showManualTaskStatus('Fetching task from ClickUp API...','info');
+
+        try {
+            debugLog(`Fetching manual task: ${taskId}`);
+            const response=await fetch(`/php/api/fetch-clickup-task.php?task_id=${encodeURIComponent(taskId)}`);
+            debugLog('Response status:',response.status);
+            const data=await response.json();
+            debugLog('Response data:',data);
+
+            if(data.success&&data.task) {
+                debugLog('Manual task fetched successfully:',data.task);
+
+                // Add task to select dropdown
+                const existingOption=Array.from(taskSelect.options).find(opt => opt.value===taskId);
+                if(!existingOption) {
+                    const option=document.createElement('option');
+                    option.value=data.task.task_id;
+                    option.textContent=`${data.task.task_name} ${data.task.website_url? '('+data.task.website_url+')':''}`;
+                    taskSelect.appendChild(option);
+                }
+
+                // Select the task in dropdown
+                taskSelect.value=taskId;
+
+                // Prefill form with task data
+                this.prefillDeploymentForm(data.task);
+
+                // Show success message
+                this.showManualTaskStatus(`Task "${data.task.task_name}" fetched successfully!`,'success');
+
+                // Clear input after successful fetch
+                taskIdInput.value='';
+
+            } else {
+                debugLog('Failed to fetch manual task:',data,'error');
+                const errorMessage=data.message||'Failed to fetch task from ClickUp';
+                this.showManualTaskStatus(errorMessage,'error');
+            }
+
+        } catch(error) {
+            debugLog('Error fetching manual task:',error,'error');
+            this.showManualTaskStatus('Network error. Please check your connection and try again.','error');
+        } finally {
+            // Reset button state
+            fetchBtn.disabled=false;
+            fetchBtn.innerHTML='<i class="fas fa-download me-1"></i>Fetch Task';
+
+            // Auto-hide success message after 5 seconds
+            setTimeout(() => {
+                if(statusDiv&&alertDiv&&alertDiv.classList.contains('alert-success')) {
+                    statusDiv.style.display='none';
+                }
+            },5000);
+        }
+    }
+
+    showManualTaskStatus(message,type) {
+        const statusDiv=document.getElementById('manual-task-status');
+        const alertDiv=document.getElementById('manual-task-alert');
+
+        if(!statusDiv||!alertDiv) return;
+
+        // Remove all alert type classes
+        alertDiv.className='alert';
+
+        // Add appropriate alert class
+        switch(type) {
+            case 'success':
+                alertDiv.classList.add('alert-success');
+                break;
+            case 'error':
+                alertDiv.classList.add('alert-danger');
+                break;
+            case 'info':
+                alertDiv.classList.add('alert-info');
+                break;
+            default:
+                alertDiv.classList.add('alert-secondary');
+        }
+
+        alertDiv.textContent=message;
+        statusDiv.style.display='block';
     }
 
     async populateThemeSelect(themes) {
@@ -6483,6 +6621,46 @@ class AdminInterface {
 
         // Load configuration data
         await this.loadConfiguration();
+
+        // Setup manual task fetch button after DOM is ready
+        this.setupManualTaskFetchButton();
+    }
+
+    setupManualTaskFetchButton() {
+        const fetchBtn=document.getElementById('fetch-manual-task-btn');
+        const taskInput=document.getElementById('manual-task-id-input');
+
+        if(fetchBtn) {
+            debugLog('Setting up manual task fetch button - direct listener');
+
+            // Remove any existing listeners to avoid duplicates
+            fetchBtn.replaceWith(fetchBtn.cloneNode(true));
+            const newFetchBtn=document.getElementById('fetch-manual-task-btn');
+
+            newFetchBtn.addEventListener('click',(e) => {
+                e.preventDefault();
+                debugLog('Manual fetch button clicked - direct listener');
+                this.fetchManualTask();
+            });
+        } else {
+            debugLog('Manual task fetch button not found!','error');
+        }
+
+        if(taskInput) {
+            // Remove any existing listeners to avoid duplicates
+            taskInput.replaceWith(taskInput.cloneNode(true));
+            const newTaskInput=document.getElementById('manual-task-id-input');
+
+            newTaskInput.addEventListener('keypress',(e) => {
+                if(e.key==='Enter') {
+                    e.preventDefault();
+                    debugLog('Enter key pressed - direct listener');
+                    this.fetchManualTask();
+                }
+            });
+        } else {
+            debugLog('Manual task input not found!','error');
+        }
     }
 
     initializeDeploymentSteps() {
