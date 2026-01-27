@@ -4523,13 +4523,25 @@ class AdminInterface {
     }
 
     async handleDeployment(action,step=null) {
-        // Validate ClickUp task selection (mandatory)
+        // Check if ClickUp integration is enabled
+        const clickUpCheckbox=document.getElementById('clickup-integration-checkbox');
+        const isClickUpEnabled=clickUpCheckbox? clickUpCheckbox.checked:true; // Default to true if checkbox not found
+
+        // Validate ClickUp task selection only if integration is enabled
         const taskSelect=document.getElementById('clickup-task-select');
         const selectedTaskId=taskSelect? taskSelect.value:'';
 
-        if(!selectedTaskId) {
-            this.showAlert('Please select a ClickUp task before deploying. This is required to track deployment progress.','error');
+        if(isClickUpEnabled&&!selectedTaskId) {
+            this.showAlert('Please select a ClickUp task or disable ClickUp integration to proceed.','error');
             return;
+        }
+
+        // Store ClickUp status for later use
+        sessionStorage.setItem('clickup_integration_enabled',isClickUpEnabled? 'true':'false');
+        if(!isClickUpEnabled) {
+            sessionStorage.setItem('clickup_integration_skipped','true');
+        } else {
+            sessionStorage.removeItem('clickup_integration_skipped');
         }
 
         // Check if user wants to delete existing site first
@@ -5265,6 +5277,27 @@ class AdminInterface {
         const totalDuration=this.deploymentStartTime? this.formatDuration(this.deploymentStartTime):null;
         const completedAt=githubData.created_at? new Date(githubData.created_at).toLocaleString():new Date().toLocaleString();
 
+        // Check ClickUp integration status
+        const clickUpEnabled=sessionStorage.getItem('clickup_integration_enabled')==='true';
+        const clickUpSkipped=sessionStorage.getItem('clickup_integration_skipped')==='true';
+        let clickUpStatusHTML='';
+
+        if(clickUpSkipped) {
+            clickUpStatusHTML=`
+                <div class="alert alert-info" style="margin: 16px 0; padding: 12px 16px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 6px;">
+                    <i class="fas fa-info-circle" style="margin-right: 8px; color: #3b82f6;"></i>
+                    <strong>ClickUp Integration:</strong> Skipped - No task comment was posted. You can manually update your ClickUp task if needed.
+                </div>
+            `;
+        } else if(clickUpEnabled) {
+            clickUpStatusHTML=`
+                <div class="alert alert-success" style="margin: 16px 0; padding: 12px 16px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 6px;">
+                    <i class="fas fa-check-circle" style="margin-right: 8px; color: #10b981;"></i>
+                    <strong>ClickUp Integration:</strong> Deployment details posted to ClickUp task
+                </div>
+            `;
+        }
+
         switch(githubData.status) {
             case 'completed':
                 statusIcon='fas fa-check-circle';
@@ -5389,6 +5422,10 @@ class AdminInterface {
                                 Completed at ${completedAt}
                             </div>
                         ` :''}
+                        
+                        <!-- ClickUp Integration Status -->
+                        ${clickUpStatusHTML}
+                        
                         <div class="modal-actions">
                             ${actionButtons}
                         </div>
@@ -6660,6 +6697,67 @@ class AdminInterface {
             });
         } else {
             debugLog('Manual task input not found!','error');
+        }
+
+        // Setup ClickUp collapsible section
+        this.setupClickUpCollapsible();
+
+        // Setup ClickUp integration checkbox
+        this.setupClickUpIntegrationToggle();
+    }
+
+    setupClickUpCollapsible() {
+        const header=document.getElementById('clickup-section-header');
+        const content=document.getElementById('clickup-section-content');
+        const icon=document.getElementById('clickup-section-icon');
+
+        if(header&&content&&icon) {
+            // Start collapsed
+            content.style.display='none';
+            icon.style.transform='rotate(180deg)';
+
+            header.addEventListener('click',() => {
+                const isCollapsed=content.style.display==='none';
+
+                if(isCollapsed) {
+                    content.style.display='block';
+                    icon.style.transform='rotate(0deg)';
+                } else {
+                    content.style.display='none';
+                    icon.style.transform='rotate(180deg)';
+                }
+            });
+
+            debugLog('ClickUp collapsible section setup complete');
+        }
+    }
+
+    setupClickUpIntegrationToggle() {
+        const checkbox=document.getElementById('clickup-integration-checkbox');
+        const taskSection=document.getElementById('clickup-task-section');
+        const taskSelect=document.getElementById('clickup-task-select');
+
+        if(checkbox&&taskSection) {
+            // Update section visibility based on checkbox
+            const updateVisibility=() => {
+                if(checkbox.checked) {
+                    taskSection.style.display='block';
+                    if(taskSelect) taskSelect.removeAttribute('disabled');
+                } else {
+                    taskSection.style.display='none';
+                    if(taskSelect) {
+                        taskSelect.value='';
+                        taskSelect.setAttribute('disabled','disabled');
+                    }
+                }
+            };
+
+            // Initial state
+            updateVisibility();
+
+            checkbox.addEventListener('change',updateVisibility);
+
+            debugLog('ClickUp integration toggle setup complete');
         }
     }
 

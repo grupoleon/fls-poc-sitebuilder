@@ -124,31 +124,52 @@
                                 <h2 class="card-title">Deploy Your Website</h2>
                             </div>
                             <div class="card-body" id="quick-deploy-body">
+                                <!-- ClickUp Integration Toggle -->
                                 <div class="form-group mb-4">
-                                    <label class="form-label">ClickUp Task <span
-                                            style="color: #dc2626; font-weight: 600;">*</span></label>
-                                    <select id="clickup-task-select" class="form-select" required>
-                                        <option value="">-- Select a ClickUp task (Required) --</option>
-                                    </select>
-                                    <div class="form-help">Select a ClickUp task to track deployment progress and
-                                        automatically fill in site details</div>
+                                    <label class="checkbox-label" style="display: flex; align-items: center; cursor: pointer;">
+                                        <input type="checkbox" id="clickup-integration-checkbox" style="margin-right: 10px;" checked>
+                                        <span style="font-weight: 600;">
+                                            <i class="fas fa-tasks" style="margin-right: 6px;"></i>
+                                            Connect to ClickUp Task
+                                        </span>
+                                    </label>
+                                    <div class="form-help">Enable to track deployment progress in ClickUp and automatically fill site details</div>
                                 </div>
-                                <div class="form-group mb-4">
-                                    <label class="form-label">If Not Found in the List, Fetch It Directly</label>
-                                    <div style="display: flex; gap: 8px; align-items: flex-start;">
-                                        <div style="flex: 1;">
-                                            <input type="text" id="manual-task-id-input" class="form-input"
-                                                placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
-                                            <div class="form-help">Can't find your task in the dropdown? Enter the task
-                                                ID to fetch it directly from ClickUp</div>
+
+                                <!-- Collapsible ClickUp Task Section -->
+                                <div id="clickup-task-section" class="mb-4" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                                    <div id="clickup-section-header" style="background: #f9fafb; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-tasks" style="color: #6366f1;"></i>
+                                            <span style="font-weight: 600; color: #374151;">ClickUp Task Selection</span>
                                         </div>
-                                        <button type="button" class="btn btn-outline-primary" id="fetch-manual-task-btn"
-                                            style="white-space: nowrap; margin-top: 0;">
-                                            <i class="fas fa-download me-1"></i>Fetch Task
-                                        </button>
+                                        <i id="clickup-section-icon" class="fas fa-chevron-up" style="color: #9ca3af; transition: transform 0.3s;"></i>
                                     </div>
-                                    <div id="manual-task-status" class="mt-2" style="display: none;">
-                                        <div class="alert" id="manual-task-alert"></div>
+                                    <div id="clickup-section-content" style="padding: 16px; display: none;">
+                                        <div class="form-group mb-4">
+                                            <label class="form-label">ClickUp Task</label>
+                                            <select id="clickup-task-select" class="form-select">
+                                                <option value="">-- Select a ClickUp task --</option>
+                                            </select>
+                                            <div class="form-help">Select a ClickUp task to track deployment progress and automatically fill in site details</div>
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label">If Not Found in the List, Fetch It Directly</label>
+                                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                                <div style="flex: 1;">
+                                                    <input type="text" id="manual-task-id-input" class="form-input"
+                                                        placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
+                                                    <div class="form-help">Can't find your task in the dropdown? Enter the task ID to fetch it directly from ClickUp</div>
+                                                </div>
+                                                <button type="button" class="btn btn-outline-primary" id="fetch-manual-task-btn"
+                                                    style="white-space: nowrap; margin-top: 0;">
+                                                    <i class="fas fa-download me-1"></i>Fetch Task
+                                                </button>
+                                            </div>
+                                            <div id="manual-task-status" class="mt-2" style="display: none;">
+                                                <div class="alert" id="manual-task-alert"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
