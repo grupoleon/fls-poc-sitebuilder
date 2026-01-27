@@ -34,6 +34,16 @@ if [[ ! -f "$STATUS_FILE" ]]; then
     exit 1
 fi
 
+# Check if ClickUp integration is enabled
+CLICKUP_ENABLED=$(jq -r '.clickup_integration_enabled // true' "$STATUS_FILE" 2>/dev/null)
+
+if [[ "$CLICKUP_ENABLED" == "false" ]]; then
+    log_info "ClickUp integration is disabled for this deployment"
+    log_info "Skipping ClickUp task update"
+    log_success "✓ ClickUp update skipped (integration disabled)"
+    exit 0
+fi
+
 # Extract ClickUp task ID from deployment status
 TASK_ID=$(jq -r '.clickup_task_id // empty' "$STATUS_FILE" 2>/dev/null)
 

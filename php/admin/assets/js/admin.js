@@ -4740,6 +4740,9 @@ class AdminInterface {
             data.clickup_task_id=selectedTaskId;
         }
 
+        // Save ClickUp integration status for backend to know whether to post comment
+        data.clickup_integration_enabled=isClickUpEnabled;
+
         try {
             debugLog('Sending deployment request:',data);
 

@@ -433,6 +433,23 @@ function handleRequest()
                         }
 
                         $status['clickup_task_id'] = $input['clickup_task_id'];
+
+                        // Save ClickUp integration status (default to true for backward compatibility)
+                        $status['clickup_integration_enabled'] = isset($input['clickup_integration_enabled'])
+                            ? (bool) $input['clickup_integration_enabled']
+                            : true;
+
+                        file_put_contents($statusFile, json_encode($status, JSON_PRETTY_PRINT));
+                    } elseif (isset($input['clickup_integration_enabled'])) {
+                        // Even if no task ID, save the integration status
+                        $statusFile = __DIR__ . '/../tmp/deployment_status.json';
+                        $status     = [];
+
+                        if (file_exists($statusFile)) {
+                            $status = json_decode(file_get_contents($statusFile), true) ?: [];
+                        }
+
+                        $status['clickup_integration_enabled'] = (bool) $input['clickup_integration_enabled'];
                         file_put_contents($statusFile, json_encode($status, JSON_PRETTY_PRINT));
                     }
 
