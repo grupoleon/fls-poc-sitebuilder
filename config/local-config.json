@@ -24,5 +24,12 @@
         "theme": "default",
         "items_per_page": 20,
         "enable_debug_mode": false
+    },
+    "integrations": {
+        "clickup": {
+            "api_token": "",
+            "team_id": "",
+            "webhook_enabled": true
+        }
     }
 }
