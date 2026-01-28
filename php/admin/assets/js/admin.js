@@ -1986,11 +1986,16 @@ class AdminInterface {
                 // Select the task in dropdown
                 taskSelect.value=taskId;
 
-                // Prefill form with task data
-                this.prefillDeploymentForm(data.task);
-
-                // Show success message
-                this.showManualTaskStatus(`Task "${data.task.task_name}" fetched successfully!`,'success');
+                // Prefill form with task data but guard against prefill errors so they don't surface as network errors
+                try {
+                    this.prefillDeploymentForm(data.task);
+                    // Show success message only if prefill succeeded
+                    this.showManualTaskStatus(`Task "${data.task.task_name}" fetched successfully!`,'success');
+                } catch(prefillError) {
+                    debugLog('Error during prefillDeploymentForm:',prefillError,'error');
+                    // Inform user the fetch succeeded but prefill had issues
+                    this.showManualTaskStatus('Task fetched, but failed to prefill some form fields. See console for details.','warning');
+                }
 
                 // Clear input after successful fetch
                 taskIdInput.value='';
@@ -2003,7 +2008,12 @@ class AdminInterface {
 
         } catch(error) {
             debugLog('Error fetching manual task:',error,'error');
-            this.showManualTaskStatus('Network error. Please check your connection and try again.','error');
+            // Better classification of error messages
+            let message='Network error. Please check your connection and try again.';
+            if(error&&error.message&&!error.message.toLowerCase().includes('failed to fetch')) {
+                message=`Error fetching task: ${error.message}`;
+            }
+            this.showManualTaskStatus(message,'error');
         } finally {
             // Reset button state
             fetchBtn.disabled=false;
@@ -6713,11 +6723,18 @@ class AdminInterface {
         const header=document.getElementById('clickup-section-header');
         const content=document.getElementById('clickup-section-content');
         const icon=document.getElementById('clickup-section-icon');
+        const checkbox=document.getElementById('clickup-integration-checkbox');
 
         if(header&&content&&icon) {
-            // Start collapsed
-            content.style.display='none';
-            icon.style.transform='rotate(180deg)';
+            // Initialize collapsed/expanded state based on checkbox (if present)
+            const initiallyExpanded=checkbox? !!checkbox.checked:false;
+            if(initiallyExpanded) {
+                content.style.display='block';
+                icon.style.transform='rotate(0deg)';
+            } else {
+                content.style.display='none';
+                icon.style.transform='rotate(180deg)';
+            }
 
             header.addEventListener('click',() => {
                 const isCollapsed=content.style.display==='none';
@@ -6738,6 +6755,8 @@ class AdminInterface {
     setupClickUpIntegrationToggle() {
         const checkbox=document.getElementById('clickup-integration-checkbox');
         const taskSection=document.getElementById('clickup-task-section');
+        const content=document.getElementById('clickup-section-content');
+        const icon=document.getElementById('clickup-section-icon');
         const taskSelect=document.getElementById('clickup-task-select');
 
         if(checkbox&&taskSection) {
@@ -6746,12 +6765,16 @@ class AdminInterface {
                 if(checkbox.checked) {
                     taskSection.style.display='block';
                     if(taskSelect) taskSelect.removeAttribute('disabled');
+                    if(content) content.style.display='block';
+                    if(icon) icon.style.transform='rotate(0deg)';
                 } else {
                     taskSection.style.display='none';
                     if(taskSelect) {
                         taskSelect.value='';
                         taskSelect.setAttribute('disabled','disabled');
                     }
+                    if(content) content.style.display='none';
+                    if(icon) icon.style.transform='rotate(180deg)';
                 }
             };
 
