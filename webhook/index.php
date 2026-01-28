@@ -146,6 +146,11 @@ function processTaskData($taskData)
         'website_url'               => null,
         'theme'                     => null,
         'email'                     => null,
+        'facebook_link'             => null,
+        'instagram_link'            => null,
+        'twitter_link'              => null,
+        'youtube_link'              => null,
+        'winred_link'               => null,
         'google_analytics_token'    => null,
         'google_map_key'            => null,
         'privacy_policy_info'       => null,
@@ -153,95 +158,176 @@ function processTaskData($taskData)
         'recaptcha_site_key'        => null,
         'google_drive'              => null,
         'selected_services'         => [],
+        'security_options'          => [],
         'website_brief_attachments' => [],
     ];
 
-    // Extract custom fields
+    // Extract custom fields (robust, case-insensitive matching)
     if (isset($taskData['custom_fields']) && is_array($taskData['custom_fields'])) {
         foreach ($taskData['custom_fields'] as $field) {
             $fieldName  = $field['name'] ?? '';
             $fieldValue = $field['value'] ?? null;
+            $nameLower  = strtolower($fieldName);
 
-            switch ($fieldName) {
-                case 'Website URL':
-                    $processed['website_url'] = $fieldValue;
-                    break;
-
-                case 'Template Selection':
-                    // Map dropdown value to theme name
-                    if (isset($field['type_config']['options']) && is_numeric($fieldValue)) {
-                        foreach ($field['type_config']['options'] as $option) {
-                            if ($option['orderindex'] === $fieldValue) {
-                                $processed['theme'] = $option['name'] ?? null;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-
-                case 'Services Needed':
-                    // Extract service labels from IDs
-                    if (is_array($fieldValue) && isset($field['type_config']['options'])) {
-                        $serviceMap = [];
-                        foreach ($field['type_config']['options'] as $option) {
-                            $serviceMap[$option['id']] = $option['label'];
-                        }
-                        foreach ($fieldValue as $serviceId) {
-                            if (isset($serviceMap[$serviceId])) {
-                                $processed['selected_services'][] = $serviceMap[$serviceId];
-                            }
-                        }
-                    }
-                    break;
-
-                case 'Email':
-                    $processed['email'] = $fieldValue;
-                    break;
-
-                case 'Google Analytics Token':
-                    $processed['google_analytics_token'] = $fieldValue;
-                    break;
-
-                case 'Google Map key':
-                    $processed['google_map_key'] = $fieldValue;
-                    break;
-
-                case 'Privacy or Policy Information':
-                    $processed['privacy_policy_info'] = $fieldValue;
-                    break;
-
-                case 'ReCaptcha Secret':
-                    $processed['recaptcha_secret'] = $fieldValue;
-                    break;
-
-                case 'ReCaptcha Site Key':
-                    $processed['recaptcha_site_key'] = $fieldValue;
-                    break;
-
-                case 'Google Drive':
-                    $processed['google_drive'] = $fieldValue;
-                    break;
-
-                case 'Website Brief':
-                    // Store only essential attachment fields
-                    if (is_array($fieldValue)) {
-                        foreach ($fieldValue as $attachment) {
-                            $processed['website_brief_attachments'][] = [
-                                'url'       => $attachment['url'] ?? null,
-                                'title'     => $attachment['title'] ?? null,
-                                'extension' => $attachment['extension'] ?? null,
-                                'mimetype'  => $attachment['mimetype'] ?? null,
-                                'is_folder' => $attachment['is_folder'] ?? null,
-                                'size'      => $attachment['size'] ?? null,
-                            ];
-                        }
-                    }
-                    break;
-
-                default:
-                    // Skip other fields
-                    break;
+            // Website URL
+            if (stripos($nameLower, 'website url') !== false || stripos($nameLower, 'websiteurl') !== false) {
+                $processed['website_url'] = $fieldValue;
+                continue;
             }
+
+            // Template Selection / Theme
+            if (stripos($nameLower, 'template') !== false) {
+                if (isset($field['type_config']['options']) && is_array($field['type_config']['options'])) {
+                    foreach ($field['type_config']['options'] as $option) {
+                        if ((isset($option['orderindex']) && (int) $option['orderindex'] === (int) $fieldValue)
+                            || (isset($option['id']) && (string) $option['id'] === (string) $fieldValue)
+                            || (isset($option['name']) && strtolower($option['name']) === strtolower((string) $fieldValue))
+                        ) {
+                            $processed['theme'] = $option['name'] ?? $option['label'] ?? null;
+                            break;
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Services Needed
+            if (stripos($nameLower, 'services needed') !== false) {
+                if (is_array($fieldValue) && isset($field['type_config']['options'])) {
+                    $serviceMap = [];
+                    foreach ($field['type_config']['options'] as $option) {
+                        $id    = $option['id'] ?? null;
+                        $label = $option['label'] ?? $option['name'] ?? null;
+                        if ($id && $label) {
+                            $serviceMap[$id] = $label;
+                        } elseif (isset($option['orderindex'])) {
+                            $serviceMap[(string) $option['orderindex']] = $label;
+                        }
+                    }
+                    foreach ($fieldValue as $serviceId) {
+                        if (isset($serviceMap[$serviceId])) {
+                            $processed['selected_services'][] = $serviceMap[$serviceId];
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Security Options (labels)
+            if (stripos($nameLower, 'security') !== false) {
+                if (is_array($fieldValue) && isset($field['type_config']['options'])) {
+                    $optionMap = [];
+                    foreach ($field['type_config']['options'] as $option) {
+                        $id    = $option['id'] ?? null;
+                        $label = $option['label'] ?? $option['name'] ?? null;
+                        if ($id && $label) {
+                            $optionMap[$id] = $label;
+                        }
+                    }
+                    foreach ($fieldValue as $id) {
+                        if (isset($optionMap[$id])) {
+                            $processed['security_options'][] = $optionMap[$id];
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Email (prefer SiteBuild-DestinationEmail)
+            if (stripos($nameLower, 'destination') !== false || stripos($nameLower, 'destinationemail') !== false) {
+                $processed['email'] = $fieldValue;
+                continue;
+            }
+            if (stripos($nameLower, 'email') !== false && empty($processed['email'])) {
+                $processed['email'] = $fieldValue;
+                continue;
+            }
+
+            // Social links
+            if (stripos($nameLower, 'fb') !== false || stripos($nameLower, 'facebook') !== false) {
+                $processed['facebook_link'] = $fieldValue;
+                continue;
+            }
+            if (stripos($nameLower, 'insta') !== false || stripos($nameLower, 'instagram') !== false) {
+                $processed['instagram_link'] = $fieldValue;
+                continue;
+            }
+            if (stripos($nameLower, 'xlink') !== false || stripos($nameLower, 'twitter') !== false) {
+                $processed['twitter_link'] = $fieldValue;
+                continue;
+            }
+            if (stripos($nameLower, 'youtube') !== false) {
+                $processed['youtube_link'] = $fieldValue;
+                continue;
+            }
+            if (stripos($nameLower, 'winred') !== false) {
+                $processed['winred_link'] = $fieldValue;
+                continue;
+            }
+
+            // Google Analytics Token
+            if (stripos($nameLower, 'google analytics') !== false) {
+                $processed['google_analytics_token'] = $fieldValue;
+                continue;
+            }
+
+            // Google Map key
+            if (stripos($nameLower, 'google map') !== false) {
+                $processed['google_map_key'] = $fieldValue;
+                continue;
+            }
+
+            // Privacy Policy Info
+            if (stripos($nameLower, 'privacy') !== false || stripos($nameLower, 'policy') !== false) {
+                $processed['privacy_policy_info'] = $fieldValue;
+                continue;
+            }
+
+            // reCAPTCHA keys
+            if (stripos($nameLower, 'recaptcha') !== false) {
+                if (stripos($nameLower, 'site') !== false || stripos($nameLower, 'site key') !== false) {
+                    $processed['recaptcha_site_key'] = $fieldValue;
+                } else {
+                    $processed['recaptcha_secret'] = $fieldValue;
+                }
+                continue;
+            }
+
+            // Google Drive
+            if (stripos($nameLower, 'google drive') !== false) {
+                $processed['google_drive'] = $fieldValue;
+                continue;
+            }
+
+            // Website Brief attachments
+            if (stripos($nameLower, 'website brief') !== false || stripos($nameLower, 'websitebrief') !== false) {
+                if (is_array($fieldValue)) {
+                    foreach ($fieldValue as $attachment) {
+                        $processed['website_brief_attachments'][] = [
+                            'url'       => $attachment['url'] ?? null,
+                            'title'     => $attachment['title'] ?? $attachment['name'] ?? null,
+                            'extension' => $attachment['extension'] ?? null,
+                            'mimetype'  => $attachment['mimetype'] ?? null,
+                            'is_folder' => $attachment['is_folder'] ?? null,
+                            'size'      => $attachment['size'] ?? null,
+                        ];
+                    }
+                }
+                continue;
+            }
+        }
+    }
+
+    // Also include top-level attachments if present
+    if (isset($taskData['attachments']) && is_array($taskData['attachments'])) {
+        foreach ($taskData['attachments'] as $attachment) {
+            $processed['website_brief_attachments'][] = [
+                'name'      => $attachment['title'] ?? $attachment['name'] ?? 'Untitled',
+                'url'       => $attachment['url'] ?? null,
+                'extension' => $attachment['extension'] ?? null,
+                'mimetype'  => $attachment['mimetype'] ?? null,
+                'size'      => $attachment['size'] ?? null,
+            ];
         }
     }
 
