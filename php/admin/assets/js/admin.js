@@ -1025,6 +1025,8 @@ class AdminInterface {
                     const minutes=Math.floor(duration/60);
                     const seconds=duration%60;
                     timingInfo=`${minutes>0? minutes+'m ':''}${seconds}s`;
+                    // Store the formatted duration in the Map for future reference
+                    this.stepDurations.set(step.id,timingInfo);
                 } else if(this.stepDurations.has(step.id)) {
                     timingInfo=this.stepDurations.get(step.id);
                 }
@@ -1037,6 +1039,9 @@ class AdminInterface {
                     const minutes=Math.floor(seconds/60);
                     const remainingSeconds=seconds%60;
                     timingInfo=`${minutes}m ${remainingSeconds}s`;
+                } else {
+                    // Store start time if not already set
+                    this.stepStartTimes.set(step.id,Date.now());
                 }
             } else if(status.status==='error'&&index<=currentStepIndex) {
                 stepStatus='error';
