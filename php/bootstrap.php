@@ -990,71 +990,88 @@ function handleRequest()
 
             case 'import_config':
                 try {
-                    // Check if file was uploaded
-                    if (! isset($_FILES['config_file'])) {
-                        throw new Exception('No file uploaded');
+                    $uploads = [];
+
+                    if (isset($_FILES['config_files'])) {
+                        $uploads = normalizeUploadedFiles($_FILES['config_files']);
+                    } elseif (isset($_FILES['config_file'])) {
+                        $uploads = normalizeUploadedFiles($_FILES['config_file']);
+                    } else {
+                        throw new Exception('No files uploaded');
                     }
 
-                    $file = $_FILES['config_file'];
-
-                    // Check for upload errors
-                    if ($file['error'] !== UPLOAD_ERR_OK) {
-                        throw new Exception('File upload error: ' . $file['error']);
+                    if (empty($uploads)) {
+                        throw new Exception('No files uploaded');
                     }
 
-                    // Validate file extension
-                    $filename = basename($file['name']);
-                    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
-                        throw new Exception('Only JSON files are allowed');
+                    $configDir = dirname(__DIR__) . '/config';
+                    $imported  = [];
+                    $failed    = [];
+
+                    foreach ($uploads as $file) {
+                        $filename = $file['name'] ?? 'unknown';
+
+                        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                            $failed[] = [
+                                'file'    => $filename,
+                                'message' => 'File upload error: ' . ($file['error'] ?? 'unknown'),
+                            ];
+                            continue;
+                        }
+
+                        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                        if ($extension === 'json') {
+                            $content = file_get_contents($file['tmp_name']);
+                            if ($content === false) {
+                                $failed[] = [
+                                    'file'    => $filename,
+                                    'message' => 'Failed to read uploaded file',
+                                ];
+                                continue;
+                            }
+
+                            $result = importConfigContent($filename, $content, $configDir);
+                            if ($result['success']) {
+                                $imported[] = $result;
+                            } else {
+                                $failed[] = $result;
+                            }
+                        } elseif ($extension === 'zip') {
+                            $zipResults = importConfigsFromZip($file['tmp_name'], $filename, $configDir);
+                            $imported   = array_merge($imported, $zipResults['imported']);
+                            $failed     = array_merge($failed, $zipResults['failed']);
+                        } else {
+                            $failed[] = [
+                                'file'    => $filename,
+                                'message' => 'Only JSON or ZIP files are allowed',
+                            ];
+                        }
                     }
 
-                    // Validate filename to prevent directory traversal
-                    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
-                        throw new Exception('Invalid file name');
+                    $importedCount = count($imported);
+                    $failedCount   = count($failed);
+
+                    if ($importedCount === 0) {
+                        echo json_encode([
+                            'success'  => false,
+                            'message'  => $failedCount > 0 ? 'No configuration files were imported.' : 'No files were processed.',
+                            'imported' => $imported,
+                            'failed'   => $failed,
+                        ]);
+                        break;
                     }
 
-                    // Read and validate JSON content
-                    $content = file_get_contents($file['tmp_name']);
-                    if ($content === false) {
-                        throw new Exception('Failed to read uploaded file');
-                    }
-
-                    // Validate JSON structure
-                    $jsonData = json_decode($content, true);
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        throw new Exception('Invalid JSON format: ' . json_last_error_msg());
-                    }
-
-                    // Validate the config based on its type
-                    $configType = pathinfo($filename, PATHINFO_FILENAME);
-                    if (! validateImportedConfig($configType, $jsonData)) {
-                        throw new Exception('Configuration validation failed. Please check the structure matches the expected format.');
-                    }
-
-                    // Save to config directory
-                    $configDir  = dirname(__DIR__) . '/config';
-                    $targetPath = $configDir . '/' . $filename;
-
-                    // Backup existing file if it exists
-                    if (file_exists($targetPath)) {
-                        $backupPath = $targetPath . '.backup.' . date('YmdHis');
-                        copy($targetPath, $backupPath);
-                    }
-
-                    // Write the file with pretty formatting
-                    $result = file_put_contents(
-                        $targetPath,
-                        json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-                    );
-
-                    if ($result === false) {
-                        throw new Exception('Failed to save config file');
+                    $message = "Imported {$importedCount} configuration file(s).";
+                    if ($failedCount > 0) {
+                        $message .= " {$failedCount} failed.";
                     }
 
                     echo json_encode([
-                        'success' => true,
-                        'message' => "Configuration file '{$filename}' imported successfully",
-                        'file' => $filename,
+                        'success'  => true,
+                        'message'  => $message,
+                        'imported' => $imported,
+                        'failed'   => $failed,
                     ]);
 
                 } catch (Exception $e) {
@@ -1109,6 +1126,168 @@ function validateImportedConfig($configType, $data)
             // For unknown types, just validate it's valid JSON (array or object)
             return is_array($data);
     }
+}
+
+/**
+ * Normalize single or multiple uploaded files into a flat array
+ */
+function normalizeUploadedFiles($fileInput)
+{
+    $normalized = [];
+
+    if (is_array($fileInput['name'])) {
+        $count = count($fileInput['name']);
+        for ($i = 0; $i < $count; $i++) {
+            $normalized[] = [
+                'name'     => $fileInput['name'][$i] ?? '',
+                'type'     => $fileInput['type'][$i] ?? '',
+                'tmp_name' => $fileInput['tmp_name'][$i] ?? '',
+                'error'    => $fileInput['error'][$i] ?? UPLOAD_ERR_NO_FILE,
+                'size'     => $fileInput['size'][$i] ?? 0,
+            ];
+        }
+    } else {
+        $normalized[] = $fileInput;
+    }
+
+    return $normalized;
+}
+
+/**
+ * Import a single JSON config file content
+ */
+function importConfigContent($filename, $content, $configDir, $source = null)
+{
+    try {
+        $safeName = basename($filename);
+
+        if ($safeName === '' || $safeName === '.' || $safeName === '..') {
+            throw new Exception('Invalid file name');
+        }
+
+        if (strpos($filename, '..') !== false) {
+            throw new Exception('Invalid file name');
+        }
+
+        if (pathinfo($safeName, PATHINFO_EXTENSION) !== 'json') {
+            throw new Exception('Only JSON files are allowed');
+        }
+
+        $jsonData = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Invalid JSON format: ' . json_last_error_msg());
+        }
+
+        $configType = pathinfo($safeName, PATHINFO_FILENAME);
+        if (! validateImportedConfig($configType, $jsonData)) {
+            throw new Exception('Configuration validation failed. Please check the structure matches the expected format.');
+        }
+
+        $targetPath = $configDir . '/' . $safeName;
+        if (file_exists($targetPath)) {
+            $backupPath = $targetPath . '.backup.' . date('YmdHis');
+            copy($targetPath, $backupPath);
+        }
+
+        $result = file_put_contents(
+            $targetPath,
+            json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+
+        if ($result === false) {
+            throw new Exception('Failed to save config file');
+        }
+
+        return [
+            'success' => true,
+            'file'    => $safeName,
+            'source'  => $source ?: $safeName,
+            'message' => "Configuration file '{$safeName}' imported successfully",
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'file'    => basename($filename),
+            'source'  => $source ?: basename($filename),
+            'message' => $e->getMessage(),
+        ];
+    }
+}
+
+/**
+ * Import JSON configs from a ZIP archive
+ */
+function importConfigsFromZip($zipPath, $zipName, $configDir)
+{
+    $imported = [];
+    $failed   = [];
+
+    if (! class_exists('ZipArchive')) {
+        return [
+            'imported' => [],
+            'failed'   => [[
+                'file'    => $zipName,
+                'message' => 'ZIP support is not available on this server',
+            ]],
+        ];
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath) !== true) {
+        return [
+            'imported' => [],
+            'failed'   => [[
+                'file'    => $zipName,
+                'message' => 'Failed to open ZIP file',
+            ]],
+        ];
+    }
+
+    $foundJson = false;
+
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $entryName = $zip->getNameIndex($i);
+        if (! $entryName || substr($entryName, -1) === '/') {
+            continue;
+        }
+
+        $extension = strtolower(pathinfo($entryName, PATHINFO_EXTENSION));
+        if ($extension !== 'json') {
+            continue;
+        }
+
+        $foundJson = true;
+        $content   = $zip->getFromIndex($i);
+        if ($content === false) {
+            $failed[] = [
+                'file'    => basename($entryName),
+                'source'  => $zipName,
+                'message' => 'Failed to read file from ZIP',
+            ];
+            continue;
+        }
+
+        $result = importConfigContent($entryName, $content, $configDir, $zipName);
+        if ($result['success']) {
+            $imported[] = $result;
+        } else {
+            $failed[] = $result;
+        }
+    }
+
+    $zip->close();
+
+    if (! $foundJson) {
+        $failed[] = [
+            'file'    => $zipName,
+            'message' => 'No JSON files found in ZIP',
+        ];
+    }
+
+    return [
+        'imported' => $imported,
+        'failed'   => $failed,
+    ];
 }
 
 /**

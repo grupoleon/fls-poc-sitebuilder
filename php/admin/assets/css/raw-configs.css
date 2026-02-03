@@ -46,6 +46,117 @@
     border: 1px solid #e5e7eb;
 }
 
+.config-import-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md, 6px);
+    padding: var(--space-4, 1rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+}
+
+.config-import-summary.is-hidden {
+    display: none;
+}
+
+.import-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3, 0.75rem);
+    flex-wrap: wrap;
+}
+
+.import-summary-title {
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+}
+
+.import-summary-meta {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.import-summary-stats {
+    display: flex;
+    gap: var(--space-4, 1rem);
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+}
+
+.import-summary-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.import-summary-stat.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.import-summary-stat.failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.import-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 0.5rem);
+}
+
+.import-summary-list h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #111827;
+}
+
+.import-summary-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-2, 0.5rem);
+}
+
+.import-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    font-size: 0.8125rem;
+}
+
+.import-summary-item.success {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.import-summary-item.failed {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.import-summary-item span {
+    color: #111827;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.import-summary-item small {
+    color: #6b7280;
+}
+
 .file-metadata {
     display: flex;
     gap: var(--space-6, 1.5rem);

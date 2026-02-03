@@ -3458,9 +3458,10 @@
                             <div class="config-file-actions">
                                 <button class="btn btn-primary"
                                     onclick="document.getElementById('config-import-input').click()">
-                                    <i class="fas fa-upload"></i> Import Config File
+                                    <i class="fas fa-upload"></i> Import JSON/ZIP
                                 </button>
-                                <input type="file" id="config-import-input" accept=".json" style="display: none;">
+                                <input type="file" id="config-import-input" accept=".json,.zip" multiple
+                                    style="display: none;">
                                 <button class="btn btn-secondary" id="config-copy-btn"
                                     onclick="window.rawConfigManager.copyToClipboard()">
                                     <i class="fas fa-copy"></i> Copy
@@ -3469,7 +3470,12 @@
                                     onclick="window.rawConfigManager.downloadCurrentConfig()">
                                     <i class="fas fa-download"></i> Download
                                 </button>
+                                <span class="text-muted" style="margin-left: 8px; font-size: 0.875rem;">
+                                    Import multiple `.json` files or a `.zip` containing JSONs.
+                                </span>
                             </div>
+
+                            <div id="config-import-summary" class="config-import-summary is-hidden" aria-live="polite"></div>
 
                             <div class="config-file-info">
                                 <div id="config-file-metadata" class="file-metadata">

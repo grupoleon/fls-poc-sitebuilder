@@ -22,11 +22,12 @@ class RawConfigManager {
         const importInput=document.getElementById('config-import-input');
         if(importInput) {
             importInput.addEventListener('change',(e) => {
-                this.handleFileImport(e.target.files[0]);
+                this.handleFileImport(e.target.files);
             });
         }
 
         // Load local config if on that tab
+        this.clearImportSummary();
         this.refreshLocalConfig();
     }
 
@@ -109,40 +110,43 @@ class RawConfigManager {
     /**
      * Handle file import
      */
-    async handleFileImport(file) {
-        if(!file) return;
+    async handleFileImport(fileList) {
+        const files=Array.from(fileList||[]);
+        if(files.length===0) return;
 
-        // Validate file type
-        if(!file.name.endsWith('.json')) {
-            this.showError('Only JSON files are allowed');
+        const invalidFiles=files.filter(file => !this.isSupportedImportFile(file));
+        if(invalidFiles.length) {
+            this.showError('Only JSON or ZIP files are allowed');
+            this.renderImportSummary({
+                imported: [],
+                failed: invalidFiles.map(file => ({file: file.name,message: 'Unsupported file type'})),
+                message: 'Import blocked due to unsupported files.'
+            });
+            document.getElementById('config-import-input').value='';
             return;
         }
 
-        // Show confirmation dialog
-        const filename=file.name;
-        const confirmMsg=`Are you sure you want to import "${filename}"?\n\n`+
-            `This will override the existing configuration file if it exists.\n`+
+        const jsonFiles=files.filter(file => this.isJsonFile(file));
+        const zipFiles=files.filter(file => this.isZipFile(file));
+        const filenames=files.map(file => file.name).join(', ');
+
+        const confirmMsg=`Are you sure you want to import ${files.length} file(s)?\n\n`+
+            `JSON files: ${jsonFiles.length}\n`+
+            `ZIP files: ${zipFiles.length}\n\n`+
+            `Files: ${filenames}\n\n`+
+            `Existing configuration files will be overridden if names match.\n`+
             `A backup will be created automatically.`;
 
         if(!confirm(confirmMsg)) {
-            // Reset the file input
             document.getElementById('config-import-input').value='';
             return;
         }
 
         try {
-            // Read and validate JSON before uploading
-            const content=await this.readFileContent(file);
+            await this.validateJsonFiles(jsonFiles);
 
-            try {
-                JSON.parse(content);
-            } catch(e) {
-                throw new Error('Invalid JSON format: '+e.message);
-            }
-
-            // Create form data and upload
             const formData=new FormData();
-            formData.append('config_file',file);
+            files.forEach(file => formData.append('config_files[]',file));
             formData.append('action','import_config');
 
             const response=await fetch('/php/bootstrap.php',{
@@ -153,24 +157,150 @@ class RawConfigManager {
             const result=await response.json();
 
             if(result.success) {
-                this.showSuccess(result.message);
-
-                // Refresh the file list and reload if it was the current file
-                await this.refreshFileList();
-
-                if(this.currentFile===filename) {
-                    this.loadConfigFile(filename);
-                }
+                this.showSuccess(result.message||'Configuration files imported successfully');
             } else {
-                throw new Error(result.message||'Failed to import config file');
+                this.showError(result.message||'Failed to import configuration files');
+            }
+
+            if(Array.isArray(result.failed)&&result.failed.length) {
+                const failedList=result.failed.map(item => item.file||item.name||'Unknown').join(', ');
+                this.showError(`Some files failed to import: ${failedList}`);
+            }
+
+            this.renderImportSummary(result);
+
+            await this.refreshFileList();
+
+            const importedFiles=(result.imported||[]).map(item => item.file||item.name||item);
+            if(this.currentFile&&importedFiles.includes(this.currentFile)) {
+                this.loadConfigFile(this.currentFile);
             }
         } catch(error) {
             console.error('Error importing config file:',error);
             this.showError('Failed to import configuration file: '+error.message);
+            this.renderImportSummary({
+                imported: [],
+                failed: [{file: 'Import',message: error.message}],
+                message: 'Import failed.'
+            });
         } finally {
-            // Reset the file input
             document.getElementById('config-import-input').value='';
         }
+    }
+
+    isJsonFile(file) {
+        return file.name.toLowerCase().endsWith('.json');
+    }
+
+    isZipFile(file) {
+        return file.name.toLowerCase().endsWith('.zip');
+    }
+
+    isSupportedImportFile(file) {
+        return this.isJsonFile(file)||this.isZipFile(file);
+    }
+
+    getImportSummaryElement() {
+        return document.getElementById('config-import-summary');
+    }
+
+    clearImportSummary() {
+        const summaryEl=this.getImportSummaryElement();
+        if(!summaryEl) return;
+        summaryEl.innerHTML='';
+        summaryEl.classList.add('is-hidden');
+    }
+
+    renderImportSummary(summary) {
+        const summaryEl=this.getImportSummaryElement();
+        if(!summaryEl) return;
+
+        const imported=Array.isArray(summary.imported)? summary.imported:[];
+        const failed=Array.isArray(summary.failed)? summary.failed:[];
+        const message=summary.message? this.escapeHtml(summary.message):'';
+        const importedCount=imported.length;
+        const failedCount=failed.length;
+
+        const importedHtml=importedCount? `
+            <div class="import-summary-list">
+                <h4>Imported Files</h4>
+                <div class="import-summary-items">
+                    ${imported.map(item => this.renderImportItem(item,'success')).join('')}
+                </div>
+            </div>
+        `:'';
+
+        const failedHtml=failedCount? `
+            <div class="import-summary-list">
+                <h4>Failed Files</h4>
+                <div class="import-summary-items">
+                    ${failed.map(item => this.renderImportItem(item,'failed')).join('')}
+                </div>
+            </div>
+        `:'';
+
+        summaryEl.innerHTML=`
+            <div class="import-summary-header">
+                <div class="import-summary-title">
+                    <i class="fas fa-file-import"></i>
+                    Import Summary
+                </div>
+                <div class="import-summary-meta">${message}</div>
+            </div>
+            <div class="import-summary-stats">
+                <div class="import-summary-stat success">
+                    <i class="fas fa-check-circle"></i>
+                    Imported: ${importedCount}
+                </div>
+                <div class="import-summary-stat failed">
+                    <i class="fas fa-times-circle"></i>
+                    Failed: ${failedCount}
+                </div>
+            </div>
+            ${importedHtml}
+            ${failedHtml}
+        `;
+
+        summaryEl.classList.remove('is-hidden');
+    }
+
+    renderImportItem(item,status) {
+        const fileName=this.escapeHtml(item.file||item.name||item||'Unknown');
+        const source=item.source? this.escapeHtml(item.source):'';
+        const message=item.message? this.escapeHtml(item.message):'';
+        const sourceLine=source&&source!==fileName? `<small>Source: ${source}</small>`:'';
+        const messageLine=message? `<small>${message}</small>`:'';
+
+        return `
+            <div class="import-summary-item ${status}">
+                <span>${fileName}</span>
+                ${sourceLine}
+                ${messageLine}
+            </div>
+        `;
+    }
+
+    escapeHtml(value) {
+        return String(value)
+            .replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;')
+            .replace(/\"/g,'&quot;')
+            .replace(/'/g,'&#39;');
+    }
+
+    async validateJsonFiles(files) {
+        if(!files.length) return;
+        const validations=files.map(async file => {
+            const content=await this.readFileContent(file);
+            try {
+                JSON.parse(content);
+            } catch(e) {
+                throw new Error(`Invalid JSON format in ${file.name}: ${e.message}`);
+            }
+        });
+
+        await Promise.all(validations);
     }
 
     /**
