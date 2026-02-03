@@ -1251,6 +1251,15 @@ function importConfigsFromZip($zipPath, $zipName, $configDir)
             continue;
         }
 
+        if (strpos($entryName, '__MACOSX/') === 0 || strpos($entryName, '/__MACOSX/') !== false) {
+            continue;
+        }
+
+        $baseName = basename($entryName);
+        if ($baseName === '' || $baseName[0] === '.' || strpos($baseName, '._') === 0) {
+            continue;
+        }
+
         $extension = strtolower(pathinfo($entryName, PATHINFO_EXTENSION));
         if ($extension !== 'json') {
             continue;
@@ -1260,7 +1269,7 @@ function importConfigsFromZip($zipPath, $zipName, $configDir)
         $content   = $zip->getFromIndex($i);
         if ($content === false) {
             $failed[] = [
-                'file'    => basename($entryName),
+                'file'    => $baseName ?: basename($entryName),
                 'source'  => $zipName,
                 'message' => 'Failed to read file from ZIP',
             ];
