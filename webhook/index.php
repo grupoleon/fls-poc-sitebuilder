@@ -379,17 +379,17 @@ function saveTaskToFile($taskData)
 
 // Main execution
 try {
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        sendResponse(false, 'Only GET requests are supported', null, 405);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        sendResponse(false, 'Only POST requests are supported', null, 405);
     }
 
-    if (! isset($_GET['id']) || empty($_GET['id'])) {
-        sendResponse(false, 'Task ID parameter is required', [
-            'usage' => '/task-created?id={task_id}',
-        ], 400);
+    $payload = json_decode(file_get_contents("php://input"), true);
+
+    if (! $payload) {
+        sendResponse(false, 'Invalid JSON payload', null, 400);
     }
 
-    $taskId = trim($_GET['id']);
+    $taskId = $payload['task_id'] ?? null;
 
     if (! preg_match('/^[a-zA-Z0-9]+$/', $taskId)) {
         sendResponse(false, 'Invalid Task ID format', null, 400);
