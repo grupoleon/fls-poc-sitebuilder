@@ -797,10 +797,14 @@ class DeploymentManager
                         $htmlUrl    = $runData['html_url'] ?? null;
                         $createdAt  = $runData['created_at'] ?? null;
 
+                        // Fetch job ID for direct link to deployment logs
+                        $jobId = $this->getGitHubActionsJobId($monitoringRunId, $token, $owner, $repo);
+
                         // Include repository owner/repo info so the UI can build fallback links if needed
                         $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $monitoringRunId, true);
                         $result['owner'] = $owner;
                         $result['repo']  = $repo;
+                        $result['job_id'] = $jobId;
 
                         return $result;
                     }
@@ -855,9 +859,13 @@ class DeploymentManager
                     $htmlUrl    = $run['html_url'] ?? null;
                     $createdAt  = $run['created_at'] ?? null;
 
+                    // Fetch job ID for direct link to deployment logs
+                    $jobId = $this->getGitHubActionsJobId($monitoringRunId, $token, $owner, $repo);
+
                     $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], true);
                     $result['owner'] = $owner;
                     $result['repo']  = $repo;
+                    $result['job_id'] = $jobId;
 
                     return $result;
                 }
@@ -872,9 +880,13 @@ class DeploymentManager
                     // Store this run ID for future monitoring
                     file_put_contents($runIdFile, $run['id']);
 
+                    // Fetch job ID for direct link to deployment logs
+                    $jobId = $this->getGitHubActionsJobId($run['id'], $token, $owner, $repo);
+
                     $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], false);
                     $result['owner'] = $owner;
                     $result['repo']  = $repo;
+                    $result['job_id'] = $jobId;
 
                     return $result;
                 }
@@ -1029,6 +1041,54 @@ class DeploymentManager
                 'logs'    => [],
                 'message' => 'Failed to retrieve GitHub Actions logs: ' . $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Get GitHub Actions job ID for a specific run
+     * This allows us to link directly to the deployment logs
+     */
+    private function getGitHubActionsJobId($runId, $token, $owner, $repo)
+    {
+        try {
+            if (!$runId) {
+                return null;
+            }
+
+            $url = "https://api.github.com/repos/{$owner}/{$repo}/actions/runs/{$runId}/jobs";
+            $headers = [
+                "Authorization: token {$token}",
+                "Accept: application/vnd.github.v3+json",
+                "User-Agent: Framework-Interface/1.0",
+            ];
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200) {
+                error_log("Failed to fetch GitHub job ID: HTTP {$httpCode}");
+                return null;
+            }
+
+            $data = json_decode($response, true);
+            if ($data && isset($data['jobs']) && !empty($data['jobs'])) {
+                // Get the first job (usually "deploy" job)
+                $firstJob = $data['jobs'][0];
+                return $firstJob['id'] ?? null;
+            }
+
+            return null;
+        } catch (Exception $e) {
+            error_log("GitHub Actions job ID retrieval failed: " . $e->getMessage());
+            return null;
         }
     }
 }

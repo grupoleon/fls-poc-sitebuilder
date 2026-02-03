@@ -734,7 +734,7 @@ class AdminInterface {
         }
     }
 
-    updateCompactStepStatus(stepId,status,label=null) {
+    updateCompactStepStatus(stepId,status,label=null,timingInfo=null) {
         debugLog(`updateCompactStepStatus called for ${stepId} with status ${status}`);
 
         const compactStep=document.querySelector(`.compact-step[data-step="${stepId}"]`);
@@ -765,6 +765,36 @@ class AdminInterface {
             debugLog(`Updated status text for ${stepId} to: ${statusText[status]||status}`);
         } else {
             debugLog(`No status element found in step ${stepId}`,'warn');
+        }
+
+        // Update time display
+        const timeElement=compactStep.querySelector('.step-time');
+        if(timeElement) {
+            if(timingInfo) {
+                timeElement.textContent=timingInfo;
+            } else if(status==='in-progress') {
+                // Show active timer for in-progress steps
+                if(this.stepStartTimes.has(stepId)) {
+                    const elapsed=Date.now()-this.stepStartTimes.get(stepId);
+                    const seconds=Math.floor(elapsed/1000);
+                    const minutes=Math.floor(seconds/60);
+                    const remainingSeconds=seconds%60;
+                    timeElement.textContent=`${minutes}m ${remainingSeconds}s`;
+                } else {
+                    timeElement.textContent='Running...';
+                }
+            } else if(status==='completed') {
+                // Show duration for completed steps
+                if(this.stepDurations.has(stepId)) {
+                    timeElement.textContent=this.stepDurations.get(stepId);
+                } else {
+                    timeElement.textContent='Done';
+                }
+            } else if(status==='error') {
+                timeElement.textContent='Failed';
+            } else {
+                timeElement.textContent='Waiting...';
+            }
         }
 
         // Update label if provided
@@ -985,17 +1015,36 @@ class AdminInterface {
 
         deploymentSteps.forEach((step,index) => {
             let stepStatus='pending';
+            let timingInfo=null;
 
             if(status.status==='completed'||(status.status==='running'&&index<currentStepIndex)) {
                 stepStatus='completed';
+                // Get duration from step_timings if available
+                if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].duration) {
+                    const duration=status.step_timings[step.id].duration;
+                    const minutes=Math.floor(duration/60);
+                    const seconds=duration%60;
+                    timingInfo=`${minutes>0? minutes+'m ':''}${seconds}s`;
+                } else if(this.stepDurations.has(step.id)) {
+                    timingInfo=this.stepDurations.get(step.id);
+                }
             } else if(index===currentStepIndex&&status.status==='running') {
                 stepStatus='in-progress';
+                // For in-progress steps, calculate elapsed time if we have start time
+                if(this.stepStartTimes.has(step.id)) {
+                    const elapsed=Date.now()-this.stepStartTimes.get(step.id);
+                    const seconds=Math.floor(elapsed/1000);
+                    const minutes=Math.floor(seconds/60);
+                    const remainingSeconds=seconds%60;
+                    timingInfo=`${minutes}m ${remainingSeconds}s`;
+                }
             } else if(status.status==='error'&&index<=currentStepIndex) {
                 stepStatus='error';
+                timingInfo='Failed';
             }
 
-            debugLog(`Step ${step.id} (index ${index}): status = ${stepStatus}`);
-            this.updateCompactStepStatus(step.id,stepStatus,step.name);
+            debugLog(`Step ${step.id} (index ${index}): status = ${stepStatus}, timing = ${timingInfo}`);
+            this.updateCompactStepStatus(step.id,stepStatus,step.name,timingInfo);
         });
 
         // Update connectors after all steps are updated
@@ -5941,13 +5990,53 @@ class AdminInterface {
         const statusIcon=githubStepCard.querySelector('.status-check-mark');
         const stepIcon=githubStepCard.querySelector('.status-icon-large');
 
+        // Build GitHub Actions URL with job ID for direct link to logs
+        let githubUrl=githubData.url;
+        if(githubData.run_id&&githubData.job_id&&githubData.owner&&githubData.repo) {
+            githubUrl=`https://github.com/${githubData.owner}/${githubData.repo}/actions/runs/${githubData.run_id}/job/${githubData.job_id}`;
+        } else if(githubData.run_id&&githubData.owner&&githubData.repo) {
+            githubUrl=`https://github.com/${githubData.owner}/${githubData.repo}/actions/runs/${githubData.run_id}`;
+        }
+
         // Update message
         if(statusMessage) {
             let message=githubData.message||'Checking GitHub Actions status...';
-            if(githubData.url) {
-                message+=` <a href="${githubData.url}" target="_blank" class="text-blue-500 underline">View on GitHub</a>`;
+            if(githubUrl) {
+                message+=` <a href="${githubUrl}" target="_blank" class="text-blue-500 underline">View on GitHub</a>`;
             }
             statusMessage.innerHTML=message;
+        }
+
+        // Make the step icon clickable when we have a GitHub URL
+        if(stepIcon&&githubUrl) {
+            stepIcon.style.cursor='pointer';
+            stepIcon.title='Click to view deployment logs on GitHub';
+            // Remove any existing click handler
+            const newStepIcon=stepIcon.cloneNode(true);
+            stepIcon.parentNode.replaceChild(newStepIcon,stepIcon);
+            // Add new click handler
+            newStepIcon.addEventListener('click',(e) => {
+                e.stopPropagation();
+                window.open(githubUrl,'_blank');
+            });
+        }
+
+        // Update compact step icon to be clickable as well
+        const compactStep=document.querySelector('.compact-step[data-step="github-actions"]');
+        if(compactStep&&githubUrl) {
+            const compactIcon=compactStep.querySelector('.step-icon');
+            if(compactIcon) {
+                compactIcon.style.cursor='pointer';
+                compactIcon.title='Click to view deployment logs on GitHub';
+                // Remove any existing click handler
+                const newCompactIcon=compactIcon.cloneNode(true);
+                compactIcon.parentNode.replaceChild(newCompactIcon,compactIcon);
+                // Add new click handler
+                newCompactIcon.addEventListener('click',(e) => {
+                    e.stopPropagation();
+                    window.open(githubUrl,'_blank');
+                });
+            }
         }
 
         // Update timestamp
