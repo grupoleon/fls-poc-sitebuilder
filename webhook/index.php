@@ -399,9 +399,41 @@ try {
         sendResponse(false, 'Invalid JSON payload', null, 400);
     }
 
-    $taskId = $payload['task_id'] ?? null;
+    // Check if this is a ClickUp test/ping webhook
+    if (isset($payload['body']) && strpos($payload['body'], 'Test message from ClickUp') !== false) {
+        logWebhook("ClickUp test webhook received - sending success response", [
+            'body' => $payload['body'],
+            'ip'   => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        ]);
+        sendResponse(true, 'Webhook endpoint verified successfully', [
+            'message' => 'ClickUp test webhook received',
+            'status'  => 'active',
+        ], 200);
+    }
 
-    // Check if task_id is empty or null before using preg_match
+    // Extract task ID from ClickUp webhook payload structure
+    // ClickUp sends: { "payload": { "id": "86dzku5z8", ... } } for real webhooks
+    // Or legacy format: { "task_id": "86dzku5z8" }
+    $taskId   = null;
+    $taskData = null;
+
+    // Check for nested payload structure (real ClickUp webhook)
+    if (isset($payload['payload']['id'])) {
+        $taskId   = $payload['payload']['id'];
+        $taskData = $payload['payload']; // Store the full task data from webhook
+        logWebhook("Task data received from webhook", [
+            'task_id'   => $taskId,
+            'task_name' => $taskData['name'] ?? 'N/A',
+            'trigger'   => $payload['trigger_id'] ?? 'N/A',
+        ]);
+    }
+    // Check for legacy format (manual webhook or old integration)
+    elseif (isset($payload['task_id'])) {
+        $taskId = $payload['task_id'];
+        logWebhook("Legacy task_id format detected", ['task_id' => $taskId]);
+    }
+
+    // Validate task_id
     if (empty($taskId) || ! is_string($taskId)) {
         logWebhook("Missing or invalid task_id", ['payload' => $payload]);
         sendResponse(false, 'Task ID is required and must be a string', null, 400);
@@ -414,10 +446,14 @@ try {
 
     logWebhook("Task webhook triggered", ['task_id' => $taskId, 'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
 
-    $clickupConfig = getClickUpConfig();
-
-    logWebhook("Fetching task from ClickUp API", ['task_id' => $taskId]);
-    $taskData = fetchClickUpTask($taskId, $clickupConfig['api_token']);
+    // If we already have task data from webhook, use it; otherwise fetch from API
+    if ($taskData === null) {
+        $clickupConfig = getClickUpConfig();
+        logWebhook("Fetching task from ClickUp API", ['task_id' => $taskId]);
+        $taskData = fetchClickUpTask($taskId, $clickupConfig['api_token']);
+    } else {
+        logWebhook("Using task data from webhook payload", ['task_id' => $taskId]);
+    }
 
     logWebhook("Saving task data to file", ['task_id' => $taskId, 'task_name' => $taskData['name'] ?? 'N/A']);
     $fileInfo = saveTaskToFile($taskData);
