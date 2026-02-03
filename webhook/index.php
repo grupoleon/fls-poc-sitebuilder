@@ -379,19 +379,36 @@ function saveTaskToFile($taskData)
 
 // Main execution
 try {
+    // Log all incoming webhook requests first
+    $rawPayload = file_get_contents("php://input");
+    logWebhook("Incoming webhook request", [
+        'method'     => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN',
+        'ip'         => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+        'payload'    => $rawPayload ? substr($rawPayload, 0, 500) : 'empty', // Log first 500 chars
+    ]);
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         sendResponse(false, 'Only POST requests are supported', null, 405);
     }
 
-    $payload = json_decode(file_get_contents("php://input"), true);
+    $payload = json_decode($rawPayload, true);
 
     if (! $payload) {
+        logWebhook("Invalid JSON payload received", ['raw' => $rawPayload]);
         sendResponse(false, 'Invalid JSON payload', null, 400);
     }
 
     $taskId = $payload['task_id'] ?? null;
 
+    // Check if task_id is empty or null before using preg_match
+    if (empty($taskId) || ! is_string($taskId)) {
+        logWebhook("Missing or invalid task_id", ['payload' => $payload]);
+        sendResponse(false, 'Task ID is required and must be a string', null, 400);
+    }
+
     if (! preg_match('/^[a-zA-Z0-9]+$/', $taskId)) {
+        logWebhook("Invalid Task ID format", ['task_id' => $taskId]);
         sendResponse(false, 'Invalid Task ID format', null, 400);
     }
 

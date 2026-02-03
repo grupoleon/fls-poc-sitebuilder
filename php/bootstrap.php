@@ -523,15 +523,34 @@ function handleRequest()
                             $relativePath = $prefix . $item;
 
                             if (is_dir($fullPath)) {
-                                $scanDirectory($fullPath, $relativePath . '/', $category);
+                                // Determine category based on subdirectory name
+                                $subCategory = ucfirst($item);
+                                if (in_array($item, ['api', 'deployment', 'webhook'])) {
+                                    $subCategory = ucfirst($item);
+                                } else {
+                                    $subCategory = $category;
+                                }
+                                $scanDirectory($fullPath, $relativePath . '/', $subCategory);
                             } elseif (is_file($fullPath)) {
+                                // Determine category based on file name
+                                $fileCategory = $category;
+                                if (strpos($item, 'webhook') === 0) {
+                                    $fileCategory = 'Webhook';
+                                } elseif (strpos($item, 'deployment') === 0) {
+                                    $fileCategory = 'Deployment';
+                                } elseif (strpos($item, 'api') === 0) {
+                                    $fileCategory = 'API';
+                                } elseif (in_array($item, ['errors.log', 'system.log'])) {
+                                    $fileCategory = 'System';
+                                }
+
                                 $logFiles[] = [
                                     'name'     => $item,
                                     'path'     => $relativePath,
                                     'fullPath' => $fullPath,
                                     'size'     => filesize($fullPath),
                                     'modified' => filemtime($fullPath),
-                                    'category' => $category,
+                                    'category' => $fileCategory,
                                 ];
                             }
                         }

@@ -169,7 +169,7 @@ class LocalConfigManager {
         });
 
         // Define category order
-        const categoryOrder=['Temporary Status','Logs','api','deployment'];
+        const categoryOrder=['Temporary Status','System','Webhook','API','Deployment','Logs','api','deployment'];
 
         // Add options grouped by category in specified order
         categoryOrder.forEach(category => {
