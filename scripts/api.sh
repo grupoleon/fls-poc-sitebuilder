@@ -10,11 +10,23 @@ CONFIG_DIR="$(dirname "${BASH_SOURCE[0]}")/../config"
 SITE_CONFIG="$CONFIG_DIR/site.json"
 GIT_CONFIG="$CONFIG_DIR/git.json"
 MAIN_CONFIG="$CONFIG_DIR/config.json"
+LOCAL_CONFIG="$CONFIG_DIR/local-config.json"
 
 # Read tokens from JSON configuration files with environment variable fallbacks
 KINSTA_API_TOKEN="${KINSTA_API_TOKEN:-$(jq -r '.site.kinsta_token // empty' "$MAIN_CONFIG")}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-$(jq -r '.token // empty' "$GIT_CONFIG")}"
-CLICKUP_API_TOKEN="${CLICKUP_API_TOKEN:-$(jq -r '.integrations.clickup.api_token // empty' "$MAIN_CONFIG")}"
+
+# ClickUp token: Check local-config.json first, then fall back to config.json
+if [[ -z "${CLICKUP_API_TOKEN:-}" ]]; then
+    if [[ -f "$LOCAL_CONFIG" ]]; then
+        CLICKUP_API_TOKEN="$(jq -r '.integrations.clickup.api_token // empty' "$LOCAL_CONFIG")"
+    fi
+    # Fall back to main config if not found in local config
+    if [[ -z "$CLICKUP_API_TOKEN" ]]; then
+        CLICKUP_API_TOKEN="$(jq -r '.integrations.clickup.api_token // empty' "$MAIN_CONFIG")"
+    fi
+fi
+
 COMPANY_ID="${COMPANY_ID:-$(jq -r '.company // empty' "$SITE_CONFIG")}"
 
 # API logging is always enabled
@@ -60,7 +72,7 @@ api_request() {
             
             # Validate ClickUp token when needed
             if [[ -z "$token" ]]; then
-                log_error "CLICKUP_API_TOKEN is not set. Please set integrations.clickup.api_token in $MAIN_CONFIG" "API"
+                log_error "CLICKUP_API_TOKEN is not set. Please set integrations.clickup.api_token in $LOCAL_CONFIG or $MAIN_CONFIG" "API"
                 exit 1
             fi
             ;;
