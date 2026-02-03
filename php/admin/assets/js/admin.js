@@ -1949,6 +1949,7 @@ class AdminInterface {
 
     prefillServicesAndConfigs(taskData) {
         debugLog('Prefilling services and configs with task data');
+        debugLog('Current config before merge:',this.currentConfig);
 
         // Service name to config toggle mapping
         const serviceToggleMap={
@@ -1984,53 +1985,157 @@ class AdminInterface {
             });
         }
 
-        // Prefill Google Analytics Token
+        // Prefill Google Analytics Token - Only if ClickUp has a value
         if(taskData.google_analytics_token) {
             const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
             debugLog('Analytics input element:',analyticsInput);
             if(analyticsInput) {
-                analyticsInput.value=taskData.google_analytics_token;
-                debugLog('Set analytics token:',taskData.google_analytics_token);
+                // Only overwrite if ClickUp value is different from existing OR existing is empty
+                const existingValue=analyticsInput.value||'';
+                if(!existingValue||existingValue!==taskData.google_analytics_token) {
+                    analyticsInput.value=taskData.google_analytics_token;
+                    debugLog('Set analytics token:',taskData.google_analytics_token);
+                } else {
+                    debugLog('Analytics token already set, preserving existing value:',existingValue);
+                }
             } else {
                 debugLog('Analytics input not found in DOM yet','warn');
             }
         }
 
-        // Prefill Google Maps API Key
+        // Prefill Google Maps API Key - Only if ClickUp has a value
         if(taskData.google_map_key) {
             const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
             debugLog('Maps input element:',mapsInput);
             if(mapsInput) {
-                mapsInput.value=taskData.google_map_key;
-                debugLog('Set maps API key:',taskData.google_map_key);
-                // Trigger change event to potentially load map preview
-                mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
+                // Only overwrite if ClickUp value is different from existing OR existing is empty
+                const existingValue=mapsInput.value||'';
+                if(!existingValue||existingValue!==taskData.google_map_key) {
+                    mapsInput.value=taskData.google_map_key;
+                    debugLog('Set maps API key:',taskData.google_map_key);
+                    // Trigger change event to potentially load map preview
+                    mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
+                } else {
+                    debugLog('Maps API key already set, preserving existing value:',existingValue);
+                }
             } else {
                 debugLog('Maps input not found in DOM yet','warn');
             }
         }
 
-        // Store reCAPTCHA keys for later form configuration
+        // Store reCAPTCHA keys for later form configuration - Only if ClickUp has values
         // These will be available when user configures forms
         if(taskData.recaptcha_site_key||taskData.recaptcha_secret) {
-            sessionStorage.setItem('clickup_recaptcha_site_key',taskData.recaptcha_site_key||'');
-            sessionStorage.setItem('clickup_recaptcha_secret',taskData.recaptcha_secret||'');
+            // Check if we already have values in sessionStorage
+            const existingSiteKey=sessionStorage.getItem('clickup_recaptcha_site_key')||'';
+            const existingSecret=sessionStorage.getItem('clickup_recaptcha_secret')||'';
+
+            // Only update if ClickUp has a value and (existing is empty OR different)
+            if(taskData.recaptcha_site_key&&(!existingSiteKey||existingSiteKey!==taskData.recaptcha_site_key)) {
+                sessionStorage.setItem('clickup_recaptcha_site_key',taskData.recaptcha_site_key);
+                debugLog('Updated reCAPTCHA site key from ClickUp');
+            } else if(existingSiteKey) {
+                debugLog('Preserving existing reCAPTCHA site key:',existingSiteKey);
+            }
+
+            if(taskData.recaptcha_secret&&(!existingSecret||existingSecret!==taskData.recaptcha_secret)) {
+                sessionStorage.setItem('clickup_recaptcha_secret',taskData.recaptcha_secret);
+                debugLog('Updated reCAPTCHA secret from ClickUp');
+            } else if(existingSecret) {
+                debugLog('Preserving existing reCAPTCHA secret');
+            }
         }
 
-        // Store email for later use
+        // Store email for later use - Only if ClickUp has a value
         if(taskData.email) {
-            sessionStorage.setItem('clickup_email',taskData.email);
+            const existingEmail=sessionStorage.getItem('clickup_email')||'';
+            if(!existingEmail||existingEmail!==taskData.email) {
+                sessionStorage.setItem('clickup_email',taskData.email);
+                debugLog('Updated email from ClickUp:',taskData.email);
+            } else {
+                debugLog('Preserving existing email:',existingEmail);
+            }
         }
 
-        // Store privacy policy info
+        // Store privacy policy info - Only if ClickUp has a value
         if(taskData.privacy_policy_info) {
-            sessionStorage.setItem('clickup_privacy_policy',taskData.privacy_policy_info);
+            const existingPolicy=sessionStorage.getItem('clickup_privacy_policy')||'';
+            if(!existingPolicy||existingPolicy!==taskData.privacy_policy_info) {
+                sessionStorage.setItem('clickup_privacy_policy',taskData.privacy_policy_info);
+                debugLog('Updated privacy policy from ClickUp');
+            } else {
+                debugLog('Preserving existing privacy policy');
+            }
         }
 
-        // Store Google Drive info
+        // Store Google Drive info - Only if ClickUp has a value
         if(taskData.google_drive) {
-            sessionStorage.setItem('clickup_google_drive',taskData.google_drive);
+            const existingDrive=sessionStorage.getItem('clickup_google_drive')||'';
+            if(!existingDrive||existingDrive!==taskData.google_drive) {
+                sessionStorage.setItem('clickup_google_drive',taskData.google_drive);
+                debugLog('Updated Google Drive from ClickUp');
+            } else {
+                debugLog('Preserving existing Google Drive');
+            }
         }
+
+        // Store social media links - Only if ClickUp has values
+        const socialFields={
+            'facebook_link': {
+                storageKey: 'clickup_facebook_link',
+                inputPath: 'integrations.social_links.facebook'
+            },
+            'instagram_link': {
+                storageKey: 'clickup_instagram_link',
+                inputPath: 'integrations.social_links.instagram'
+            },
+            'twitter_link': {
+                storageKey: 'clickup_twitter_link',
+                inputPath: 'integrations.social_links.twitter'
+            },
+            'youtube_link': {
+                storageKey: 'clickup_youtube_link',
+                inputPath: 'integrations.social_links.youtube'
+            },
+            'winred_link': {
+                storageKey: 'clickup_winred_link',
+                inputPath: 'integrations.social_links.winred'
+            }
+        };
+
+        Object.keys(socialFields).forEach(fieldKey => {
+            if(taskData[fieldKey]) {
+                const config=socialFields[fieldKey];
+                const storageKey=config.storageKey;
+                const inputPath=config.inputPath;
+
+                // Update sessionStorage
+                const existingValue=sessionStorage.getItem(storageKey)||'';
+                if(!existingValue||existingValue!==taskData[fieldKey]) {
+                    sessionStorage.setItem(storageKey,taskData[fieldKey]);
+                    debugLog(`Updated ${fieldKey} from ClickUp:`,taskData[fieldKey]);
+                } else {
+                    debugLog(`Preserving existing ${fieldKey}:`,existingValue);
+                }
+
+                // Also fill the actual form input if it exists
+                const input=document.querySelector(`[data-path="${inputPath}"]`);
+                if(input) {
+                    const currentValue=input.value||'';
+                    // Only overwrite if ClickUp value is different from existing OR existing is empty
+                    if(!currentValue||currentValue!==taskData[fieldKey]) {
+                        input.value=taskData[fieldKey];
+                        debugLog(`Filled ${inputPath} input with:`,taskData[fieldKey]);
+                    } else {
+                        debugLog(`Preserving existing value in ${inputPath}:`,currentValue);
+                    }
+                } else {
+                    debugLog(`Input for ${inputPath} not found in DOM yet`,'warn');
+                }
+            }
+        });
+
+        debugLog('✅ Config merge complete - existing values preserved, ClickUp values applied where available');
     }
 
     async fetchManualTask() {
