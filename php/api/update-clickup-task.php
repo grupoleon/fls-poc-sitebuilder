@@ -82,35 +82,41 @@ if (! $config['success']) {
 $apiToken = $config['api_token'];
 
 // Prepare comment text with deployment information
-$commentText = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-$commentText .= "✅ **DEPLOYMENT COMPLETED**\n";
-$commentText .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-$commentText .= "**Deployment Date:** {$deploymentDate}\n\n";
+$commentText = "✅ **DEPLOYMENT COMPLETED**
+
+Deployment Date: {$deploymentDate}
+
+";
 
 if ($siteUrl) {
-    $commentText .= "**🌐 Site URL:** [{$siteUrl}](https://{$siteUrl})\n";
+    $commentText .= "🌐 Site URL: [{$siteUrl}](https://{$siteUrl})
+
+";
 }
 
 if ($adminUrl) {
-    $commentText .= "**🔐 Admin URL:** [{$adminUrl}](https://{$adminUrl})\n";
+    $commentText .= "🔒 Admin URL: [{$adminUrl}](https://{$adminUrl})
+
+";
 }
 
 if ($adminUser || $adminPass) {
-    $commentText .= "\n**Login Credentials:**\n";
+    $commentText .= "Login Credentials:
+";
     if ($adminUser) {
-        $commentText .= "- **Username:** `{$adminUser}`\n";
+        $commentText .= "  Username: `{$adminUser}`
+";
     }
     if ($adminPass) {
-        $commentText .= "- **Password:** `{$adminPass}`\n";
+        $commentText .= "  Password: `{$adminPass}`
+";
     }
 }
-
-$commentText .= "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
 // Post comment to task
 $commentUrl = "https://api.clickup.com/api/v2/task/{$taskId}/comment";
 
-$commentData  = [
+$commentData = [
     'comment_text' => $commentText,
     'notify_all'   => true,
 ];
@@ -153,9 +159,9 @@ if ($commentHttpCode !== 200) {
 }
 
 // Optionally update Website URL custom field
-$customFieldUpdated = false;
+$customFieldUpdated  = false;
 // Optionally update Website URL custom field
-$customFieldUpdated = false;
+$customFieldUpdated  = false;
 
 // Get task details to find custom fields
 $getUrl = "https://api.clickup.com/api/v2/task/{$taskId}";
