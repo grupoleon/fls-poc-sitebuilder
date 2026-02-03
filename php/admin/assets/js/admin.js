@@ -1898,6 +1898,12 @@ class AdminInterface {
 
             if(data.success&&data.task) {
                 console.log('Task object:',JSON.stringify(data.task,null,2));
+
+                // CRITICAL: Load/reload configuration to ensure all form fields exist
+                debugLog('Loading configuration before prefilling task data...');
+                await this.loadConfiguration();
+
+                // Now prefill with task data after config is loaded
                 this.prefillDeploymentForm(data.task);
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
@@ -1996,6 +2002,25 @@ class AdminInterface {
         this.showNotification('Form prefilled with ClickUp task data','success');
     }
 
+    // Helper method to retry setting element values with delays
+    retrySetElement(setter,elementName,maxAttempts=5,delayMs=200) {
+        let attempts=0;
+        const trySet=() => {
+            attempts++;
+            const success=setter();
+            if(!success&&attempts<maxAttempts) {
+                debugLog(`${elementName} not found, retry ${attempts}/${maxAttempts} in ${delayMs}ms`,'warn');
+                setTimeout(trySet,delayMs);
+            } else if(!success) {
+                debugLog(`${elementName} not found after ${maxAttempts} attempts`,'error');
+            } else {
+                debugLog(`${elementName} set successfully on attempt ${attempts}`);
+            }
+        };
+        // Start first attempt immediately
+        trySet();
+    }
+
     prefillServicesAndConfigs(taskData) {
         debugLog('Prefilling services and configs with task data');
         debugLog('Current config before merge:',this.currentConfig);
@@ -2020,56 +2045,53 @@ class AdminInterface {
             taskData.selected_services.forEach(service => {
                 const toggleId=serviceToggleMap[service];
                 if(toggleId) {
-                    const toggle=document.getElementById(toggleId);
-                    debugLog(`Looking for toggle ${toggleId}:`,toggle);
-                    if(toggle&&!toggle.checked) {
-                        toggle.checked=true;
-                        debugLog(`Enabled toggle: ${toggleId}`);
-                        // Trigger change event to update dependent UI
-                        toggle.dispatchEvent(new Event('change',{bubbles: true}));
-                    } else if(!toggle) {
-                        debugLog(`Toggle ${toggleId} not found in DOM yet`,'warn');
-                    }
+                    // Retry toggle enabling with a small delay
+                    this.retrySetElement(() => {
+                        const toggle=document.getElementById(toggleId);
+                        if(toggle&&!toggle.checked) {
+                            toggle.checked=true;
+                            debugLog(`Enabled toggle: ${toggleId}`);
+                            // Trigger change event to update dependent UI
+                            toggle.dispatchEvent(new Event('change',{bubbles: true}));
+                            return true;
+                        }
+                        return !!toggle;
+                    },`toggle ${toggleId}`);
                 }
             });
         }
 
         // Prefill Google Analytics Token - Only if ClickUp has a value
         if(taskData.google_analytics_token) {
-            const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
-            debugLog('Analytics input element:',analyticsInput);
-            if(analyticsInput) {
-                // Only overwrite if ClickUp value is different from existing OR existing is empty
-                const existingValue=analyticsInput.value||'';
-                if(!existingValue||existingValue!==taskData.google_analytics_token) {
-                    analyticsInput.value=taskData.google_analytics_token;
-                    debugLog('Set analytics token:',taskData.google_analytics_token);
-                } else {
-                    debugLog('Analytics token already set, preserving existing value:',existingValue);
+            this.retrySetElement(() => {
+                const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
+                if(analyticsInput) {
+                    const existingValue=analyticsInput.value||'';
+                    if(!existingValue||existingValue!==taskData.google_analytics_token) {
+                        analyticsInput.value=taskData.google_analytics_token;
+                        debugLog('Set analytics token:',taskData.google_analytics_token);
+                    }
+                    return true;
                 }
-            } else {
-                debugLog('Analytics input not found in DOM yet','warn');
-            }
+                return false;
+            },'Google Analytics input');
         }
 
         // Prefill Google Maps API Key - Only if ClickUp has a value
         if(taskData.google_map_key) {
-            const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
-            debugLog('Maps input element:',mapsInput);
-            if(mapsInput) {
-                // Only overwrite if ClickUp value is different from existing OR existing is empty
-                const existingValue=mapsInput.value||'';
-                if(!existingValue||existingValue!==taskData.google_map_key) {
-                    mapsInput.value=taskData.google_map_key;
-                    debugLog('Set maps API key:',taskData.google_map_key);
-                    // Trigger change event to potentially load map preview
-                    mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
-                } else {
-                    debugLog('Maps API key already set, preserving existing value:',existingValue);
+            this.retrySetElement(() => {
+                const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
+                if(mapsInput) {
+                    const existingValue=mapsInput.value||'';
+                    if(!existingValue||existingValue!==taskData.google_map_key) {
+                        mapsInput.value=taskData.google_map_key;
+                        debugLog('Set maps API key:',taskData.google_map_key);
+                        mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
+                    }
+                    return true;
                 }
-            } else {
-                debugLog('Maps input not found in DOM yet','warn');
-            }
+                return false;
+            },'Google Maps input');
         }
 
         // Store reCAPTCHA keys for later form configuration - Only if ClickUp has values
@@ -2251,6 +2273,11 @@ class AdminInterface {
 
                 // Prefill form with task data but guard against prefill errors so they don't surface as network errors
                 try {
+                    // CRITICAL: Load/reload configuration to ensure all form fields exist
+                    debugLog('Loading configuration before prefilling manual task data...');
+                    await this.loadConfiguration();
+
+                    // Now prefill with task data after config is loaded
                     this.prefillDeploymentForm(data.task);
                     // Show success message only if prefill succeeded
                     this.showManualTaskStatus(`Task "${data.task.task_name}" fetched successfully!`,'success');
