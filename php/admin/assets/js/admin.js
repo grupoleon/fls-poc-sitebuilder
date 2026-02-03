@@ -80,6 +80,7 @@ class AdminInterface {
 
         // Store current ClickUp task data for prefilling
         this.currentTaskData=null;
+        this.kinstaRegionFallbackOptions=null;
 
         this.init();
     }
@@ -445,6 +446,7 @@ class AdminInterface {
             if(e.target.id==='company-id-input') {
                 this.clearCompanyValidation();
                 this.updateKinstaTokenLink();
+                this.loadKinstaRegions(e.target.value||'');
             }
         });
 
@@ -1309,6 +1311,7 @@ class AdminInterface {
             if(data.success) {
                 this.currentConfig=data.data; // Store config for later use
                 this.populateConfigForms(data.data);
+                await this.loadKinstaRegions();
                 // Load page options for forms and maps dropdowns
                 await this.loadPageOptionsForForms();
                 // Load Git data from GitHub (orgs, repos, branches)
@@ -1410,6 +1413,112 @@ class AdminInterface {
                 // Try to load repos and branches even if org fetch failed
                 await this.loadGitRepositories();
             }
+        }
+    }
+
+    getKinstaRegionSelect() {
+        return document.querySelector('select[data-path="region"]');
+    }
+
+    cacheKinstaRegionFallbackOptions() {
+        if(this.kinstaRegionFallbackOptions) return;
+        const regionSelect=this.getKinstaRegionSelect();
+        if(!regionSelect) return;
+
+        this.kinstaRegionFallbackOptions=Array.from(regionSelect.options)
+            .filter(option => option.value!=='')
+            .map(option => ({
+                value: option.value,
+                label: option.textContent
+            }));
+    }
+
+    populateKinstaRegionSelect(regions,selectedValue,placeholderText=null) {
+        const regionSelect=this.getKinstaRegionSelect();
+        if(!regionSelect) return;
+
+        regionSelect.innerHTML='';
+
+        if(placeholderText) {
+            const placeholder=document.createElement('option');
+            placeholder.value='';
+            placeholder.textContent=placeholderText;
+            placeholder.disabled=true;
+            placeholder.selected=!selectedValue;
+            regionSelect.appendChild(placeholder);
+        }
+
+        if(Array.isArray(regions)&&regions.length) {
+            regions.forEach(region => {
+                const value=region?.value||region?.region||region?.id||region?.code||region?.name||'';
+                const label=region?.label||region?.name||region?.location||value;
+                if(!value) return;
+                const option=document.createElement('option');
+                option.value=value;
+                option.textContent=label;
+                regionSelect.appendChild(option);
+            });
+        }
+
+        if(selectedValue&&!Array.from(regionSelect.options).some(option => option.value===selectedValue)) {
+            const option=document.createElement('option');
+            option.value=selectedValue;
+            option.textContent=`${selectedValue} (Unavailable)`;
+            regionSelect.appendChild(option);
+        }
+
+        if(selectedValue) {
+            regionSelect.value=selectedValue;
+        }
+    }
+
+    async loadKinstaRegions(companyId=null) {
+        const regionSelect=this.getKinstaRegionSelect();
+        if(!regionSelect) return;
+
+        this.cacheKinstaRegionFallbackOptions();
+
+        const selectedValue=regionSelect.value||
+            this.currentConfig?.site?.region||
+            this.currentConfig?.main?.region||
+            this.currentConfig?.config?.region||
+            '';
+
+        const resolvedCompanyId=(companyId&&companyId.trim())||
+            document.getElementById('company-id-input')?.value?.trim()||
+            this.currentConfig?.site?.company||
+            this.currentConfig?.main?.company||
+            this.currentConfig?.config?.company||
+            '';
+
+        if(!resolvedCompanyId) {
+            this.populateKinstaRegionSelect(this.kinstaRegionFallbackOptions,selectedValue,'Enter Company ID to load regions');
+            return;
+        }
+
+        regionSelect.disabled=true;
+        this.populateKinstaRegionSelect([],'','Loading regions...');
+
+        try {
+            const response=await fetch(`?action=get_available_regions&company_id=${encodeURIComponent(resolvedCompanyId)}`);
+            const result=await response.json();
+
+            if(!result.success) {
+                throw new Error(result.message||'Failed to load regions');
+            }
+
+            const regions=result.data?.regions||[];
+            if(!Array.isArray(regions)||regions.length===0) {
+                this.populateKinstaRegionSelect(this.kinstaRegionFallbackOptions,selectedValue,'No regions available');
+                return;
+            }
+
+            this.populateKinstaRegionSelect(regions,selectedValue);
+        } catch(error) {
+            debugLog(`Failed to load Kinsta regions: ${error.message}`,'error');
+            this.populateKinstaRegionSelect(this.kinstaRegionFallbackOptions,selectedValue,'Unable to load regions');
+        } finally {
+            regionSelect.disabled=false;
         }
     }
 

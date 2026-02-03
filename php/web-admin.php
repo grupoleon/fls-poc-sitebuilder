@@ -698,7 +698,8 @@
                                             <div class="grid grid-cols-1 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">Region</label>
-                                                    <select class="form-select config-input" data-path="region">
+                                                    <select id="kinsta-region-select" class="form-select config-input" data-path="region">
+                                                        <option value="">Loading regions...</option>
                                                         <option value="us-central1">US Central</option>
                                                         <option value="europe-west1">Europe West</option>
                                                         <option value="asia-southeast1">Asia Southeast</option>

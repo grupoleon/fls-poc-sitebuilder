@@ -736,6 +736,30 @@ function handleRequest()
                 }
                 break;
 
+            case 'get_available_regions':
+                // Get available regions from Kinsta API
+                $companyId = $_GET['company_id'] ?? $_POST['company_id'] ?? null;
+                if (empty($companyId)) {
+                    $siteConfig = $configManager->getConfig('site');
+                    $companyId  = $siteConfig['company'] ?? null;
+                }
+
+                try {
+                    $regions = getAvailableRegionsFromKinsta($companyId);
+                    echo json_encode([
+                        'success' => true,
+                        'data'    => [
+                            'regions' => $regions,
+                        ],
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to get available regions: ' . $e->getMessage(),
+                    ]);
+                }
+                break;
+
             case 'check_site_exists':
                 // Check if a site with the given title exists in Kinsta
                 $input     = json_decode(file_get_contents('php://input'), true);
@@ -1459,6 +1483,88 @@ function checkIfSiteExistsInKinsta($siteTitle)
         'site_title'     => $siteTitle,
         'matching_sites' => $matchingSites,
     ];
+}
+
+/**
+ * Get available regions for a company from Kinsta
+ */
+function getAvailableRegionsFromKinsta($companyId)
+{
+    if (empty($companyId)) {
+        throw new Exception('Company ID not configured. Please set it in site configuration.');
+    }
+
+    $kinstaToken = getKinstaToken();
+    $url         = "https://api.kinsta.com/v2/company/{$companyId}/available-regions";
+    $result      = makeKinstaApiRequest($url, 'GET', $kinstaToken);
+
+    if ($result['error']) {
+        throw new Exception("Kinsta API request failed: {$result['error']}");
+    }
+
+    if ($result['http_code'] !== 200) {
+        $errorData = json_decode($result['body'], true);
+        $errorMsg  = $errorData['message'] ?? "HTTP {$result['http_code']}";
+        throw new Exception("Kinsta API returned error: {$errorMsg}");
+    }
+
+    $data = json_decode($result['body'], true);
+    if (! $data) {
+        throw new Exception('Invalid response from Kinsta API');
+    }
+
+    // Support multiple possible response formats
+    if (isset($data['available_regions']) && is_array($data['available_regions'])) {
+        $regionsRaw = $data['available_regions'];
+    } elseif (isset($data['company']['available_regions']) && is_array($data['company']['available_regions'])) {
+        $regionsRaw = $data['company']['available_regions'];
+    } elseif (isset($data['regions']) && is_array($data['regions'])) {
+        $regionsRaw = $data['regions'];
+    } elseif (isset($data['data']) && is_array($data['data'])) {
+        $regionsRaw = $data['data'];
+    } elseif (is_array($data) && array_values($data) === $data) {
+        $regionsRaw = $data;
+    } else {
+        $regionsRaw = [];
+    }
+
+    $regions = [];
+    foreach ($regionsRaw as $region) {
+        if (! is_array($region)) {
+            continue;
+        }
+
+        // Some APIs may nest the region data
+        $regionData = $region;
+        if (isset($region['region']) && is_array($region['region'])) {
+            $regionData = array_merge($region['region'], $region);
+        }
+
+        $value = $regionData['region'] ?? $regionData['id'] ?? $regionData['code'] ?? $regionData['name'] ?? null;
+        if (empty($value)) {
+            continue;
+        }
+
+        $label = $regionData['name'] ?? $regionData['label'] ?? $regionData['location'] ?? $regionData['region'] ?? $regionData['id'] ?? $value;
+        if (! empty($regionData['name']) && ! empty($regionData['location']) && $regionData['location'] !== $regionData['name']) {
+            $label = $regionData['name'] . ' (' . $regionData['location'] . ')';
+        }
+
+        $regions[] = [
+            'value' => $value,
+            'label' => $label,
+        ];
+    }
+
+    // De-duplicate by value while preserving order
+    $unique = [];
+    foreach ($regions as $region) {
+        if (! isset($unique[$region['value']])) {
+            $unique[$region['value']] = $region;
+        }
+    }
+
+    return array_values($unique);
 }
 
 /**
