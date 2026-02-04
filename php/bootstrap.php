@@ -45,6 +45,130 @@ function deepMergeConfig($existing, $new)
 }
 
 /**
+ * Get valid schema for each config file type
+ * Uses whitelist approach - only keys defined here are allowed
+ */
+function getConfigSchema($type)
+{
+    $schemas = [
+        // config.json - main configuration file
+        'main' => [
+            'site' => [
+                'admin' => ['username', 'email', 'password'],
+                'settings' => ['delete_default_pages'],
+                'navigation' => ['enabled', 'replace_existing', 'menu_items'],
+                'kinsta_token', 'logo', 'site_title', 'display_name', 'admin_email',
+                'admin_user', 'admin_password', 'region', 'company', 'wp_language',
+                'install_mode', 'is_multisite', 'is_subdomain_multisite', 'woocommerce', 'wordpressseo'
+            ],
+            'authentication' => [
+                'api_keys' => [
+                    'google_maps', 'google_analytics',
+                    'recaptcha' => ['site_key', 'secret_key'],
+                    'security' => ['wpvulndb_api_key', 'vulnerability_scanner_api']
+                ]
+            ],
+            'security' => [
+                'enabled',
+                'ip_blocking' => ['enabled', 'allowed_ips', 'blocked_ips'],
+                'geo_blocking' => ['enabled', 'allowed_countries', 'block_admin_area', 'block_frontend', 'emergency_access', 'emergency_access_code', 'whitelist_ips'],
+                'two_factor_auth' => ['enabled', 'required_for_all_users', 'required_roles', 'grace_period_days'],
+                'login_protection' => ['enabled', 'custom_login_url', 'hide_login_page', 'limit_failed_attempts', 'max_attempts', 'lockout_duration'],
+                'wordpress_hardening' => ['enabled', 'disable_file_editing', 'disable_installer', 'hide_wp_version', 'disable_xmlrpc', 'security_headers'],
+                'recaptcha_protection' => ['enabled', 'protect_forms', 'protect_login', 'protect_comments'],
+                'vulnerability_monitoring' => ['enabled', 'notification_email', 'check_frequency', 'check_plugins', 'check_themes', 'auto_update_minor', 'severity_threshold'],
+                'vulnerability_notifications' => ['enabled', 'email', 'frequency'],
+                'malware_protection' => [
+                    'enabled',
+                    'real_time_scanning' => ['enabled', 'sensitivity'],
+                    'scheduled_scans' => ['enabled', 'frequency', 'scan_hour'],
+                    'scan_options' => ['scan_malware', 'scan_file_changes', 'scan_core_files', 'scan_plugins', 'scan_themes', 'scan_images', 'scan_comments', 'scan_posts'],
+                    'email_alerts' => ['enabled', 'scan_issues', 'blocking_events', 'login_lockouts', 'admin_logins', 'breach_attempts', 'plugin_deactivation', 'file_changes', 'alert_frequency', 'alert_threshold'],
+                    'auto_cleaning' => ['enabled', 'comment']
+                ],
+                'brute_force_protection' => ['enabled', 'login_attempt_threshold', 'block_duration_hours', 'immediate_ip_blocking'],
+                'ip_whitelist' => ['enabled', 'ips'],
+                'admin_protection' => ['enabled']
+            ],
+            'password_policy' => ['min_length', 'require_uppercase', 'require_lowercase', 'require_numbers', 'require_special_chars', 'prevent_username_password', 'prevent_common_passwords'],
+            'wp_2fa_config' => ['enabled', 'enforce_on_multisite', 'enforcement_policy', 'grace_policy', 'grace_period', 'enforced_roles', 'backup_codes_enabled', 'enable_destroy_session', 'create_custom_user_page', 'custom_user_page_url', 'redirect_after_wizard_redirect', 'login_code_expiry_time', 'backup_codes_wrapper'],
+            'wp_security_audit_log' => ['enabled', 'restrict_log_viewer', 'incognito_mode', 'hide_plugin', 'frontend_events', 'backend_events', 'login_page_notification', 'pruning_date_e', 'pruning_limit_e', 'log_404', 'purge_404_log', 'log_visitor_404'],
+            'plugins' => ['keep', 'install'],
+            'themes' => ['install'],
+            'integrations' => [
+                'analytics' => ['enabled'],
+                'theme_customization' => ['enabled'],
+                'forms' => [
+                    'enabled', 'auto_find_placements',
+                    'contact_form' => ['enabled', 'placement', 'placeholders'],
+                    'volunteer_form' => ['enabled', 'placement', 'placeholders'],
+                    'document_upload_form' => ['enabled', 'placement', 'placeholders'],
+                    'test_form' => ['enabled', 'placement', 'placeholders']
+                ],
+                'social_links' => ['enabled', 'placement', 'facebook', 'twitter', 'instagram', 'youtube', 'winred'],
+                'maps' => ['enabled', 'placement', 'markers', 'center', 'zoom', 'auto_find_placements']
+            ]
+        ],
+        // git.json - Git/SSH configuration
+        'git' => ['token', 'org', 'repo', 'branch', 'host', 'user', 'port', 'path'],
+        // site.json - Site-specific configuration
+        'site' => ['site_title', 'display_name', 'admin_email', 'admin_user', 'admin_password', 'region', 'company', 'wp_language', 'install_mode', 'is_multisite', 'is_subdomain_multisite', 'woocommerce', 'wordpressseo'],
+        // theme-config.json - Theme configuration
+        'theme' => ['active_theme', 'available_themes', 'overrides']
+    ];
+
+    return $schemas[$type] ?? [];
+}
+
+/**
+ * Get valid root-level keys for a config type
+ */
+function getValidRootKeys($type)
+{
+    $schema = getConfigSchema($type);
+    if (empty($schema)) {
+        return [];
+    }
+
+    // For simple schemas (git, site), return the array directly
+    if ($type === 'git' || $type === 'site' || $type === 'theme') {
+        return $schema;
+    }
+
+    // For main config, return the top-level keys
+    return array_keys($schema);
+}
+
+/**
+ * Filter config data to only include valid keys based on schema
+ * Uses whitelist approach - only keeps keys that are in the schema
+ */
+function filterConfigBySchema($config, $type)
+{
+    $validRootKeys = getValidRootKeys($type);
+
+    if (empty($validRootKeys)) {
+        return $config;
+    }
+
+    $filtered = [];
+
+    foreach ($config as $key => $value) {
+        // Only keep keys that are in the valid keys list
+        if (in_array($key, $validRootKeys, true)) {
+            $filtered[$key] = $value;
+        }
+    }
+
+    // For main config, also filter out linkedin from social_links if present
+    if ($type === 'main' && isset($filtered['integrations']['social_links']['linkedin'])) {
+        unset($filtered['integrations']['social_links']['linkedin']);
+    }
+
+    return $filtered;
+}
+
+/**
  * Handle AJAX and API requests
  */
 function handleRequest()
@@ -89,7 +213,14 @@ function handleRequest()
                     // Handle different config types - some save to main config, others to their own files
                     switch ($type) {
                         case 'git':
+                            // Filter to only allow valid git.json keys
+                            $data = filterConfigBySchema($data, 'git');
+                            $configManager->updateConfig($type, $data);
+                            break;
+
                         case 'site':
+                            // Filter to only allow valid site.json keys
+                            $data = filterConfigBySchema($data, 'site');
                             $configManager->updateConfig($type, $data);
                             break;
 
@@ -103,13 +234,22 @@ function handleRequest()
                             $debugFile = __DIR__ . '/../logs/save_debug.log';
                             file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Save config - Processing main config merge for type: $type\n", FILE_APPEND);
 
+                            // Get existing config and filter to only include valid keys (whitelist approach)
                             $mainConfig = $configManager->getConfig('main');
-                            file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Original main config: " . json_encode($mainConfig, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
-                            file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Data to merge: " . json_encode($data, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+                            $mainConfig = filterConfigBySchema($mainConfig, 'main');
+
+                            // Filter incoming data to only allow valid keys
+                            $data = filterConfigBySchema($data, 'main');
+
+                            file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Original main config (filtered): " . json_encode($mainConfig, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+                            file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Data to merge (filtered): " . json_encode($data, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
 
                             // Smart merge - preserve existing structure but update provided values
                             $mergedConfig = deepMergeConfig($mainConfig, $data);
-                            file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Merged config: " . json_encode($mergedConfig, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+
+                            // Final filter to ensure only valid keys are saved
+                            $mergedConfig = filterConfigBySchema($mergedConfig, 'main');
+                            file_put_contents($debugFile, "[" . date('Y-m-d H:i:s') . "] Merged config (filtered): " . json_encode($mergedConfig, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
 
                             $configManager->updateConfig('main', $mergedConfig);
 
