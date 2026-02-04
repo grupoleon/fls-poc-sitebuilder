@@ -2126,6 +2126,39 @@ class AdminInterface {
             } else if(existingSecret) {
                 debugLog('Preserving existing reCAPTCHA secret');
             }
+
+            // Also fill reCAPTCHA form inputs directly
+            if(taskData.recaptcha_site_key) {
+                this.retrySetElement(() => {
+                    const input=document.querySelector('[data-path="authentication.api_keys.recaptcha.site_key"]');
+                    if(input) {
+                        const currentValue=input.value||'';
+                        if(!currentValue||currentValue!==taskData.recaptcha_site_key) {
+                            input.value=taskData.recaptcha_site_key;
+                            debugLog('Filled reCAPTCHA site key input:',taskData.recaptcha_site_key);
+                            input.dispatchEvent(new Event('input',{bubbles: true}));
+                        }
+                        return true;
+                    }
+                    return false;
+                },'reCAPTCHA site key input');
+            }
+
+            if(taskData.recaptcha_secret) {
+                this.retrySetElement(() => {
+                    const input=document.querySelector('[data-path="authentication.api_keys.recaptcha.secret_key"]');
+                    if(input) {
+                        const currentValue=input.value||'';
+                        if(!currentValue||currentValue!==taskData.recaptcha_secret) {
+                            input.value=taskData.recaptcha_secret;
+                            debugLog('Filled reCAPTCHA secret key input:',taskData.recaptcha_secret);
+                            input.dispatchEvent(new Event('input',{bubbles: true}));
+                        }
+                        return true;
+                    }
+                    return false;
+                },'reCAPTCHA secret key input');
+            }
         }
 
         // Store email for later use - Only if ClickUp has a value
@@ -2137,6 +2170,21 @@ class AdminInterface {
             } else {
                 debugLog('Preserving existing email:',existingEmail);
             }
+
+            // Also fill admin email form input directly
+            this.retrySetElement(() => {
+                const input=document.querySelector('[data-path="site.admin.email"]');
+                if(input) {
+                    const currentValue=input.value||'';
+                    if(!currentValue||currentValue!==taskData.email) {
+                        input.value=taskData.email;
+                        debugLog('Filled admin email input:',taskData.email);
+                        input.dispatchEvent(new Event('input',{bubbles: true}));
+                    }
+                    return true;
+                }
+                return false;
+            },'admin email input');
         }
 
         // Store privacy policy info - Only if ClickUp has a value
@@ -2217,7 +2265,92 @@ class AdminInterface {
             }
         });
 
+        // Apply security options from ClickUp task to toggle corresponding security checkboxes
+        if(taskData.security_options&&Array.isArray(taskData.security_options)&&taskData.security_options.length>0) {
+            this.applySecurityOptionsToForm(taskData.security_options);
+        }
+
         debugLog('✅ Config merge complete - existing values preserved, ClickUp values applied where available');
+    }
+
+    /**
+     * Apply security options from ClickUp task to form toggles
+     * Maps ClickUp security option strings to configuration paths and sets corresponding checkboxes
+     * @param {Array} securityOptions - Array of security option strings from ClickUp task
+     */
+    applySecurityOptionsToForm(securityOptions) {
+        if(!securityOptions||!Array.isArray(securityOptions)) {
+            debugLog('No security options to apply');
+            return;
+        }
+
+        debugLog('Applying security options from ClickUp:',securityOptions);
+
+        // Mapping of ClickUp security option keywords to config data-paths
+        const securityMapping={
+            'block country': 'security.geo_blocking.enabled',
+            'geo blocking': 'security.geo_blocking.enabled',
+            'block ip': 'security.ip_blocking.enabled',
+            'ip blocking': 'security.ip_blocking.enabled',
+            'scramble': 'security.login_protection.enabled',
+            'hide login': 'security.login_protection.hide_login_page',
+            'login protection': 'security.login_protection.enabled',
+            'audit': 'wp_security_audit_log.enabled',
+            'security log': 'wp_security_audit_log.enabled',
+            'disable installer': 'security.wordpress_hardening.disable_installer',
+            'wordpress hardening': 'security.wordpress_hardening.enabled',
+            'wp hardening': 'security.wordpress_hardening.enabled',
+            '2fa': 'security.two_factor_auth.enabled',
+            'two factor': 'security.two_factor_auth.enabled',
+            'two-factor': 'security.two_factor_auth.enabled'
+        };
+
+        // Track which paths have been enabled
+        const enabledPaths=new Set();
+
+        // Process each security option from ClickUp
+        securityOptions.forEach(option => {
+            const normalizedOption=option.toLowerCase().trim();
+
+            // Check each mapping keyword
+            Object.keys(securityMapping).forEach(keyword => {
+                if(normalizedOption.includes(keyword)) {
+                    const path=securityMapping[keyword];
+                    enabledPaths.add(path);
+                    debugLog(`Matched security option "${option}" to path: ${path}`);
+                }
+            });
+
+            // Special case: "Scramble WP Login URLs" should also enable hide_login_page
+            if(normalizedOption.includes('scramble')&&normalizedOption.includes('login')) {
+                enabledPaths.add('security.login_protection.hide_login_page');
+            }
+        });
+
+        // Apply the security options to form toggles
+        enabledPaths.forEach(path => {
+            this.retrySetElement(() => {
+                const input=document.querySelector(`[data-path="${path}"]`);
+                if(input) {
+                    if(input.type==='checkbox') {
+                        if(!input.checked) {
+                            input.checked=true;
+                            debugLog(`Enabled security toggle: ${path}`);
+                            // Trigger change event to update UI
+                            input.dispatchEvent(new Event('change',{bubbles: true}));
+                        }
+                    } else {
+                        // For non-checkbox inputs (e.g., text/select), set value to true
+                        input.value='true';
+                        debugLog(`Set security value: ${path} = true`);
+                    }
+                    return true;
+                }
+                return false;
+            },`security toggle ${path}`);
+        });
+
+        debugLog(`Applied ${enabledPaths.size} security options from ClickUp`);
     }
 
     async fetchManualTask() {

@@ -211,6 +211,7 @@
     "backup_codes_wrapper": 10
   },
   "wp_security_audit_log": {
+    "enabled": true,
     "restrict_log_viewer": "only_admins",
     "incognito_mode": false,
     "hide_plugin": false,
@@ -304,7 +305,9 @@
       "facebook": "",
       "twitter": "",
       "instagram": "",
-      "linkedin": ""
+      "linkedin": "",
+      "youtube": "",
+      "winred": ""
     },
     "maps": {
       "enabled": true,
