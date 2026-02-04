@@ -86,18 +86,21 @@
                     style="padding: var(--space-4); border-top: 1px solid rgba(255, 255, 255, 0.1);">
 
                     <!-- User Profile -->
-                    <div class="user-info mb-3" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <div class="user-info mb-3"
+                        style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
                         <?php if (Auth::getPicture()): ?>
-                            <img src="<?php echo htmlspecialchars(Auth::getPicture()); ?>" alt="Profile"
-                                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+                        <img src="<?php echo htmlspecialchars(Auth::getPicture()); ?>" alt="Profile"
+                            style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
                         <?php else: ?>
-                            <i class="fas fa-user-circle" style="font-size: 28px; color: rgba(255,255,255,0.7);"></i>
+                        <i class="fas fa-user-circle" style="font-size: 28px; color: rgba(255,255,255,0.7);"></i>
                         <?php endif; ?>
                         <div style="flex: 1; min-width: 0;">
-                            <div style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <div
+                                style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 <?php echo htmlspecialchars(Auth::getName() ?: 'User'); ?>
                             </div>
-                            <div style="font-size: 10px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <div
+                                style="font-size: 10px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 <?php echo htmlspecialchars(Auth::getEmail() ?: ''); ?>
                             </div>
                         </div>
@@ -153,24 +156,31 @@
                             <div class="card-body" id="quick-deploy-body">
                                 <!-- ClickUp Integration Toggle -->
                                 <div class="form-group mb-4">
-                                    <label class="checkbox-label" style="display: flex; align-items: center; cursor: pointer;">
-                                        <input type="checkbox" id="clickup-integration-checkbox" style="margin-right: 10px;" checked>
+                                    <label class="checkbox-label"
+                                        style="display: flex; align-items: center; cursor: pointer;">
+                                        <input type="checkbox" id="clickup-integration-checkbox"
+                                            style="margin-right: 10px;" checked>
                                         <span style="font-weight: 600;">
                                             <i class="fas fa-tasks" style="margin-right: 6px;"></i>
                                             Connect to ClickUp Task
                                         </span>
                                     </label>
-                                    <div class="form-help">Enable to track deployment progress in ClickUp and automatically fill site details</div>
+                                    <div class="form-help">Enable to track deployment progress in ClickUp and
+                                        automatically fill site details</div>
                                 </div>
 
                                 <!-- Collapsible ClickUp Task Section -->
-                                <div id="clickup-task-section" class="mb-4" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                                    <div id="clickup-section-header" style="background: #f9fafb; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                                <div id="clickup-task-section" class="mb-4"
+                                    style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                                    <div id="clickup-section-header"
+                                        style="background: #f9fafb; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <i class="fas fa-tasks" style="color: #6366f1;"></i>
-                                            <span style="font-weight: 600; color: #374151;">ClickUp Task Selection</span>
+                                            <span style="font-weight: 600; color: #374151;">ClickUp Task
+                                                Selection</span>
                                         </div>
-                                        <i id="clickup-section-icon" class="fas fa-chevron-up" style="color: #9ca3af; transition: transform 0.3s;"></i>
+                                        <i id="clickup-section-icon" class="fas fa-chevron-up"
+                                            style="color: #9ca3af; transition: transform 0.3s;"></i>
                                     </div>
                                     <div id="clickup-section-content" style="padding: 16px; display: none;">
                                         <div class="form-group mb-4">
@@ -178,17 +188,21 @@
                                             <select id="clickup-task-select" class="form-select">
                                                 <option value="">-- Select a ClickUp task --</option>
                                             </select>
-                                            <div class="form-help">Select a ClickUp task to track deployment progress and automatically fill in site details</div>
+                                            <div class="form-help">Select a ClickUp task to track deployment progress
+                                                and automatically fill in site details</div>
                                         </div>
                                         <div class="form-group mb-0">
-                                            <label class="form-label">If Not Found in the List, Fetch It Directly</label>
+                                            <label class="form-label">If Not Found in the List, Fetch It
+                                                Directly</label>
                                             <div style="display: flex; gap: 8px; align-items: flex-start;">
                                                 <div style="flex: 1;">
                                                     <input type="text" id="manual-task-id-input" class="form-input"
                                                         placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
-                                                    <div class="form-help">Can't find your task in the dropdown? Enter the task ID to fetch it directly from ClickUp</div>
+                                                    <div class="form-help">Can't find your task in the dropdown? Enter
+                                                        the task ID to fetch it directly from ClickUp</div>
                                                 </div>
-                                                <button type="button" class="btn btn-outline-primary" id="fetch-manual-task-btn"
+                                                <button type="button" class="btn btn-outline-primary"
+                                                    id="fetch-manual-task-btn"
                                                     style="white-space: nowrap; margin-top: 0;">
                                                     <i class="fas fa-download me-1"></i>Fetch Task
                                                 </button>
@@ -725,7 +739,8 @@
                                             <div class="grid grid-cols-1 gap-4">
                                                 <div class="form-group">
                                                     <label class="form-label">Region</label>
-                                                    <select id="kinsta-region-select" class="form-select config-input" data-path="region">
+                                                    <select id="kinsta-region-select" class="form-select config-input"
+                                                        data-path="region">
                                                         <option value="">Loading regions...</option>
                                                         <option value="us-central1">US Central</option>
                                                         <option value="europe-west1">Europe West</option>
@@ -1061,6 +1076,37 @@
                                                                 <option value="BR">🇧🇷 Brazil</option>
                                                                 <option value="IN">🇮🇳 India</option>
                                                                 <option value="SG">🇸🇬 Singapore</option>
+                                                                <option value="PE">🇵🇪 Peru</option>
+                                                                <option value="RU">🇷🇺 Russia</option>
+                                                                <option value="ZA">🇿🇦 South Africa</option>
+                                                                <option value="CN">🇨🇳 China</option>
+                                                                <option value="MX">🇲🇽 Mexico</option>
+                                                                <option value="IT">🇮🇹 Italy</option>
+                                                                <option value="ES">🇪🇸 Spain</option>
+                                                                <option value="NL">🇳🇱 Netherlands</option>
+                                                                <option value="SE">🇸🇪 Sweden</option>
+                                                                <option value="CH">🇨🇭 Switzerland</option>
+                                                                <option value="KR">🇰🇷 Korea</option>
+                                                                <option value="TR">🇹🇷 Turkey</option>
+                                                                <option value="AR">🇦🇷 Argentina</option>
+                                                                <option value="BE">🇧🇪 Belgium</option>
+                                                                <option value="DK">🇩🇰 Denmark</option>
+                                                                <option value="FI">🇫🇮 Finland</option>
+                                                                <option value="GR">🇬🇷 Greece</option>
+                                                                <option value="IE">🇮🇪 Ireland</option>
+                                                                <option value="NO">🇳🇴 Norway</option>
+                                                                <option value="PL">🇵🇱 Poland</option>
+                                                                <option value="PT">🇵🇹 Portugal</option>
+                                                                <option value="AT">🇦🇹 Austria</option>
+                                                                <option value="CZ">🇨🇿 Czech Republic</option>
+                                                                <option value="HU">🇭🇺 Hungary</option>
+                                                                <option value="NZ">🇳🇿 New Zealand</option>
+                                                                <option value="RO">🇷🇴 Romania</option>
+                                                                <option value="SK">🇸🇰 Slovakia</option>
+                                                                <option value="TW">🇹🇼 Taiwan</option>
+                                                                <option value="UA">🇺🇦 Ukraine</option>
+                                                                <option value="TH">🇹🇭 Thailand</option>
+                                                                <option value="VN">🇻🇳 Vietnam</option>
                                                             </select>
                                                         </div>
                                                         <button type="button" class="dynamic-list-add-btn"
@@ -1974,7 +2020,8 @@
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
                                         <div class="config-section mb-8">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                                 <h3 class="font-semibold mb-0">IP Blocking</h3>
                                                 <div class="toggle-container" style="margin-left: auto;">
                                                     <div class="toggle-wrapper">
@@ -1989,7 +2036,8 @@
                                                     </label>
                                                 </div>
                                             </div>
-                                            <div class="form-help mb-4">Block or allow specific IP addresses from accessing your site</div>
+                                            <div class="form-help mb-4">Block or allow specific IP addresses from
+                                                accessing your site</div>
 
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div class="form-group">
@@ -1997,20 +2045,23 @@
                                                     <textarea class="form-input config-input" rows="5"
                                                         data-path="security.ip_blocking.allowed_ips"
                                                         placeholder="Enter one IP per line&#10;192.168.1.100&#10;10.0.0.50&#10;203.0.113.0/24"></textarea>
-                                                    <div class="form-help">Whitelist IPs that should always have access. Supports CIDR notation (e.g., 192.168.1.0/24)</div>
+                                                    <div class="form-help">Whitelist IPs that should always have access.
+                                                        Supports CIDR notation (e.g., 192.168.1.0/24)</div>
                                                 </div>
                                                 <div class="form-group">
                                                     <label class="form-label">Blocked IP Addresses</label>
                                                     <textarea class="form-input config-input" rows="5"
                                                         data-path="security.ip_blocking.blocked_ips"
                                                         placeholder="Enter one IP per line&#10;192.168.1.200&#10;172.16.0.100&#10;198.51.100.0/24"></textarea>
-                                                    <div class="form-help">Blacklist IPs that should be blocked. Supports CIDR notation</div>
+                                                    <div class="form-help">Blacklist IPs that should be blocked.
+                                                        Supports CIDR notation</div>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <div class="form-help text-info">
                                                     <i class="fas fa-info-circle"></i>
-                                                    <strong>Note:</strong> Allowed IPs take precedence over blocked IPs. Use carefully to avoid locking yourself out.
+                                                    <strong>Note:</strong> Allowed IPs take precedence over blocked IPs.
+                                                    Use carefully to avoid locking yourself out.
                                                 </div>
                                             </div>
                                         </div>
@@ -2869,36 +2920,48 @@
                             <div class="card-body">
                                 <div class="alert alert-info mb-4">
                                     <i class="fas fa-info-circle"></i>
-                                    <strong>Deploy with Theme Defaults:</strong> Toggle these options to control which custom content will override theme defaults during deployment. When disabled, the theme's original demo content will be used instead.
+                                    <strong>Deploy with Theme Defaults:</strong> Toggle these options to control which
+                                    custom content will override theme defaults during deployment. When disabled, the
+                                    theme's original demo content will be used instead.
                                 </div>
                                 <div class="form-group">
                                     <div class="d-flex flex-column gap-3">
                                         <div class="form-check">
-                                            <input type="checkbox" id="slides-override-toggle" class="form-check-input override-toggle" data-override-type="slides_override" checked>
+                                            <input type="checkbox" id="slides-override-toggle"
+                                                class="form-check-input override-toggle"
+                                                data-override-type="slides_override" checked>
                                             <label class="form-check-label" for="slides-override-toggle">
                                                 <strong>Override Slides</strong>
-                                                <small class="d-block text-muted">Use custom slider content instead of theme defaults</small>
+                                                <small class="d-block text-muted">Use custom slider content instead of
+                                                    theme defaults</small>
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input type="checkbox" id="pages-override-toggle" class="form-check-input override-toggle" data-override-type="pages_override" checked>
+                                            <input type="checkbox" id="pages-override-toggle"
+                                                class="form-check-input override-toggle"
+                                                data-override-type="pages_override" checked>
                                             <label class="form-check-label" for="pages-override-toggle">
                                                 <strong>Override Pages</strong>
-                                                <small class="d-block text-muted">Use custom page layouts instead of theme defaults</small>
+                                                <small class="d-block text-muted">Use custom page layouts instead of
+                                                    theme defaults</small>
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input type="checkbox" id="cpt-override-toggle" class="form-check-input override-toggle" data-override-type="cpt_override" checked>
+                                            <input type="checkbox" id="cpt-override-toggle"
+                                                class="form-check-input override-toggle"
+                                                data-override-type="cpt_override" checked>
                                             <label class="form-check-label" for="cpt-override-toggle">
                                                 <strong>Override Custom Post Types</strong>
-                                                <small class="d-block text-muted">Use custom posts, issues, endorsements, etc. instead of theme defaults</small>
+                                                <small class="d-block text-muted">Use custom posts, issues,
+                                                    endorsements, etc. instead of theme defaults</small>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="alert alert-warning mt-3">
                                     <i class="fas fa-exclamation-triangle"></i>
-                                    <strong>Note:</strong> Changes will take effect on the next deployment. Make sure to save your override settings.
+                                    <strong>Note:</strong> Changes will take effect on the next deployment. Make sure to
+                                    save your override settings.
                                 </div>
                                 <button type="button" class="btn btn-primary mt-3" id="save-overrides-btn">
                                     <i class="fas fa-save"></i> Save Override Settings
@@ -3554,7 +3617,8 @@
                                 </span>
                             </div>
 
-                            <div id="config-import-summary" class="config-import-summary is-hidden" aria-live="polite"></div>
+                            <div id="config-import-summary" class="config-import-summary is-hidden" aria-live="polite">
+                            </div>
 
                             <div class="config-file-info">
                                 <div id="config-file-metadata" class="file-metadata">
