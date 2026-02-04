@@ -2027,16 +2027,16 @@ class AdminInterface {
 
         // API Keys
         if(before.google_analytics!==after.google_analytics&&after.google_analytics) {
-            addChange('API Keys','Google Analytics',before.google_analytics?'[set]':'[empty]',after.google_analytics?'[set]':'[empty]');
+            addChange('API Keys','Google Analytics',before.google_analytics? '[set]':'[empty]',after.google_analytics? '[set]':'[empty]');
         }
         if(before.google_maps!==after.google_maps&&after.google_maps) {
-            addChange('API Keys','Google Maps',before.google_maps?'[set]':'[empty]',after.google_maps?'[set]':'[empty]');
+            addChange('API Keys','Google Maps',before.google_maps? '[set]':'[empty]',after.google_maps? '[set]':'[empty]');
         }
         if(before.recaptcha_site_key!==after.recaptcha_site_key&&after.recaptcha_site_key) {
-            addChange('API Keys','reCAPTCHA Site Key',before.recaptcha_site_key?'[set]':'[empty]','[set]');
+            addChange('API Keys','reCAPTCHA Site Key',before.recaptcha_site_key? '[set]':'[empty]','[set]');
         }
         if(before.recaptcha_secret!==after.recaptcha_secret&&after.recaptcha_secret) {
-            addChange('API Keys','reCAPTCHA Secret',before.recaptcha_secret?'[set]':'[empty]','[set]');
+            addChange('API Keys','reCAPTCHA Secret',before.recaptcha_secret? '[set]':'[empty]','[set]');
         }
 
         // Admin email
@@ -2045,7 +2045,7 @@ class AdminInterface {
         }
 
         // Social links
-        const socialLabels={facebook:'Facebook',twitter:'Twitter/X',instagram:'Instagram',youtube:'YouTube',winred:'WinRed'};
+        const socialLabels={facebook: 'Facebook',twitter: 'Twitter/X',instagram: 'Instagram',youtube: 'YouTube',winred: 'WinRed'};
         Object.keys(socialLabels).forEach(platform => {
             const key=`social_${platform}`;
             if(before[key]!==after[key]&&after[key]) {
@@ -2066,7 +2066,7 @@ class AdminInterface {
         };
         Object.keys(securityLabels).forEach(path => {
             if(before[path]!==after[path]) {
-                addChange('Security',securityLabels[path],before[path]?'Enabled':'Disabled',after[path]?'Enabled':'Disabled');
+                addChange('Security',securityLabels[path],before[path]? 'Enabled':'Disabled',after[path]? 'Enabled':'Disabled');
             }
         });
 
@@ -2228,7 +2228,7 @@ class AdminInterface {
                     </button>
                 </div>
                 <div class="changes-preview-body">
-                    <div class="changes-summary">${changeCount} configuration${changeCount!==1?'s':''} updated</div>
+                    <div class="changes-summary">${changeCount} configuration${changeCount!==1? 's':''} updated</div>
                     <div class="changes-list">
         `;
 
@@ -2547,7 +2547,7 @@ class AdminInterface {
 
         // Store reCAPTCHA keys for later form configuration - Only if ClickUp has values
         // These will be available when user configures forms
-        console.log('Checking reCAPTCHA keys:',{site_key: taskData.recaptcha_site_key, secret: taskData.recaptcha_secret ? '[PRESENT]' : null});
+        console.log('Checking reCAPTCHA keys:',{site_key: taskData.recaptcha_site_key,secret: taskData.recaptcha_secret? '[PRESENT]':null});
         if(taskData.recaptcha_site_key||taskData.recaptcha_secret) {
             // Check if we already have values in sessionStorage
             const existingSiteKey=sessionStorage.getItem('clickup_recaptcha_site_key')||'';
@@ -2678,11 +2678,11 @@ class AdminInterface {
             },
             'winred_link': {
                 storageKey: 'clickup_winred_link',
-                inputPath: 'integrations.social_links.winred'
+                inputPath: 'integrations.donation.winred'
             }
         };
 
-        console.log('Social link values from task:', {
+        console.log('Social link values from task:',{
             facebook: taskData.facebook_link,
             instagram: taskData.instagram_link,
             twitter: taskData.twitter_link,

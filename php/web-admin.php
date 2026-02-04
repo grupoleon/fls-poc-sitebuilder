@@ -2271,8 +2271,9 @@
 
                                         <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Social Media Links</h3>
+                                            <p class="text-sm text-gray-600 mb-4">Social icons will be displayed in the footer across all themes</p>
 
-                                            <div class="grid grid-cols-2 gap-4">
+                                            <div class="grid grid-cols-1 gap-4 mb-4">
                                                 <div class="form-group">
                                                     <div class="toggle-container">
                                                         <div class="toggle-wrapper">
@@ -2286,13 +2287,6 @@
                                                             Enable Social Media Links
                                                         </label>
                                                     </div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label class="form-label">Placement</label>
-                                                    <select class="form-select config-input"
-                                                        data-path="integrations.social_links.placement">
-                                                        <option value="">Loading pages...</option>
-                                                    </select>
                                                 </div>
                                             </div>
 
@@ -2325,13 +2319,22 @@
                                                             placeholder="https://youtube.com/@yourchannel">
                                                     </div>
                                                 </div>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div class="form-group">
-                                                        <label class="form-label">WinRed URL</label>
-                                                        <input type="url" class="form-input config-input"
-                                                            data-path="integrations.social_links.winred"
-                                                            placeholder="https://secure.winred.com/yourpage">
-                                                    </div>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
+
+                                        <div class="config-section mb-8">
+                                            <h3 class="font-semibold mb-3">Donation Platform</h3>
+                                            <p class="text-sm text-gray-600 mb-4">WinRed integration is handled by a separate extension</p>
+
+                                            <div class="grid grid-cols-1 gap-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">WinRed URL</label>
+                                                    <input type="url" class="form-input config-input"
+                                                        data-path="integrations.donation.winred"
+                                                        placeholder="https://secure.winred.com/yourpage">
+                                                    <p class="text-xs text-gray-500 mt-1">Configure WinRed donation page URL for the extension</p>
                                                 </div>
                                             </div>
                                         </div>
