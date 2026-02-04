@@ -2241,10 +2241,18 @@
                                                             placeholder="https://instagram.com/youraccount">
                                                     </div>
                                                     <div class="form-group">
-                                                        <label class="form-label">LinkedIn URL</label>
+                                                        <label class="form-label">YouTube URL</label>
                                                         <input type="url" class="form-input config-input"
-                                                            data-path="integrations.social_links.linkedin"
-                                                            placeholder="https://linkedin.com/in/yourprofile">
+                                                            data-path="integrations.social_links.youtube"
+                                                            placeholder="https://youtube.com/@yourchannel">
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">WinRed URL</label>
+                                                        <input type="url" class="form-input config-input"
+                                                            data-path="integrations.social_links.winred"
+                                                            placeholder="https://secure.winred.com/yourpage">
                                                     </div>
                                                 </div>
                                             </div>

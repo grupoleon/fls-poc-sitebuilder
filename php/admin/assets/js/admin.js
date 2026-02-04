@@ -1914,14 +1914,347 @@ class AdminInterface {
                 debugLog('Loading configuration before prefilling task data...');
                 await this.loadConfiguration();
 
+                // Capture current values BEFORE prefilling to track changes
+                const beforeValues=this.captureCurrentConfigValues();
+
                 // Now prefill with task data after config is loaded
                 this.prefillDeploymentForm(data.task);
+
+                // Wait for all async prefill operations to complete
+                setTimeout(async () => {
+                    // Capture values AFTER prefilling
+                    const afterValues=this.captureCurrentConfigValues();
+
+                    // Calculate what changed
+                    const changes=this.calculateChanges(beforeValues,afterValues,data.task);
+
+                    // Save changes to backend
+                    if(Object.keys(changes).length>0) {
+                        await this.saveClickUpChangesToBackend(changes,data.task);
+                    }
+
+                    // Show changes preview (will auto-close)
+                    this.showChangesPreview(changes,data.task);
+                },800); // Wait for retrySetElement operations to complete
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
             }
         } catch(error) {
             debugLog('Failed to load task data:',error,'error');
         }
+    }
+
+    /**
+     * Capture current form values for change tracking
+     */
+    captureCurrentConfigValues() {
+        const values={};
+
+        // Site title
+        const siteTitleInput=document.getElementById('deployment-site-title');
+        if(siteTitleInput) values.site_title=siteTitleInput.value||'';
+
+        // Theme
+        const themeSelect=document.getElementById('deployment-theme-select');
+        if(themeSelect) values.theme=themeSelect.value||'';
+
+        // API Keys
+        const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
+        if(analyticsInput) values.google_analytics=analyticsInput.value||'';
+
+        const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
+        if(mapsInput) values.google_maps=mapsInput.value||'';
+
+        const recaptchaSiteKey=document.querySelector('[data-path="authentication.api_keys.recaptcha.site_key"]');
+        if(recaptchaSiteKey) values.recaptcha_site_key=recaptchaSiteKey.value||'';
+
+        const recaptchaSecret=document.querySelector('[data-path="authentication.api_keys.recaptcha.secret_key"]');
+        if(recaptchaSecret) values.recaptcha_secret=recaptchaSecret.value||'';
+
+        // Admin email
+        const emailInput=document.querySelector('[data-path="site.admin.email"]');
+        if(emailInput) values.admin_email=emailInput.value||'';
+
+        // Social links
+        const socialPaths=['facebook','twitter','instagram','youtube','winred'];
+        socialPaths.forEach(platform => {
+            const input=document.querySelector(`[data-path="integrations.social_links.${platform}"]`);
+            if(input) values[`social_${platform}`]=input.value||'';
+        });
+
+        // Security toggles
+        const securityToggles=[
+            'security.geo_blocking.enabled',
+            'security.ip_blocking.enabled',
+            'security.login_protection.enabled',
+            'security.login_protection.hide_login_page',
+            'security.wordpress_hardening.enabled',
+            'security.wordpress_hardening.disable_installer',
+            'security.two_factor_auth.enabled',
+            'wp_security_audit_log.enabled'
+        ];
+        securityToggles.forEach(path => {
+            const input=document.querySelector(`[data-path="${path}"]`);
+            if(input&&input.type==='checkbox') {
+                values[path]=input.checked;
+            }
+        });
+
+        return values;
+    }
+
+    /**
+     * Calculate what changed between before and after values
+     */
+    calculateChanges(before,after,taskData) {
+        const changes={};
+
+        // Helper to add change
+        const addChange=(category,field,oldVal,newVal) => {
+            if(!changes[category]) changes[category]=[];
+            changes[category].push({field,oldVal,newVal});
+        };
+
+        // Site title
+        if(before.site_title!==after.site_title) {
+            addChange('Site Settings','Site Title',before.site_title,after.site_title);
+        }
+
+        // Theme
+        if(before.theme!==after.theme&&after.theme) {
+            addChange('Site Settings','Theme',before.theme,after.theme);
+        }
+
+        // API Keys
+        if(before.google_analytics!==after.google_analytics&&after.google_analytics) {
+            addChange('API Keys','Google Analytics',before.google_analytics?'[set]':'[empty]',after.google_analytics?'[set]':'[empty]');
+        }
+        if(before.google_maps!==after.google_maps&&after.google_maps) {
+            addChange('API Keys','Google Maps',before.google_maps?'[set]':'[empty]',after.google_maps?'[set]':'[empty]');
+        }
+        if(before.recaptcha_site_key!==after.recaptcha_site_key&&after.recaptcha_site_key) {
+            addChange('API Keys','reCAPTCHA Site Key',before.recaptcha_site_key?'[set]':'[empty]','[set]');
+        }
+        if(before.recaptcha_secret!==after.recaptcha_secret&&after.recaptcha_secret) {
+            addChange('API Keys','reCAPTCHA Secret',before.recaptcha_secret?'[set]':'[empty]','[set]');
+        }
+
+        // Admin email
+        if(before.admin_email!==after.admin_email&&after.admin_email) {
+            addChange('Site Settings','Admin Email',before.admin_email||'[empty]',after.admin_email);
+        }
+
+        // Social links
+        const socialLabels={facebook:'Facebook',twitter:'Twitter/X',instagram:'Instagram',youtube:'YouTube',winred:'WinRed'};
+        Object.keys(socialLabels).forEach(platform => {
+            const key=`social_${platform}`;
+            if(before[key]!==after[key]&&after[key]) {
+                addChange('Social Links',socialLabels[platform],before[key]||'[empty]',after[key]);
+            }
+        });
+
+        // Security toggles
+        const securityLabels={
+            'security.geo_blocking.enabled': 'Geo Blocking',
+            'security.ip_blocking.enabled': 'IP Blocking',
+            'security.login_protection.enabled': 'Login Protection',
+            'security.login_protection.hide_login_page': 'Hide Login Page',
+            'security.wordpress_hardening.enabled': 'WordPress Hardening',
+            'security.wordpress_hardening.disable_installer': 'Disable Installer',
+            'security.two_factor_auth.enabled': '2FA Authentication',
+            'wp_security_audit_log.enabled': 'Security Audit Log'
+        };
+        Object.keys(securityLabels).forEach(path => {
+            if(before[path]!==after[path]) {
+                addChange('Security',securityLabels[path],before[path]?'Enabled':'Disabled',after[path]?'Enabled':'Disabled');
+            }
+        });
+
+        return changes;
+    }
+
+    /**
+     * Save ClickUp task changes to backend config files
+     */
+    async saveClickUpChangesToBackend(changes,taskData) {
+        try {
+            console.log('=== SAVING CLICKUP CHANGES TO BACKEND ===');
+
+            // Paths that belong in git.json (should NOT be saved to config.json)
+            const gitJsonPaths=['token','org','repo','branch','host','user','port','path'];
+
+            // Paths that belong in site.json at root level (should NOT be saved to config.json root)
+            const siteJsonPaths=['site_title','display_name','admin_email','admin_user','admin_password',
+                'region','company','wp_language','install_mode','is_multisite','is_subdomain_multisite',
+                'woocommerce','wordpressseo'];
+
+            // Valid prefixes for config.json paths
+            const validConfigPrefixes=['site.','authentication.','security.','password_policy.',
+                'wp_2fa_config.','wp_security_audit_log.','plugins.','themes.','integrations.'];
+
+            // Build config object from current form values
+            const configData={};
+
+            // Collect only config.json inputs (filter out git.json and site.json paths)
+            document.querySelectorAll('[data-path]').forEach(input => {
+                const path=input.dataset.path;
+
+                // Skip git.json paths (root level paths like "token", "org", etc.)
+                if(gitJsonPaths.includes(path)) {
+                    console.log(`Skipping git.json path: ${path}`);
+                    return;
+                }
+
+                // Skip site.json root paths
+                if(siteJsonPaths.includes(path)) {
+                    console.log(`Skipping site.json path: ${path}`);
+                    return;
+                }
+
+                // Only include paths that start with valid config.json prefixes
+                const isValidConfigPath=validConfigPrefixes.some(prefix => path.startsWith(prefix));
+                if(!isValidConfigPath) {
+                    console.log(`Skipping invalid config path: ${path}`);
+                    return;
+                }
+
+                let value;
+                if(input.type==='checkbox') {
+                    value=input.checked;
+                } else if(input.type==='number') {
+                    value=parseFloat(input.value)||0;
+                } else {
+                    value=input.value;
+                }
+
+                // Set nested path in config object
+                const parts=path.split('.');
+                let obj=configData;
+                for(let i=0;i<parts.length-1;i++) {
+                    if(!obj[parts[i]]) obj[parts[i]]={};
+                    obj=obj[parts[i]];
+                }
+                obj[parts[parts.length-1]]=value;
+            });
+
+            // Save site title under site.site_title (proper location in config.json)
+            const siteTitleInput=document.getElementById('deployment-site-title');
+            if(siteTitleInput&&siteTitleInput.value) {
+                if(!configData.site) configData.site={};
+                configData.site.site_title=siteTitleInput.value;
+            }
+
+            console.log('Config data to save:',Object.keys(configData));
+
+            // Save main config
+            const response=await fetch('?action=save_config',{
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'main',data: configData})
+            });
+            const result=await response.json();
+
+            if(result.success) {
+                console.log('✅ Configuration saved successfully');
+            } else {
+                console.error('Failed to save configuration:',result.message);
+            }
+
+            // Save active theme if changed
+            const themeSelect=document.getElementById('deployment-theme-select');
+            if(themeSelect&&themeSelect.value) {
+                await this.saveActiveTheme(themeSelect.value);
+            }
+
+            return result.success;
+        } catch(error) {
+            console.error('Error saving ClickUp changes:',error);
+            return false;
+        }
+    }
+
+    /**
+     * Show preview of changes made from ClickUp task with auto-close
+     */
+    showChangesPreview(changes,taskData) {
+        // Remove any existing preview
+        const existingPreview=document.getElementById('clickup-changes-preview');
+        if(existingPreview) existingPreview.remove();
+
+        const changeCount=Object.values(changes).reduce((sum,arr) => sum+arr.length,0);
+
+        if(changeCount===0) {
+            this.showNotification('No new changes from ClickUp task','info');
+            return;
+        }
+
+        // Build preview HTML
+        let previewHtml=`
+            <div id="clickup-changes-preview" class="clickup-changes-preview">
+                <div class="changes-preview-header">
+                    <div class="changes-preview-title">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Task "${taskData.task_name}" Applied</span>
+                    </div>
+                    <button class="changes-preview-close" onclick="this.closest('.clickup-changes-preview').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="changes-preview-body">
+                    <div class="changes-summary">${changeCount} configuration${changeCount!==1?'s':''} updated</div>
+                    <div class="changes-list">
+        `;
+
+        // Add changes by category
+        Object.keys(changes).forEach(category => {
+            previewHtml+=`<div class="changes-category">
+                <div class="changes-category-name">${category}</div>
+                <ul class="changes-items">`;
+            changes[category].forEach(change => {
+                previewHtml+=`<li><span class="change-field">${change.field}:</span> <span class="change-value">${change.newVal}</span></li>`;
+            });
+            previewHtml+=`</ul></div>`;
+        });
+
+        previewHtml+=`
+                    </div>
+                    <div class="changes-preview-footer">
+                        <span class="auto-close-text">Auto-closing in <span id="countdown">5</span>s</span>
+                        <button class="changes-preview-dismiss" onclick="this.closest('.clickup-changes-preview').remove()">
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insert preview into page
+        document.body.insertAdjacentHTML('beforeend',previewHtml);
+
+        // Auto-close countdown
+        let countdown=5;
+        const countdownEl=document.getElementById('countdown');
+        const previewEl=document.getElementById('clickup-changes-preview');
+
+        const timer=setInterval(() => {
+            countdown--;
+            if(countdownEl) countdownEl.textContent=countdown;
+            if(countdown<=0) {
+                clearInterval(timer);
+                if(previewEl) {
+                    previewEl.classList.add('closing');
+                    setTimeout(() => previewEl.remove(),300);
+                }
+            }
+        },1000);
+
+        // Store timer so it can be cleared if manually closed
+        previewEl._timer=timer;
+        previewEl.addEventListener('click',e => {
+            if(e.target.closest('.changes-preview-close')||e.target.closest('.changes-preview-dismiss')) {
+                clearInterval(previewEl._timer);
+            }
+        });
     }
 
     prefillDeploymentForm(taskData) {
@@ -1976,9 +2309,10 @@ class AdminInterface {
             });
         }
 
-        // Prefill theme
-        const themeSelect=document.getElementById('deployment-theme-select');
-        if(themeSelect&&taskData.theme) {
+        // Prefill theme - use retry since theme options may load asynchronously
+        console.log('=== PREFILLING THEME ===');
+        console.log('Theme from task data:',taskData.theme);
+        if(taskData.theme) {
             // Map theme names (handle variations)
             const themeMapping={
                 'Political WP': 'Political',
@@ -1986,31 +2320,49 @@ class AdminInterface {
                 // Add more mappings as needed
             };
             const themeName=themeMapping[taskData.theme]||taskData.theme;
+            console.log('Mapped theme name:',themeName);
 
-            // Try to select the theme
-            const option=Array.from(themeSelect.options).find(opt => opt.value===themeName);
-            if(option) {
-                themeSelect.value=themeName;
-                localStorage.setItem('deploymentTheme',themeName);
-                this.saveActiveTheme(themeName);
-                this.updatePageOptionsForTheme(themeName);
-                this.updatePageThemeSelect(themeName);
+            // Use retry since theme select options might not be loaded yet
+            this.retrySetElement(() => {
+                const themeSelect=document.getElementById('deployment-theme-select');
+                console.log('Theme select found:',!!themeSelect,'options count:',themeSelect?.options?.length);
+                if(!themeSelect||themeSelect.options.length<=1) {
+                    // Options not loaded yet (only default "Select a theme..." option)
+                    return false;
+                }
 
-                // Re-apply site title after theme operations (they may have cleared it)
-                setTimeout(() => {
-                    if(siteTitleInput&&taskData.task_name) {
-                        siteTitleInput.value=taskData.task_name;
-                        console.log('🔄 Site title re-applied after theme operations:',taskData.task_name);
-                    }
-                },100);
-            }
+                // Try to select the theme
+                const option=Array.from(themeSelect.options).find(opt => opt.value===themeName);
+                console.log('Theme option found:',!!option,'looking for:',themeName);
+                console.log('Available options:',Array.from(themeSelect.options).map(o => o.value));
+
+                if(option) {
+                    themeSelect.value=themeName;
+                    console.log('✅ Theme selected:',themeName);
+                    localStorage.setItem('deploymentTheme',themeName);
+                    this.saveActiveTheme(themeName);
+                    this.updatePageOptionsForTheme(themeName);
+                    this.updatePageThemeSelect(themeName);
+
+                    // Re-apply site title after theme operations (they may have cleared it)
+                    setTimeout(() => {
+                        if(siteTitleInput&&taskData.task_name) {
+                            siteTitleInput.value=taskData.task_name;
+                            console.log('🔄 Site title re-applied after theme operations:',taskData.task_name);
+                        }
+                    },100);
+                    return true;
+                } else {
+                    console.log('⚠️ Theme option not found, will retry...');
+                    return false;
+                }
+            },'deployment-theme-select',10,300); // More retries with longer delay for theme loading
         }
 
         // Enable services based on selected_services and prefill API keys
         this.prefillServicesAndConfigs(taskData);
 
-        // Show notification about prefilled data
-        this.showNotification('Form prefilled with ClickUp task data','success');
+        // Note: Notification is now shown via showChangesPreview() in loadTaskDataAndPrefill()
     }
 
     // Helper method to retry setting element values with delays
@@ -2033,6 +2385,20 @@ class AdminInterface {
     }
 
     prefillServicesAndConfigs(taskData) {
+        console.log('=== PREFILLING SERVICES AND CONFIGS ===');
+        console.log('Task data received:',{
+            google_analytics_token: taskData.google_analytics_token,
+            google_map_key: taskData.google_map_key,
+            recaptcha_site_key: taskData.recaptcha_site_key,
+            recaptcha_secret: taskData.recaptcha_secret,
+            email: taskData.email,
+            security_options: taskData.security_options,
+            facebook_link: taskData.facebook_link,
+            twitter_link: taskData.twitter_link,
+            instagram_link: taskData.instagram_link,
+            youtube_link: taskData.youtube_link,
+            winred_link: taskData.winred_link
+        });
         debugLog('Prefilling services and configs with task data');
         debugLog('Current config before merge:',this.currentConfig);
 
@@ -2073,40 +2439,88 @@ class AdminInterface {
         }
 
         // Prefill Google Analytics Token - Only if ClickUp has a value
+        console.log('Checking google_analytics_token:',taskData.google_analytics_token);
         if(taskData.google_analytics_token) {
+            // Enable analytics toggle if not already enabled
+            console.log('Analytics token detected - enabling analytics toggle');
             this.retrySetElement(() => {
-                const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
-                if(analyticsInput) {
-                    const existingValue=analyticsInput.value||'';
-                    if(!existingValue||existingValue!==taskData.google_analytics_token) {
-                        analyticsInput.value=taskData.google_analytics_token;
-                        debugLog('Set analytics token:',taskData.google_analytics_token);
-                    }
-                    return true;
+                const analyticsToggle=document.getElementById('analytics-toggle');
+                console.log('Analytics toggle found:',!!analyticsToggle);
+                if(analyticsToggle&&!analyticsToggle.checked) {
+                    analyticsToggle.checked=true;
+                    console.log('✅ Enabled analytics toggle');
+                    analyticsToggle.dispatchEvent(new Event('change',{bubbles: true}));
+                } else if(analyticsToggle&&analyticsToggle.checked) {
+                    console.log('ℹ️ Analytics toggle already enabled');
                 }
-                return false;
-            },'Google Analytics input');
+                return !!analyticsToggle;
+            },'analytics-toggle');
+
+            // Fill the analytics input (with small delay to allow toggle to reveal input)
+            setTimeout(() => {
+                console.log('Attempting to fill Google Analytics input...');
+                this.retrySetElement(() => {
+                    const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
+                    console.log('Google Analytics input found:',!!analyticsInput);
+                    if(analyticsInput) {
+                        const existingValue=analyticsInput.value||'';
+                        if(!existingValue||existingValue!==taskData.google_analytics_token) {
+                            analyticsInput.value=taskData.google_analytics_token;
+                            console.log('✅ Set analytics token:',taskData.google_analytics_token);
+                            analyticsInput.dispatchEvent(new Event('input',{bubbles: true}));
+                        } else {
+                            console.log('ℹ️ Analytics token already set:',existingValue);
+                        }
+                        return true;
+                    }
+                    return false;
+                },'Google Analytics input');
+            },200);
         }
 
         // Prefill Google Maps API Key - Only if ClickUp has a value
+        console.log('Checking google_map_key:',taskData.google_map_key);
         if(taskData.google_map_key) {
+            // Enable maps toggle if not already enabled
+            console.log('Maps API key detected - enabling maps toggle');
             this.retrySetElement(() => {
-                const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
-                if(mapsInput) {
-                    const existingValue=mapsInput.value||'';
-                    if(!existingValue||existingValue!==taskData.google_map_key) {
-                        mapsInput.value=taskData.google_map_key;
-                        debugLog('Set maps API key:',taskData.google_map_key);
-                        mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
-                    }
-                    return true;
+                const mapsToggle=document.getElementById('maps-toggle');
+                console.log('Maps toggle found:',!!mapsToggle);
+                if(mapsToggle&&!mapsToggle.checked) {
+                    mapsToggle.checked=true;
+                    console.log('✅ Enabled maps toggle');
+                    mapsToggle.dispatchEvent(new Event('change',{bubbles: true}));
+                } else if(mapsToggle&&mapsToggle.checked) {
+                    console.log('ℹ️ Maps toggle already enabled');
                 }
-                return false;
-            },'Google Maps input');
+                return !!mapsToggle;
+            },'maps-toggle');
+
+            // Fill the maps input (with small delay to allow toggle to reveal input)
+            setTimeout(() => {
+                console.log('Attempting to fill Google Maps input...');
+                this.retrySetElement(() => {
+                    const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
+                    console.log('Google Maps input found:',!!mapsInput);
+                    if(mapsInput) {
+                        const existingValue=mapsInput.value||'';
+                        if(!existingValue||existingValue!==taskData.google_map_key) {
+                            mapsInput.value=taskData.google_map_key;
+                            console.log('✅ Set maps API key:',taskData.google_map_key);
+                            mapsInput.dispatchEvent(new Event('input',{bubbles: true}));
+                        } else {
+                            console.log('ℹ️ Maps API key already set:',existingValue);
+                        }
+                        return true;
+                    }
+                    return false;
+                },'Google Maps input');
+            },200);
         }
 
         // Store reCAPTCHA keys for later form configuration - Only if ClickUp has values
         // These will be available when user configures forms
+        console.log('Checking reCAPTCHA keys:',{site_key: taskData.recaptcha_site_key, secret: taskData.recaptcha_secret ? '[PRESENT]' : null});
         if(taskData.recaptcha_site_key||taskData.recaptcha_secret) {
             // Check if we already have values in sessionStorage
             const existingSiteKey=sessionStorage.getItem('clickup_recaptcha_site_key')||'';
@@ -2129,13 +2543,15 @@ class AdminInterface {
 
             // Also fill reCAPTCHA form inputs directly
             if(taskData.recaptcha_site_key) {
+                console.log('Attempting to fill reCAPTCHA site key input...');
                 this.retrySetElement(() => {
                     const input=document.querySelector('[data-path="authentication.api_keys.recaptcha.site_key"]');
+                    console.log('reCAPTCHA site key input found:',!!input);
                     if(input) {
                         const currentValue=input.value||'';
                         if(!currentValue||currentValue!==taskData.recaptcha_site_key) {
                             input.value=taskData.recaptcha_site_key;
-                            debugLog('Filled reCAPTCHA site key input:',taskData.recaptcha_site_key);
+                            console.log('✅ Filled reCAPTCHA site key input:',taskData.recaptcha_site_key);
                             input.dispatchEvent(new Event('input',{bubbles: true}));
                         }
                         return true;
@@ -2145,13 +2561,15 @@ class AdminInterface {
             }
 
             if(taskData.recaptcha_secret) {
+                console.log('Attempting to fill reCAPTCHA secret key input...');
                 this.retrySetElement(() => {
                     const input=document.querySelector('[data-path="authentication.api_keys.recaptcha.secret_key"]');
+                    console.log('reCAPTCHA secret key input found:',!!input);
                     if(input) {
                         const currentValue=input.value||'';
                         if(!currentValue||currentValue!==taskData.recaptcha_secret) {
                             input.value=taskData.recaptcha_secret;
-                            debugLog('Filled reCAPTCHA secret key input:',taskData.recaptcha_secret);
+                            console.log('✅ Filled reCAPTCHA secret key input');
                             input.dispatchEvent(new Event('input',{bubbles: true}));
                         }
                         return true;
@@ -2162,23 +2580,26 @@ class AdminInterface {
         }
 
         // Store email for later use - Only if ClickUp has a value
+        console.log('Checking email:',taskData.email);
         if(taskData.email) {
             const existingEmail=sessionStorage.getItem('clickup_email')||'';
             if(!existingEmail||existingEmail!==taskData.email) {
                 sessionStorage.setItem('clickup_email',taskData.email);
-                debugLog('Updated email from ClickUp:',taskData.email);
+                console.log('Updated email in sessionStorage:',taskData.email);
             } else {
-                debugLog('Preserving existing email:',existingEmail);
+                console.log('Preserving existing email:',existingEmail);
             }
 
             // Also fill admin email form input directly
+            console.log('Attempting to fill admin email input...');
             this.retrySetElement(() => {
                 const input=document.querySelector('[data-path="site.admin.email"]');
+                console.log('Admin email input found:',!!input);
                 if(input) {
                     const currentValue=input.value||'';
                     if(!currentValue||currentValue!==taskData.email) {
                         input.value=taskData.email;
-                        debugLog('Filled admin email input:',taskData.email);
+                        console.log('✅ Filled admin email input:',taskData.email);
                         input.dispatchEvent(new Event('input',{bubbles: true}));
                     }
                     return true;
@@ -2210,6 +2631,7 @@ class AdminInterface {
         }
 
         // Store social media links - Only if ClickUp has values
+        console.log('=== PREFILLING SOCIAL LINKS ===');
         const socialFields={
             'facebook_link': {
                 storageKey: 'clickup_facebook_link',
@@ -2233,44 +2655,88 @@ class AdminInterface {
             }
         };
 
-        Object.keys(socialFields).forEach(fieldKey => {
-            if(taskData[fieldKey]) {
-                const config=socialFields[fieldKey];
-                const storageKey=config.storageKey;
-                const inputPath=config.inputPath;
-
-                // Update sessionStorage
-                const existingValue=sessionStorage.getItem(storageKey)||'';
-                if(!existingValue||existingValue!==taskData[fieldKey]) {
-                    sessionStorage.setItem(storageKey,taskData[fieldKey]);
-                    debugLog(`Updated ${fieldKey} from ClickUp:`,taskData[fieldKey]);
-                } else {
-                    debugLog(`Preserving existing ${fieldKey}:`,existingValue);
-                }
-
-                // Also fill the actual form input if it exists
-                const input=document.querySelector(`[data-path="${inputPath}"]`);
-                if(input) {
-                    const currentValue=input.value||'';
-                    // Only overwrite if ClickUp value is different from existing OR existing is empty
-                    if(!currentValue||currentValue!==taskData[fieldKey]) {
-                        input.value=taskData[fieldKey];
-                        debugLog(`Filled ${inputPath} input with:`,taskData[fieldKey]);
-                    } else {
-                        debugLog(`Preserving existing value in ${inputPath}:`,currentValue);
-                    }
-                } else {
-                    debugLog(`Input for ${inputPath} not found in DOM yet`,'warn');
-                }
-            }
+        console.log('Social link values from task:', {
+            facebook: taskData.facebook_link,
+            instagram: taskData.instagram_link,
+            twitter: taskData.twitter_link,
+            youtube: taskData.youtube_link,
+            winred: taskData.winred_link
         });
 
-        // Apply security options from ClickUp task to toggle corresponding security checkboxes
-        if(taskData.security_options&&Array.isArray(taskData.security_options)&&taskData.security_options.length>0) {
-            this.applySecurityOptionsToForm(taskData.security_options);
+        // Check if any social link has a value - if so, enable the social links toggle
+        const hasSocialLinks=taskData.facebook_link||taskData.instagram_link||taskData.twitter_link||taskData.youtube_link||taskData.winred_link;
+        if(hasSocialLinks) {
+            console.log('Social links detected - enabling social links toggle');
+            this.retrySetElement(() => {
+                const socialToggle=document.getElementById('social-links-toggle');
+                console.log('Social links toggle found:',!!socialToggle);
+                if(socialToggle&&!socialToggle.checked) {
+                    socialToggle.checked=true;
+                    console.log('✅ Enabled social links toggle');
+                    socialToggle.dispatchEvent(new Event('change',{bubbles: true}));
+                } else if(socialToggle&&socialToggle.checked) {
+                    console.log('ℹ️ Social links toggle already enabled');
+                }
+                return !!socialToggle;
+            },'social-links-toggle');
         }
 
-        debugLog('✅ Config merge complete - existing values preserved, ClickUp values applied where available');
+        // Fill social link inputs (with delay to allow toggle to reveal inputs)
+        const fillSocialLinks=() => {
+            Object.keys(socialFields).forEach(fieldKey => {
+                if(taskData[fieldKey]) {
+                    const config=socialFields[fieldKey];
+                    const storageKey=config.storageKey;
+                    const inputPath=config.inputPath;
+
+                    // Update sessionStorage
+                    const existingValue=sessionStorage.getItem(storageKey)||'';
+                    if(!existingValue||existingValue!==taskData[fieldKey]) {
+                        sessionStorage.setItem(storageKey,taskData[fieldKey]);
+                        console.log(`📝 Stored ${fieldKey} in sessionStorage:`,taskData[fieldKey]);
+                    } else {
+                        console.log(`ℹ️ Preserving existing ${fieldKey}:`,existingValue);
+                    }
+
+                    // Also fill the actual form input with retry (input may not exist yet)
+                    console.log(`Attempting to fill ${inputPath} input...`);
+                    this.retrySetElement(() => {
+                        const input=document.querySelector(`[data-path="${inputPath}"]`);
+                        console.log(`  ${inputPath} input found:`,!!input);
+                        if(input) {
+                            const currentValue=input.value||'';
+                            if(!currentValue||currentValue!==taskData[fieldKey]) {
+                                input.value=taskData[fieldKey];
+                                console.log(`  ✅ Filled ${inputPath} with:`,taskData[fieldKey]);
+                                input.dispatchEvent(new Event('input',{bubbles: true}));
+                            } else {
+                                console.log(`  ℹ️ Preserving existing value in ${inputPath}:`,currentValue);
+                            }
+                            return true;
+                        }
+                        return false;
+                    },`social link ${inputPath}`);
+                } else {
+                    console.log(`⏭️ Skipping ${fieldKey} (no value in task data)`);
+                }
+            });
+        };
+
+        // Delay filling social links to allow toggle animation and DOM update
+        if(hasSocialLinks) {
+            setTimeout(fillSocialLinks,300);
+        }
+
+        // Apply security options from ClickUp task to toggle corresponding security checkboxes
+        console.log('Checking security_options:',taskData.security_options);
+        if(taskData.security_options&&Array.isArray(taskData.security_options)&&taskData.security_options.length>0) {
+            console.log('Calling applySecurityOptionsToForm with',taskData.security_options.length,'options');
+            this.applySecurityOptionsToForm(taskData.security_options);
+        } else {
+            console.log('No security options to apply (empty or not an array)');
+        }
+
+        console.log('✅ Config merge complete - existing values preserved, ClickUp values applied where available');
     }
 
     /**
@@ -2279,12 +2745,15 @@ class AdminInterface {
      * @param {Array} securityOptions - Array of security option strings from ClickUp task
      */
     applySecurityOptionsToForm(securityOptions) {
+        console.log('=== APPLYING SECURITY OPTIONS ===');
+        console.log('Security options received:',securityOptions);
+
         if(!securityOptions||!Array.isArray(securityOptions)) {
-            debugLog('No security options to apply');
+            console.log('No security options to apply');
             return;
         }
 
-        debugLog('Applying security options from ClickUp:',securityOptions);
+        console.log('Applying',securityOptions.length,'security options from ClickUp');
 
         // Mapping of ClickUp security option keywords to config data-paths
         const securityMapping={
@@ -2311,38 +2780,46 @@ class AdminInterface {
         // Process each security option from ClickUp
         securityOptions.forEach(option => {
             const normalizedOption=option.toLowerCase().trim();
+            console.log(`Processing security option: "${option}" (normalized: "${normalizedOption}")`);
 
             // Check each mapping keyword
             Object.keys(securityMapping).forEach(keyword => {
                 if(normalizedOption.includes(keyword)) {
                     const path=securityMapping[keyword];
                     enabledPaths.add(path);
-                    debugLog(`Matched security option "${option}" to path: ${path}`);
+                    console.log(`  ✓ Matched keyword "${keyword}" -> path: ${path}`);
                 }
             });
 
             // Special case: "Scramble WP Login URLs" should also enable hide_login_page
             if(normalizedOption.includes('scramble')&&normalizedOption.includes('login')) {
                 enabledPaths.add('security.login_protection.hide_login_page');
+                console.log('  ✓ Special case: Also enabling hide_login_page');
             }
         });
 
+        console.log('Enabled paths to apply:',Array.from(enabledPaths));
+
         // Apply the security options to form toggles
         enabledPaths.forEach(path => {
+            console.log(`Attempting to set toggle for path: ${path}`);
             this.retrySetElement(() => {
                 const input=document.querySelector(`[data-path="${path}"]`);
+                console.log(`  Input for ${path} found:`,!!input,input?.type);
                 if(input) {
                     if(input.type==='checkbox') {
                         if(!input.checked) {
                             input.checked=true;
-                            debugLog(`Enabled security toggle: ${path}`);
+                            console.log(`  ✅ Enabled security checkbox: ${path}`);
                             // Trigger change event to update UI
                             input.dispatchEvent(new Event('change',{bubbles: true}));
+                        } else {
+                            console.log(`  ℹ️ Checkbox already checked: ${path}`);
                         }
                     } else {
                         // For non-checkbox inputs (e.g., text/select), set value to true
                         input.value='true';
-                        debugLog(`Set security value: ${path} = true`);
+                        console.log(`  ✅ Set security value: ${path} = true`);
                     }
                     return true;
                 }
@@ -2350,7 +2827,7 @@ class AdminInterface {
             },`security toggle ${path}`);
         });
 
-        debugLog(`Applied ${enabledPaths.size} security options from ClickUp`);
+        console.log(`✅ Applied ${enabledPaths.size} security options from ClickUp`);
     }
 
     async fetchManualTask() {
@@ -2421,10 +2898,21 @@ class AdminInterface {
                     debugLog('Loading configuration before prefilling manual task data...');
                     await this.loadConfiguration();
 
+                    // Capture current values BEFORE prefilling to track changes
+                    const beforeValues=this.captureCurrentConfigValues();
+
                     // Now prefill with task data after config is loaded
                     this.prefillDeploymentForm(data.task);
-                    // Show success message only if prefill succeeded
-                    this.showManualTaskStatus(`Task "${data.task.task_name}" fetched successfully!`,'success');
+
+                    // Wait for async prefill operations then save and show preview
+                    setTimeout(async () => {
+                        const afterValues=this.captureCurrentConfigValues();
+                        const changes=this.calculateChanges(beforeValues,afterValues,data.task);
+                        if(Object.keys(changes).length>0) {
+                            await this.saveClickUpChangesToBackend(changes,data.task);
+                        }
+                        this.showChangesPreview(changes,data.task);
+                    },800);
                 } catch(prefillError) {
                     debugLog('Error during prefillDeploymentForm:',prefillError,'error');
                     // Inform user the fetch succeeded but prefill had issues
