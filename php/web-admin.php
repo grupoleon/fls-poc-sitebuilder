@@ -2829,6 +2829,50 @@
 
                         <div class="card mb-6">
                             <div class="card-header">
+                                <h2 class="card-title">Deployment Overrides</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-4">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Deploy with Theme Defaults:</strong> Toggle these options to control which custom content will override theme defaults during deployment. When disabled, the theme's original demo content will be used instead.
+                                </div>
+                                <div class="form-group">
+                                    <div class="d-flex flex-column gap-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" id="slides-override-toggle" class="form-check-input override-toggle" data-override-type="slides_override" checked>
+                                            <label class="form-check-label" for="slides-override-toggle">
+                                                <strong>Override Slides</strong>
+                                                <small class="d-block text-muted">Use custom slider content instead of theme defaults</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" id="pages-override-toggle" class="form-check-input override-toggle" data-override-type="pages_override" checked>
+                                            <label class="form-check-label" for="pages-override-toggle">
+                                                <strong>Override Pages</strong>
+                                                <small class="d-block text-muted">Use custom page layouts instead of theme defaults</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" id="cpt-override-toggle" class="form-check-input override-toggle" data-override-type="cpt_override" checked>
+                                            <label class="form-check-label" for="cpt-override-toggle">
+                                                <strong>Override Custom Post Types</strong>
+                                                <small class="d-block text-muted">Use custom posts, issues, endorsements, etc. instead of theme defaults</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning mt-3">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Note:</strong> Changes will take effect on the next deployment. Make sure to save your override settings.
+                                </div>
+                                <button type="button" class="btn btn-primary mt-3" id="save-overrides-btn">
+                                    <i class="fas fa-save"></i> Save Override Settings
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-6">
+                            <div class="card-header">
                                 <h2 class="card-title">Site Logo</h2>
                             </div>
                             <div class="card-body">

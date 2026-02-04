@@ -217,7 +217,54 @@ function handleRequest()
                     error_log("Theme refresh error: " . $e->getMessage());
                     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
                 }
-                break;case 'get_pages':
+                break;
+
+            case 'get_theme_config':
+                $themeConfig = $configManager->getConfig('theme') ?: [];
+
+                // Ensure overrides exist with default values
+                if (! isset($themeConfig['overrides'])) {
+                    $themeConfig['overrides'] = [
+                        'slides_override' => true,
+                        'pages_override'  => true,
+                        'cpt_override'    => true,
+                    ];
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'data'    => $themeConfig,
+                ]);
+                break;
+
+            case 'save_theme_overrides':
+                $input     = json_decode(file_get_contents('php://input'), true);
+                $overrides = $input['overrides'] ?? [];
+
+                // Validate overrides
+                $validOverrides = [
+                    'slides_override' => isset($overrides['slides_override']) ? (bool) $overrides['slides_override'] : true,
+                    'pages_override'  => isset($overrides['pages_override']) ? (bool) $overrides['pages_override'] : true,
+                    'cpt_override'    => isset($overrides['cpt_override']) ? (bool) $overrides['cpt_override'] : true,
+                ];
+
+                // Get current theme config
+                $themeConfig = $configManager->getConfig('theme') ?: [];
+
+                // Update overrides
+                $themeConfig['overrides'] = $validOverrides;
+
+                // Save theme config
+                $configManager->updateConfig('theme', $themeConfig);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Override settings saved successfully',
+                    'data'    => ['overrides' => $validOverrides],
+                ]);
+                break;
+
+            case 'get_pages':
                 $themes      = $configManager->getAvailableThemes();
                 $themeConfig = $configManager->getConfig('theme');
                 $activeTheme = $themeConfig['active_theme'] ?? ($themes[0] ?? 'FLS-One');

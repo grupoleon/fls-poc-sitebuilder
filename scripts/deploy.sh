@@ -303,50 +303,67 @@ upload_pages() {
         return
     fi
     
+    # Read override settings from theme config
+    local slides_override="true"
+    local pages_override="true"
+    local cpt_override="true"
+    
+    if [[ -f "$THEME_CONFIG_FILE" ]]; then
+        slides_override=$(jq -r '.overrides.slides_override // true' "$THEME_CONFIG_FILE")
+        pages_override=$(jq -r '.overrides.pages_override // true' "$THEME_CONFIG_FILE")
+        cpt_override=$(jq -r '.overrides.cpt_override // true' "$THEME_CONFIG_FILE")
+        
+        print_info "Override settings - Slides: $slides_override, Pages: $pages_override, CPT: $cpt_override"
+    fi
+    
     print_info "Uploading page layout files..."
     print_info "These custom layouts will replace theme defaults BEFORE activation"
     
     # Create pages directory on server
     ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages"
     
-    # Upload CPT JSON files first
-    local custom_posts_dir="$pages_dir/cpt"
-    local custom_posts_dir_server="/tmp/pages/cpt"
-    if [[ -d "$custom_posts_dir" ]]; then
-        print_info "Uploading CPT JSON files..."
-        
-        # Create CPT directory on server
-        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p '$custom_posts_dir_server'"
-        
-        # Count and upload JSON files
-        local custom_posts_count=$(find "$custom_posts_dir" -name "*.json" -type f | wc -l)
-        print_info "Found $custom_posts_count CPT JSON files"
-        
-        for json_file in "$custom_posts_dir"/*.json; do
-            if [[ -f "$json_file" ]]; then
-                local file_name=$(basename "$json_file")
-                print_info "Uploading CPT: $file_name"
-                
-                # Validate JSON before upload
-                if ! jq empty "$json_file" 2>/dev/null; then
-                    print_error "Invalid JSON in CPT file: $file_name"
-                    exit 1
-                fi
+    # Upload CPT JSON files first (only if override is enabled)
+    if [[ "$cpt_override" == "true" ]]; then
+        local custom_posts_dir="$pages_dir/cpt"
+        local custom_posts_dir_server="/tmp/pages/cpt"
+        if [[ -d "$custom_posts_dir" ]]; then
+            print_info "Uploading CPT JSON files..."
+            
+            # Create CPT directory on server
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p '$custom_posts_dir_server'"
+            
+            # Count and upload JSON files
+            local custom_posts_count=$(find "$custom_posts_dir" -name "*.json" -type f | wc -l)
+            print_info "Found $custom_posts_count CPT JSON files"
+            
+            for json_file in "$custom_posts_dir"/*.json; do
+                if [[ -f "$json_file" ]]; then
+                    local file_name=$(basename "$json_file")
+                    print_info "Uploading CPT: $file_name"
+                    
+                    # Validate JSON before upload
+                    if ! jq empty "$json_file" 2>/dev/null; then
+                        print_error "Invalid JSON in CPT file: $file_name"
+                        exit 1
+                    fi
 
-                if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$json_file" "${KINSTA_USER}@${KINSTA_HOST}:$custom_posts_dir_server/"; then
-                    print_success "CPT $file_name uploaded successfully"
-                else
-                    print_error "Failed to upload CPT: $file_name"
-                    exit 1
+                    if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$json_file" "${KINSTA_USER}@${KINSTA_HOST}:$custom_posts_dir_server/"; then
+                        print_success "CPT $file_name uploaded successfully"
+                    else
+                        print_error "Failed to upload CPT: $file_name"
+                        exit 1
+                    fi
                 fi
+            done
+            
+            if [[ $custom_posts_count -gt 0 ]]; then
+                print_success "All CPT files uploaded successfully ($custom_posts_count files)"
             fi
-        done
-        
-        if [[ $custom_posts_count -gt 0 ]]; then
-            print_success "All CPT files uploaded successfully ($custom_posts_count files)"
+        else
+            print_info "No CPT directory found at: $custom_posts_dir"
         fi
     else
-        print_info "No CPT directory found at: $custom_posts_dir"
+        print_warning "CPT override is disabled - skipping custom post types upload (theme defaults will be used)"
     fi
     
     # Get active theme to verify we have custom content for it
@@ -357,108 +374,116 @@ upload_pages() {
     fi
     
     # Only upload files for the active theme (excluding CPT which was handled above)
-    local active_theme_dir="$pages_dir/themes/$active_theme"
-    if [[ -d "$active_theme_dir" ]]; then
-        local theme_name="$active_theme"
-        print_info "Uploading pages for ACTIVE theme only: $theme_name"
-            
-            # Validate custom content in key file (check layouts subdirectory)
-            local home_layout_file="$active_theme_dir/layouts/home.json"
-            if [[ -f "$home_layout_file" ]] && command -v jq &>/dev/null; then
-                local sample_heading=$(jq -r '.widgets[0].heading // "No custom heading found"' "$home_layout_file" 2>/dev/null)
-                if [[ "$sample_heading" != "No custom heading found" && "$sample_heading" != "null" ]]; then
-                    print_success "Custom content detected: '$sample_heading'"
-                else
-                    print_warning "home.json may not contain custom content for $theme_name"
-                fi
-            fi
-            
-            # Create theme directory structure on server (only for layouts)
-            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages/$theme_name/layouts"
-
-            # Upload layout files (these are the main theme-specific files)
-            local layouts_dir="$active_theme_dir/layouts"
-            if [[ -d "$layouts_dir" ]]; then
-                local layout_count=$(find "$layouts_dir" -name "*.json" -type f | wc -l)
-                print_info "Uploading $layout_count layout files for $theme_name"
+    if [[ "$pages_override" == "true" ]]; then
+        local active_theme_dir="$pages_dir/themes/$active_theme"
+        if [[ -d "$active_theme_dir" ]]; then
+            local theme_name="$active_theme"
+            print_info "Uploading pages for ACTIVE theme only: $theme_name"
                 
-                for layout_file in "$layouts_dir"/*.json; do
-                    if [[ -f "$layout_file" ]]; then
-                        print_info "Uploading layout: $(basename "$layout_file")"
-                        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$layout_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/layouts/"; then
-                            print_success "Layout $(basename "$layout_file") uploaded for $theme_name"
+                # Validate custom content in key file (check layouts subdirectory)
+                local home_layout_file="$active_theme_dir/layouts/home.json"
+                if [[ -f "$home_layout_file" ]] && command -v jq &>/dev/null; then
+                    local sample_heading=$(jq -r '.widgets[0].heading // "No custom heading found"' "$home_layout_file" 2>/dev/null)
+                    if [[ "$sample_heading" != "No custom heading found" && "$sample_heading" != "null" ]]; then
+                        print_success "Custom content detected: '$sample_heading'"
+                    else
+                        print_warning "home.json may not contain custom content for $theme_name"
+                    fi
+                fi
+                
+                # Create theme directory structure on server (only for layouts)
+                ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/pages/$theme_name/layouts"
+
+                # Upload layout files (these are the main theme-specific files)
+                local layouts_dir="$active_theme_dir/layouts"
+                if [[ -d "$layouts_dir" ]]; then
+                    local layout_count=$(find "$layouts_dir" -name "*.json" -type f | wc -l)
+                    print_info "Uploading $layout_count layout files for $theme_name"
+                    
+                    for layout_file in "$layouts_dir"/*.json; do
+                        if [[ -f "$layout_file" ]]; then
+                            print_info "Uploading layout: $(basename "$layout_file")"
+                            if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$layout_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/layouts/"; then
+                                print_success "Layout $(basename "$layout_file") uploaded for $theme_name"
+                            else
+                                print_error "Failed to upload layout $(basename "$layout_file") for $theme_name"
+                                exit 1
+                            fi
+                        fi
+                    done
+                else
+                    print_warning "No layouts directory found for $theme_name"
+                fi
+
+                # Note: Forms and slides are now handled via common upload directories (theme-agnostic)
+                # - Forms: pages/forms/*.json → /tmp/forms/ (processed by forms.sh)
+                # - Slides: pages/slides/*.json → /tmp/slides/ (processed by template.sh)
+                
+                # Upload any remaining JSON files directly in theme directory (legacy page support)
+                for page_file in "$active_theme_dir"/*.json; do
+                    if [[ -f "$page_file" ]]; then
+                        print_info "Uploading legacy file: $(basename "$page_file")"
+                        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$page_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/"; then
+                            print_success "Legacy file $(basename "$page_file") uploaded for $theme_name"
                         else
-                            print_error "Failed to upload layout $(basename "$layout_file") for $theme_name"
+                            print_error "Failed to upload legacy file $(basename "$page_file") for $theme_name"
+                            exit 1
+                        fi
+                    fi
+                done
+        else
+            print_warning "Active theme directory not found: $active_theme_dir"
+            print_info "Available theme directories:"
+            for theme_dir in "$pages_dir/themes"/*; do
+                if [[ -d "$theme_dir" ]]; then
+                    local dir_name=$(basename "$theme_dir")
+                    print_info "  - $dir_name"
+                fi
+            done
+        fi
+    else
+        print_warning "Pages override is disabled - skipping custom pages upload (theme defaults will be used)"
+    fi
+    
+    # Upload common slides to single server location (theme-agnostic slide management)
+    if [[ "$slides_override" == "true" ]]; then
+        local common_slides_dir="$pages_dir/slides"
+        if [[ -d "$common_slides_dir" ]]; then
+            local slide_count=$(find "$common_slides_dir" -name "*.json" -type f | wc -l)
+            
+            if [[ $slide_count -gt 0 ]]; then
+                print_info "Uploading $slide_count common slide files to server"
+                
+                # Create single slides directory on server
+                ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/slides"
+                
+                # Upload all slides to single location
+                for slide_file in "$common_slides_dir"/*.json; do
+                    if [[ -f "$slide_file" ]]; then
+                        print_info "Uploading common slide: $(basename "$slide_file")"
+                        
+                        # Validate JSON before upload
+                        if ! jq empty "$slide_file" 2>/dev/null; then
+                            print_error "Invalid JSON in common slide file: $(basename "$slide_file")"
+                            exit 1
+                        fi
+
+                        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$slide_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/slides/"; then
+                            print_success "Common slide $(basename "$slide_file") uploaded"
+                        else
+                            print_error "Failed to upload common slide $(basename "$slide_file")"
                             exit 1
                         fi
                     fi
                 done
             else
-                print_warning "No layouts directory found for $theme_name"
+                print_info "No slide files found in common slides directory"
             fi
-
-            # Note: Forms and slides are now handled via common upload directories (theme-agnostic)
-            # - Forms: pages/forms/*.json → /tmp/forms/ (processed by forms.sh)
-            # - Slides: pages/slides/*.json → /tmp/slides/ (processed by template.sh)
-            
-            # Upload any remaining JSON files directly in theme directory (legacy page support)
-            for page_file in "$active_theme_dir"/*.json; do
-                if [[ -f "$page_file" ]]; then
-                    print_info "Uploading legacy file: $(basename "$page_file")"
-                    if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$page_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/pages/$theme_name/"; then
-                        print_success "Legacy file $(basename "$page_file") uploaded for $theme_name"
-                    else
-                        print_error "Failed to upload legacy file $(basename "$page_file") for $theme_name"
-                        exit 1
-                    fi
-                fi
-            done
-    else
-        print_warning "Active theme directory not found: $active_theme_dir"
-        print_info "Available theme directories:"
-        for theme_dir in "$pages_dir/themes"/*; do
-            if [[ -d "$theme_dir" ]]; then
-                local dir_name=$(basename "$theme_dir")
-                print_info "  - $dir_name"
-            fi
-        done
-    fi
-    
-    # Upload common slides to single server location (theme-agnostic slide management)
-    local common_slides_dir="$pages_dir/slides"
-    if [[ -d "$common_slides_dir" ]]; then
-        local slide_count=$(find "$common_slides_dir" -name "*.json" -type f | wc -l)
-        
-        if [[ $slide_count -gt 0 ]]; then
-            print_info "Uploading $slide_count common slide files to server"
-            
-            # Create single slides directory on server
-            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/slides"
-            
-            # Upload all slides to single location
-            for slide_file in "$common_slides_dir"/*.json; do
-                if [[ -f "$slide_file" ]]; then
-                    print_info "Uploading common slide: $(basename "$slide_file")"
-                    
-                    # Validate JSON before upload
-                    if ! jq empty "$slide_file" 2>/dev/null; then
-                        print_error "Invalid JSON in common slide file: $(basename "$slide_file")"
-                        exit 1
-                    fi
-
-                    if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" "$slide_file" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/slides/"; then
-                        print_success "Common slide $(basename "$slide_file") uploaded"
-                    else
-                        print_error "Failed to upload common slide $(basename "$slide_file")"
-                        exit 1
-                    fi
-                fi
-            done
         else
-            print_info "No slide files found in common slides directory"
+            print_info "No common slides directory found at: $common_slides_dir"
         fi
     else
-        print_info "No common slides directory found at: $common_slides_dir"
+        print_warning "Slides override is disabled - skipping slides upload (theme defaults will be used)"
     fi
     
     # Upload common forms to single server location (theme-agnostic form management)

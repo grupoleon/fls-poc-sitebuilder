@@ -12,5 +12,10 @@
         "Reform",
         "Speaker",
         "Tudor"
-    ]
+    ],
+    "overrides": {
+        "slides_override": true,
+        "pages_override": true,
+        "cpt_override": true
+    }
 }

@@ -467,6 +467,12 @@ class AdminInterface {
                 e.preventDefault();
                 this.refreshThemeList();
             }
+
+            // Save overrides button
+            if(e.target.id==='save-overrides-btn'||e.target.closest('#save-overrides-btn')) {
+                e.preventDefault();
+                this.saveOverrideSettings();
+            }
         });
 
         // File uploads
@@ -3432,6 +3438,8 @@ class AdminInterface {
 
             if(data.success&&data.data) {
                 this.populatePageEditor(data.data);
+                // Load override settings
+                this.loadOverrideSettings();
             } else {
                 debugLog('Failed to load page editor:',data.message||'Unknown error','error');
                 this.showAlert('Failed to load page editor','error');
@@ -3439,6 +3447,68 @@ class AdminInterface {
         } catch(error) {
             debugLog('Failed to load page editor:',error,'error');
             this.showAlert('Error loading page editor: '+error.message,'error');
+        }
+    }
+
+    async loadOverrideSettings() {
+        try {
+            const response=await fetch('?action=get_theme_config');
+            const data=await response.json();
+
+            if(data.success&&data.data&&data.data.overrides) {
+                const overrides=data.data.overrides;
+
+                // Update toggle checkboxes
+                const slidesToggle=document.getElementById('slides-override-toggle');
+                const pagesToggle=document.getElementById('pages-override-toggle');
+                const cptToggle=document.getElementById('cpt-override-toggle');
+
+                if(slidesToggle) slidesToggle.checked=overrides.slides_override!==false;
+                if(pagesToggle) pagesToggle.checked=overrides.pages_override!==false;
+                if(cptToggle) cptToggle.checked=overrides.cpt_override!==false;
+
+                debugLog('Override settings loaded:',overrides);
+            }
+        } catch(error) {
+            debugLog('Failed to load override settings:',error,'error');
+            // Don't show error to user - use defaults
+        }
+    }
+
+    async saveOverrideSettings() {
+        try {
+            const slidesToggle=document.getElementById('slides-override-toggle');
+            const pagesToggle=document.getElementById('pages-override-toggle');
+            const cptToggle=document.getElementById('cpt-override-toggle');
+
+            const overrides={
+                slides_override: slidesToggle? slidesToggle.checked:true,
+                pages_override: pagesToggle? pagesToggle.checked:true,
+                cpt_override: cptToggle? cptToggle.checked:true
+            };
+
+            debugLog('Saving override settings:',overrides);
+
+            const response=await fetch('?action=save_theme_overrides',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({overrides})
+            });
+
+            const data=await response.json();
+
+            if(data.success) {
+                this.showAlert('Override settings saved successfully','success');
+                debugLog('Override settings saved successfully');
+            } else {
+                this.showAlert(data.message||'Failed to save override settings','error');
+                debugLog('Failed to save override settings:',data.message,'error');
+            }
+        } catch(error) {
+            debugLog('Failed to save override settings:',error,'error');
+            this.showAlert('Error saving override settings: '+error.message,'error');
         }
     }
 
