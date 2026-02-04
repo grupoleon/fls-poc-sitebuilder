@@ -260,43 +260,6 @@ $error = $error ?? null;
             color: var(--accent-primary);
         }
 
-        .setup-instructions {
-            margin-top: 24px;
-            padding: 20px;
-            background: var(--bg-input);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .setup-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .setup-steps {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.8;
-        }
-
-        .setup-steps li {
-            margin-bottom: 8px;
-        }
-
-        .setup-steps code {
-            background: var(--bg-dark);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--accent-primary);
-        }
-
         .login-footer {
             text-align: center;
             margin-top: 24px;
@@ -372,30 +335,12 @@ $error = $error ?? null;
             <?php else: ?>
                 <button class="google-btn disabled" disabled>
                     <i class="fas fa-lock"></i>
-                    Google OAuth Not Configured
+                    Authentication Unavailable
                 </button>
 
-                <div class="setup-instructions">
-                    <div class="setup-title">
-                        <i class="fas fa-cog"></i>
-                        Setup Required
-                    </div>
-                    <ol class="setup-steps">
-                        <li>Create a project in <a href="https://console.cloud.google.com/" target="_blank">Google Cloud
-                                Console</a></li>
-                        <li>Enable the <strong>Google+ API</strong> or <strong>People API</strong></li>
-                        <li>Create <strong>OAuth 2.0 credentials</strong> (Web application)</li>
-                        <li>Add your redirect URI: <code>/php/login.php</code></li>
-                        <li>Create <code>config/auth.json</code> with:
-                            <pre style="margin-top: 8px; background: var(--bg-dark); padding: 12px; border-radius: 6px; overflow-x: auto;">
-{
-  "client_id": "YOUR_CLIENT_ID",
-  "client_secret": "YOUR_SECRET",
-  "redirect_uri": "https://your-domain/php/login.php",
-  "allowed_domain": "frontlinestrategies.co"
-}</pre>
-                        </li>
-                    </ol>
+                <div class="alert alert-warning" style="margin-top: 24px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Authentication is not configured. Please contact your administrator.</span>
                 </div>
             <?php endif; ?>
 
