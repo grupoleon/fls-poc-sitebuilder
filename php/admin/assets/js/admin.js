@@ -82,6 +82,9 @@ class AdminInterface {
         this.currentTaskData=null;
         this.kinstaRegionFallbackOptions=null;
 
+        // Flag to prevent populateConfigForms from overwriting task-prefilled values
+        this.isTaskPrefilling=false;
+
         this.init();
     }
 
@@ -1917,11 +1920,20 @@ class AdminInterface {
                 // Capture current values BEFORE prefilling to track changes
                 const beforeValues=this.captureCurrentConfigValues();
 
+                // Set flag to prevent populateConfigForms from overwriting task values
+                this.isTaskPrefilling=true;
+                debugLog('Task prefilling started - populateConfigForms will preserve existing values');
+
                 // Now prefill with task data after config is loaded
                 this.prefillDeploymentForm(data.task);
 
                 // Wait for all async prefill operations to complete
+                // Using 1500ms to account for retrySetElement (up to 10 retries * 300ms for theme)
                 setTimeout(async () => {
+                    // Clear the prefilling flag
+                    this.isTaskPrefilling=false;
+                    debugLog('Task prefilling completed - populateConfigForms will resume normal behavior');
+
                     // Capture values AFTER prefilling
                     const afterValues=this.captureCurrentConfigValues();
 
@@ -1935,7 +1947,7 @@ class AdminInterface {
 
                     // Show changes preview (will auto-close)
                     this.showChangesPreview(changes,data.task);
-                },800); // Wait for retrySetElement operations to complete
+                },1500); // Wait for retrySetElement operations to complete (increased from 800ms)
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
             }
@@ -3267,8 +3279,13 @@ class AdminInterface {
 
             container.innerHTML=html;
 
-            // Re-populate config values if they exist
-            this.populateConfigForms(this.currentConfig);
+            // Re-populate config values if they exist, but skip during task prefilling
+            // to avoid overwriting task-prefilled values
+            if(!this.isTaskPrefilling) {
+                this.populateConfigForms(this.currentConfig);
+            } else {
+                debugLog('Skipping populateConfigForms during task prefilling to preserve task values');
+            }
         } catch(error) {
             debugLog('Failed to load dynamic forms:',error,'error');
             const container=document.getElementById('dynamic-forms-container');
@@ -3296,7 +3313,8 @@ class AdminInterface {
                 this.updateDeploymentStatusDisplay(data.data);
 
                 // Load site configuration to get the site title if not in the response
-                if(!data.data.site_title) {
+                // Skip if task prefilling is in progress to preserve task values
+                if(!data.data.site_title&&!this.isTaskPrefilling) {
                     const configResponse=await fetch('?action=get_configs');
                     const configData=await configResponse.json();
 
