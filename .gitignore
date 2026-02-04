@@ -4,6 +4,9 @@
 # environment files
 .env
 
+# auth configuration (contains OAuth secrets)
+config/auth.json
+
 # .github directory
 .github/
 !.github/workflows/
