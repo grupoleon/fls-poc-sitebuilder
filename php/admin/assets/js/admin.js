@@ -2223,7 +2223,7 @@ class AdminInterface {
         const changeCount=Object.values(changes).reduce((sum,arr) => sum+arr.length,0);
 
         if(changeCount===0) {
-            this.showNotification('No new changes from ClickUp task','info');
+            showNotification('No new changes from ClickUp task','info');
             return;
         }
 

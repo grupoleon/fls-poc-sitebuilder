@@ -291,13 +291,24 @@ function handleRequest()
                         case 'git':
                             // Filter to only allow valid git.json keys
                             $data = filterConfigBySchema($data, 'git');
-                            $configManager->updateConfig($type, $data);
+
+                            // Deep merge with existing git config to preserve other fields
+                            $existingGitConfig = $configManager->getConfig('git');
+                            $mergedGitConfig = deepMergeConfig($existingGitConfig, $data);
+
+                            $configManager->updateConfig($type, $mergedGitConfig);
                             break;
 
                         case 'site':
                             // Filter to only allow valid site.json keys
                             $data = filterConfigBySchema($data, 'site');
-                            $configManager->updateConfig($type, $data);
+
+                            // Deep merge with existing site config to preserve other fields
+                            // (e.g., kinsta_token, company, region when only updating site_title)
+                            $existingSiteConfig = $configManager->getConfig('site');
+                            $mergedSiteConfig = deepMergeConfig($existingSiteConfig, $data);
+
+                            $configManager->updateConfig($type, $mergedSiteConfig);
                             break;
 
                         case 'main':
