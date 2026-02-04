@@ -113,6 +113,11 @@ if ($adminUser || $adminPass) {
     }
 }
 
+// add a note about this is an automated message from site builder
+$commentText .= "
+---
+*This is an automated message from the  Site Builder.*";
+
 // Post comment to task
 $commentUrl = "https://api.clickup.com/api/v2/task/{$taskId}/comment";
 
@@ -129,14 +134,14 @@ curl_setopt_array($ch, [
         "Authorization: {$apiToken}",
         "Content-Type: application/json",
     ],
-    CURLOPT_POSTFIELDS => json_encode($commentData),
-    CURLOPT_TIMEOUT    => 30,
+    CURLOPT_POSTFIELDS   => json_encode($commentData),
+    CURLOPT_TIMEOUT      => 30,
+    CURLOPT_FORBID_REUSE => true,
 ]);
 
 $commentResponse = curl_exec($ch);
 $commentHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError       = curl_error($ch);
-curl_close($ch);
 
 if ($curlError) {
     http_response_code(500);
@@ -159,9 +164,9 @@ if ($commentHttpCode !== 200) {
 }
 
 // Optionally update Website URL custom field
-$customFieldUpdated  = false;
+$customFieldUpdated = false;
 // Optionally update Website URL custom field
-$customFieldUpdated  = false;
+$customFieldUpdated = false;
 
 // Get task details to find custom fields
 $getUrl = "https://api.clickup.com/api/v2/task/{$taskId}";
