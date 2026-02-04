@@ -80,6 +80,66 @@ else
     echo ""
 fi
 
+# Configure Google OAuth from environment variables using PHP
+echo "▶ Configuring Google OAuth authentication..."
+AUTH_CONFIG_FILE="./config/auth.json"
+
+# Ensure config directory exists
+mkdir -p ./config 2>/dev/null || true
+
+# Use PHP to read Kinsta environment variables and write auth.json
+# PHP has access to Kinsta env vars, bash does not
+if command -v php &> /dev/null; then
+    echo "  Running PHP configuration script..."
+    
+    # Run PHP setup script
+    php php/setup-config.php
+    PHP_EXIT_CODE=$?
+    
+    if [[ $PHP_EXIT_CODE -eq 0 ]]; then
+        # Verify the file was created
+        if [[ -f "$AUTH_CONFIG_FILE" ]]; then
+            # Set secure permissions (readable by PHP/nobody user)
+            chmod 640 "$AUTH_CONFIG_FILE"
+            chown nobody:nogroup "$AUTH_CONFIG_FILE" 2>/dev/null || true
+            echo "  ✓ Google OAuth configured successfully"
+        else
+            echo "  ⚠️  Configuration script ran but auth.json not found"
+        fi
+    else
+        echo "  ⚠️  Configuration script failed (exit code: $PHP_EXIT_CODE)"
+        echo "     This usually means environment variables are not set."
+        echo ""
+        echo "     Set these in Kinsta Environment Variables dashboard:"
+        echo "     - client_id"
+        echo "     - client_secret"
+        echo "     - redirect_uri"
+        echo "     - allowed_domain (optional, defaults to frontlinestrategies.co)"
+        echo ""
+        echo "     After setting env vars, run: php php/setup-config.php"
+        
+        # Create empty template if file doesn't exist
+        if [[ ! -f "$AUTH_CONFIG_FILE" ]]; then
+            echo '{"client_id":"","client_secret":"","redirect_uri":"","allowed_domain":"frontlinestrategies.co"}' > "$AUTH_CONFIG_FILE"
+            chmod 640 "$AUTH_CONFIG_FILE"
+            chown nobody:nogroup "$AUTH_CONFIG_FILE" 2>/dev/null || true
+            echo "  ✓ Empty auth.json template created"
+        fi
+    fi
+else
+    echo "  ⚠️  PHP not found in PATH"
+    echo "     Cannot configure OAuth automatically"
+    
+    # Create empty template
+    if [[ ! -f "$AUTH_CONFIG_FILE" ]]; then
+        echo '{"client_id":"","client_secret":"","redirect_uri":"","allowed_domain":"frontlinestrategies.co"}' > "$AUTH_CONFIG_FILE"
+        chmod 640 "$AUTH_CONFIG_FILE"
+        chown nobody:nogroup "$AUTH_CONFIG_FILE" 2>/dev/null || true
+        echo "  ✓ Empty auth.json template created"
+    fi
+fi
+echo ""
+
 # Display public key
 echo "==================================================================="
 echo "✓ Setup Complete!"
@@ -107,13 +167,19 @@ echo "════════════════════════�
 echo "📚 Helpful Commands:"
 echo "═══════════════════════════════════════════════════════════════════"
 echo ""
-echo "View key again:"
+echo "View SSH key again:"
 echo "  cat /app/.ssh/id_rsa.pub"
 echo ""
 echo "Test SSH connection (replace with your actual values):"
 echo "  ssh -i /app/.ssh/id_rsa -p YOUR_PORT YOUR_USER@YOUR_HOST"
 echo ""
-echo "Example:"
+echo "Configure OAuth (if env vars set after initial setup):"
+echo "  php php/setup-config.php"
+echo ""
+echo "Check if OAuth env vars are available:"
+echo "  php -r \"echo getenv('client_id') ? 'Found' : 'Not set';\""
+echo ""
+echo "Example SSH connection:"
 echo "  ssh -i /app/.ssh/id_rsa -p 47807 pocsite@146.148.59.197"
 echo ""
 echo "═══════════════════════════════════════════════════════════════════"

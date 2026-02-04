@@ -38,6 +38,11 @@ class ConfigManager
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception("Invalid JSON in {$file}: " . json_last_error_msg());
                 }
+
+                // Normalize data types for main config
+                if ($key === 'main' && function_exists('normalizeConfigDataTypes')) {
+                    $this->configs[$key] = normalizeConfigDataTypes($this->configs[$key]);
+                }
             } else {
                 $this->configs[$key] = [];
             }

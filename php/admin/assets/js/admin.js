@@ -2166,6 +2166,33 @@ class AdminInterface {
                 await this.saveActiveTheme(themeSelect.value);
             }
 
+            // Save site_title and display_name to site.json from task_name
+            if(taskData&&taskData.task_name) {
+                const siteTitle=taskData.task_name;
+                const displayName=this.slugify(taskData.task_name);
+
+                console.log(`Saving to site.json: site_title="${siteTitle}", display_name="${displayName}"`);
+
+                const siteResponse=await fetch('?action=save_config',{
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'site',
+                        data: {
+                            site_title: siteTitle,
+                            display_name: displayName
+                        }
+                    })
+                });
+                const siteResult=await siteResponse.json();
+
+                if(siteResult.success) {
+                    console.log('✅ site.json updated with site_title and display_name');
+                } else {
+                    console.error('Failed to update site.json:',siteResult.message);
+                }
+            }
+
             return result.success;
         } catch(error) {
             console.error('Error saving ClickUp changes:',error);
