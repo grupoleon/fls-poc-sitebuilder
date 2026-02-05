@@ -273,6 +273,8 @@ run_migrations() {
     # Support both DB_PASSWORD and DB_PASS (Kinsta compatibility)
     DB_PASSWORD="${DB_PASSWORD:-${DB_PASS:-}}"
     
+    DB_NAME="${DB_NAME:-frontline_poc}"
+    
     # Set default port if not provided
     DB_PORT="${DB_PORT:-3306}"
     
@@ -293,6 +295,7 @@ run_migrations() {
     
     # Export for PHP scripts
     export DB_PASSWORD
+    export DB_NAME
     export DB_PORT
     
     # Check if migration script exists
