@@ -1,33 +1,19 @@
 # =============================================================================
 # FLS POC Site Builder - Nixpacks Configuration
 # =============================================================================
-# This configures how Kinsta builds and runs the container using Nixpacks.
-# https://nixpacks.com/docs/configuration/file
+# Let Nixpacks auto-detect PHP - only customize install and start phases
 # =============================================================================
 
-[phases.setup]
-# Additional Nix packages to install
-# These are required for deployment scripts (SSH, JSON processing, etc.)
-nixPkgs = ["jq", "openssh", "rsync", "git", "curl", "python3"]
-
 [phases.install]
-# Commands to run during install phase
 cmds = [
-    "mkdir -p /app/config /app/logs /app/tmp /app/uploads /app/.ssh",
-    "chmod 755 /app/config /app/logs /app/tmp /app/uploads",
+    "mkdir -p /app/config /app/logs /app/logs/api /app/logs/deployment /app/tmp /app/uploads /app/.ssh /app/webhook/tasks",
+    "chmod 755 /app/config /app/logs /app/tmp /app/uploads /app/webhook",
     "chmod 700 /app/.ssh"
 ]
 
-[phases.build]
-# No special build commands needed for PHP
-
 [start]
-# Custom start command that runs our startup script
 cmd = "bash scripts/kinsta-start.sh"
 
 [variables]
-# Environment variables for the build (not secrets!)
 APP_ENV = "production"
 TZ = "UTC"
-# Ensure PHP can access environment variables
-PHP_INI_SCAN_DIR = "/app/.php"
