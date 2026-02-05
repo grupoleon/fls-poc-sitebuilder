@@ -32,15 +32,15 @@ try {
     // Get database connection info from environment
     $dbHost = getenv('DB_HOST');
     $dbUser = getenv('DB_USER');
-    $dbPass = getenv('DB_PASS') ?: getenv('DB_PASSWORD');
-    $dbName = getenv('DB_NAME') ?: getenv('DB_DATABASE') ?: 'frontline_poc';
+    $dbPass = getenv('DB_PASSWORD');
+    $dbName = getenv('DB_NAME') ?: 'frontline_poc';
 
     // Validate credentials
     if (empty($dbHost) || empty($dbUser) || empty($dbPass)) {
         $errorMsg  = 'Missing database credentials. ';
         $errorMsg .= 'DB_HOST=' . (empty($dbHost) ? 'MISSING' : 'SET') . ', ';
         $errorMsg .= 'DB_USER=' . (empty($dbUser) ? 'MISSING' : 'SET') . ', ';
-        $errorMsg .= 'DB_PASS/DB_PASSWORD=' . (empty($dbPass) ? 'MISSING' : 'SET');
+        $errorMsg .= 'DB_PASSWORD=' . (empty($dbPass) ? 'MISSING' : 'SET');
         throw new Exception($errorMsg);
     }
 

@@ -38,18 +38,21 @@ class DatabaseLogger
     {
         try {
             // Get Kinsta database credentials from environment
-            // Support both DB_PASS and DB_PASSWORD for compatibility
             $dbHost = getenv('DB_HOST');
             $dbUser = getenv('DB_USER');
-            $dbPass = getenv('DB_PASS') ?: getenv('DB_PASSWORD');
-            $dbName = getenv('DB_NAME') ?: getenv('DB_DATABASE') ?: 'frontline_poc'; // Default database name
+            $dbPass = getenv('DB_PASSWORD');
+            $dbName = getenv('DB_NAME') ?: 'frontline_poc'; // Default database name
+
+            // Debug logging - show what we found
+            error_log('DatabaseLogger: Checking credentials - DB_HOST=' . ($dbHost ?: 'EMPTY') . ', DB_USER=' . ($dbUser ?: 'EMPTY') . ', DB_PASSWORD=' . ($dbPass ? 'SET' : 'EMPTY') . ', DB_NAME=' . $dbName);
 
             // Validate required credentials
             if (empty($dbHost) || empty($dbUser) || empty($dbPass)) {
-                $errorMsg  = 'DatabaseLogger: Missing database credentials. ';
+                $errorMsg  = 'DatabaseLogger: Missing required database credentials. ';
                 $errorMsg .= 'DB_HOST=' . (empty($dbHost) ? 'MISSING' : 'SET') . ', ';
                 $errorMsg .= 'DB_USER=' . (empty($dbUser) ? 'MISSING' : 'SET') . ', ';
-                $errorMsg .= 'DB_PASS/DB_PASSWORD=' . (empty($dbPass) ? 'MISSING' : 'SET');
+                $errorMsg .= 'DB_PASSWORD=' . (empty($dbPass) ? 'MISSING' : 'SET');
+                $errorMsg .= ' | Set these in Kinsta environment variables';
                 error_log($errorMsg);
                 $this->isAvailable  = false;
                 return;
@@ -70,8 +73,12 @@ class DatabaseLogger
             $this->pdo         = new PDO($dsn, $dbUser, $dbPass, $options);
             $this->isAvailable = true;
 
+            // Success logging
+            error_log("DatabaseLogger: ✓ Connected successfully to {$dbHost}/{$dbName} as {$dbUser}");
+
         } catch (PDOException $e) {
-            error_log('DatabaseLogger: Connection failed - ' . $e->getMessage());
+            error_log('DatabaseLogger: ✗ Connection failed - ' . $e->getMessage());
+            error_log('DatabaseLogger: Connection details - Host: ' . ($dbHost ?? 'NULL') . ', Database: ' . ($dbName ?? 'NULL') . ', User: ' . ($dbUser ?? 'NULL'));
             $this->isAvailable = false;
             $this->pdo         = null;
         }

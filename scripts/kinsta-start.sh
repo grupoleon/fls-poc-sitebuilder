@@ -273,7 +273,7 @@ run_migrations() {
     # Check if database credentials are available
     if [[ -z "${DB_HOST:-}" ]] || [[ -z "${DB_USER:-}" ]]; then
         log_warn "Database credentials not available - skipping migrations"
-        log_warn "If you expect database logging, ensure DB_HOST, DB_USER, DB_PASS/DB_PASSWORD are set"
+        log_warn "Required: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME"
         return 0
     fi
     
