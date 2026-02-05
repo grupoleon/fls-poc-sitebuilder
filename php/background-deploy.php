@@ -5,6 +5,14 @@
 // IMMEDIATE DEBUG - Write to log as soon as script starts
 error_log("BACKGROUND-DEPLOY: Script started at " . date('Y-m-d H:i:s'));
 
+// Start session to access user information
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Load DatabaseLogger for tracking deployments
+require_once __DIR__ . '/admin/includes/DatabaseLogger.php';
+
 // Set execution time limit for background process
 set_time_limit(0); // No time limit for background deployment
 ini_set('max_execution_time', 0);
@@ -152,8 +160,41 @@ if (! $hasGitHubToken && ! $testMode) {
 
 // Main deployment process
 try {
+    // Get user information from session
+    $userEmail = $_SESSION['google_auth']['email'] ?? 'system@unknown';
+    $userName  = $_SESSION['google_auth']['name'] ?? 'System';
+
+    // Generate unique deployment ID
+    $deploymentId = 'deploy_' . date('Ymd_His') . '_' . substr(md5(uniqid()), 0, 8);
+
+    // Get ClickUp task ID from deployment status if available
+    $clickupTaskId = null;
+    $statusFile    = SCRIPT_DIR . '/tmp/deployment_status.json';
+    if (file_exists($statusFile)) {
+        $statusData    = json_decode(file_get_contents($statusFile), true);
+        $clickupTaskId = $statusData['clickup_task_id'] ?? null;
+    }
+
+    // Initialize database logger for deployment tracking
+    $dbLogger = null;
+    try {
+        $dbLogger = DatabaseLogger::getInstance();
+        if ($dbLogger->isAvailable()) {
+            $dbLogger->startDeployment($deploymentId, $userEmail, $clickupTaskId);
+            writeDeploymentLog("Database logging enabled for deployment: $deploymentId", 'INFO');
+        } else {
+            writeDeploymentLog('Database logging not available - deployment will only be logged to files', 'WARNING');
+        }
+    } catch (Exception $e) {
+        writeDeploymentLog('Failed to initialize database logging: ' . $e->getMessage(), 'WARNING');
+    }
+
     updateDeploymentStatus('running');
     writeDeploymentLog('Starting background deployment process...', 'INFO');
+    writeDeploymentLog("User: $userName ($userEmail)", 'INFO');
+    if ($clickupTaskId) {
+        writeDeploymentLog("ClickUp Task: $clickupTaskId", 'INFO');
+    }
 
     $scriptPath = SCRIPT_DIR;
     // Core steps for web interface deployment
@@ -204,11 +245,30 @@ try {
         updateDeploymentStatus('running', $stepKey);
         writeDeploymentLog("Starting step: {$stepInfo['name']}", 'INFO', $stepKey);
 
+        // Log step start to database
+        if ($dbLogger && $dbLogger->isAvailable()) {
+            try {
+                $dbLogger->logDeploymentStep($deploymentId, $stepKey, $stepInfo['name'], 'running');
+            } catch (Exception $e) {
+                writeDeploymentLog('Failed to log step to database: ' . $e->getMessage(), 'WARNING', $stepKey);
+            }
+        }
+
         // Handle test/demo mode
         if ($testMode) {
             writeDeploymentLog("DEMO MODE: Simulating {$stepInfo['name']}", 'INFO', $stepKey);
             sleep(2); // Simulate processing time
             writeDeploymentLog("DEMO MODE: {$stepInfo['name']} completed successfully", 'SUCCESS', $stepKey);
+
+            // Update step status in database
+            if ($dbLogger && $dbLogger->isAvailable()) {
+                try {
+                    $dbLogger->updateDeploymentStep($deploymentId, $stepKey, 'completed', 'Demo mode simulation');
+                } catch (Exception $e) {
+                    writeDeploymentLog('Failed to update step in database: ' . $e->getMessage(), 'WARNING', $stepKey);
+                }
+            }
+
             continue;
         }
 
@@ -358,6 +418,15 @@ try {
                     if ($finalStatus && isset($finalStatus['status']) && $finalStatus['status'] === 'completed') {
                         writeDeploymentLog("Operation completed successfully despite monitoring timeout!", 'SUCCESS', $stepKey);
                         writeDeploymentLog("Site ID: " . ($finalStatus['site_id'] ?? 'Unknown'), 'INFO', $stepKey);
+
+                        // Update step as completed in database
+                        if ($dbLogger && $dbLogger->isAvailable()) {
+                            try {
+                                $dbLogger->updateDeploymentStep($deploymentId, $stepKey, 'completed', $stdout, 'Timeout warning but completed');
+                            } catch (Exception $e) {
+                                writeDeploymentLog('Failed to update step in database: ' . $e->getMessage(), 'WARNING', $stepKey);
+                            }
+                        }
                         // Continue with deployment
                     } else {
                         writeDeploymentLog("Operation still not complete after timeout. Continuing with next steps anyway.", 'WARNING', $stepKey);
@@ -367,12 +436,43 @@ try {
                     // For other steps or other exit codes, treat as failure
                     updateDeploymentStatus('failed', $stepKey);
                     writeDeploymentLog("Deployment failed at step: {$stepInfo['name']} (exit code: $exitStatus)", 'ERROR', $stepKey);
+
+                    // Update step and deployment status in database
+                    if ($dbLogger && $dbLogger->isAvailable()) {
+                        try {
+                            $dbLogger->updateDeploymentStep($deploymentId, $stepKey, 'failed', $stdout, $stderr);
+                            $dbLogger->updateDeploymentStatus($deploymentId, 'failed', "Failed at step: {$stepInfo['name']}");
+                        } catch (Exception $e) {
+                            writeDeploymentLog('Failed to update database: ' . $e->getMessage(), 'WARNING', $stepKey);
+                        }
+                    }
+
                     exit(1);
+                }
+            } else {
+                // Success - update step in database
+                if ($dbLogger && $dbLogger->isAvailable()) {
+                    try {
+                        $dbLogger->updateDeploymentStep($deploymentId, $stepKey, 'completed', $stdout);
+                    } catch (Exception $e) {
+                        writeDeploymentLog('Failed to update step in database: ' . $e->getMessage(), 'WARNING', $stepKey);
+                    }
                 }
             }
         } else {
             writeDeploymentLog("Failed to execute: $command", 'ERROR', $stepKey);
             updateDeploymentStatus('failed', $stepKey);
+
+            // Update database
+            if ($dbLogger && $dbLogger->isAvailable()) {
+                try {
+                    $dbLogger->updateDeploymentStep($deploymentId, $stepKey, 'failed', null, 'Failed to execute command');
+                    $dbLogger->updateDeploymentStatus($deploymentId, 'failed', 'Process execution failed');
+                } catch (Exception $e) {
+                    writeDeploymentLog('Failed to update database: ' . $e->getMessage(), 'WARNING', $stepKey);
+                }
+            }
+
             exit(1);
         }
 
@@ -396,13 +496,94 @@ try {
         writeDeploymentLog('ClickUp update script not found. Skipping task update.', 'WARNING');
     }
 
+    // Extract site details from deployment status/config for database logging
+    $siteUrl       = null;
+    $adminUrl      = null;
+    $adminUsername = null;
+    $adminPassword = null;
+
+    try {
+        // Try to read site details from config
+        $siteConfigFile = SCRIPT_DIR . '/config/site.json';
+        if (file_exists($siteConfigFile)) {
+            $siteConfig = json_decode(file_get_contents($siteConfigFile), true);
+            $siteUrl    = $siteConfig['url'] ?? null;
+        }
+
+        // Try to read credentials from tmp files
+        $siteIdFile = SCRIPT_DIR . '/tmp/site_id.txt';
+        if (file_exists($siteIdFile)) {
+            $siteId = trim(file_get_contents($siteIdFile));
+            // Admin URL pattern
+            if ($siteUrl) {
+                $adminUrl = rtrim($siteUrl, '/') . '/wp-admin';
+            }
+        }
+
+        // Try to extract credentials if available
+        $credsLog = $scriptPath . '/logs/deployment/deployment.log';
+        if (file_exists($credsLog)) {
+            $logContent = file_get_contents($credsLog);
+            // Look for username and password in logs
+            if (preg_match('/Username:\s*([^\s]+)/i', $logContent, $matches)) {
+                $adminUsername = $matches[1];
+            }
+            if (preg_match('/Password:\s*([^\s]+)/i', $logContent, $matches)) {
+                $adminPassword = $matches[1];
+            }
+        }
+    } catch (Exception $e) {
+        writeDeploymentLog('Failed to extract site details: ' . $e->getMessage(), 'WARNING');
+    }
+
+    // Update deployment with site details in database
+    if ($dbLogger && $dbLogger->isAvailable() && $siteUrl) {
+        try {
+            $dbLogger->updateDeploymentSiteDetails(
+                $deploymentId,
+                $siteUrl,
+                $adminUrl ?? ($siteUrl . '/wp-admin'),
+                $adminUsername ?? 'admin',
+                $adminPassword ?? 'N/A'
+            );
+            writeDeploymentLog('Updated deployment with site details in database', 'INFO');
+        } catch (Exception $e) {
+            writeDeploymentLog('Failed to update site details in database: ' . $e->getMessage(), 'WARNING');
+        }
+    }
+
     updateDeploymentStatus('completed');
     writeDeploymentLog('Deployment completed successfully!', 'SUCCESS');
+
+    // Update deployment status in database
+    if ($dbLogger && $dbLogger->isAvailable()) {
+        try {
+            $dbLogger->updateDeploymentStatus($deploymentId, 'completed');
+            writeDeploymentLog("Deployment $deploymentId completed and logged to database", 'INFO');
+        } catch (Exception $e) {
+            writeDeploymentLog('Failed to update deployment status in database: ' . $e->getMessage(), 'WARNING');
+        }
+    }
+
     error_log("BACKGROUND-DEPLOY: Script completed successfully at " . date('Y-m-d H:i:s'));
 
 } catch (Exception $e) {
     writeDeploymentLog('Deployment failed with exception: ' . $e->getMessage(), 'ERROR');
     updateDeploymentStatus('failed');
+
+    // Update deployment status in database
+    if (isset($dbLogger) && $dbLogger && $dbLogger->isAvailable()) {
+        try {
+            $dbLogger->updateDeploymentStatus(
+                $deploymentId ?? 'unknown',
+                'failed',
+                $e->getMessage()
+            );
+        } catch (Exception $dbException) {
+            error_log('Failed to update deployment failure in database: ' . $dbException->getMessage());
+        }
+    }
+
     error_log("BACKGROUND-DEPLOY: Script failed with exception at " . date('Y-m-d H:i:s') . ": " . $e->getMessage());
 }
 

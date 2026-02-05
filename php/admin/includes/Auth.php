@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/DatabaseLogger.php';
+
 /**
  * Google Workspace OAuth Authentication Handler
  *
@@ -13,10 +15,10 @@ class Auth
 
     // Default Google OAuth config - must be configured with actual credentials
     private static $defaultConfig = [
-        'client_id' => '',
-        'client_secret' => '',
-        'redirect_uri' => '',
-        'allowed_domain' => 'frontlinestrategies.co'
+        'client_id'      => '',
+        'client_secret'  => '',
+        'redirect_uri'   => '',
+        'allowed_domain' => 'frontlinestrategies.co',
     ];
 
     /**
@@ -36,7 +38,7 @@ class Auth
 
         // Load allowed domain from config if set
         $config = self::getConfig();
-        if (!empty($config['allowed_domain'])) {
+        if (! empty($config['allowed_domain'])) {
             self::$allowedDomain = $config['allowed_domain'];
         }
     }
@@ -48,7 +50,7 @@ class Auth
     {
         if (file_exists(self::$configPath)) {
             $content = file_get_contents(self::$configPath);
-            $config = json_decode($content, true);
+            $config  = json_decode($content, true);
             if ($config) {
                 return array_merge(self::$defaultConfig, $config);
             }
@@ -64,7 +66,7 @@ class Auth
         self::init();
 
         // Check if we have a valid session
-        if (!isset($_SESSION['google_auth']) || !is_array($_SESSION['google_auth'])) {
+        if (! isset($_SESSION['google_auth']) || ! is_array($_SESSION['google_auth'])) {
             return false;
         }
 
@@ -76,11 +78,11 @@ class Auth
         }
 
         // Verify email domain
-        if (!self::isAllowedDomain($auth['email'])) {
+        if (! self::isAllowedDomain($auth['email'])) {
             return false;
         }
 
-        // Check session expiry (8 hours)
+                                        // Check session expiry (8 hours)
         $sessionDuration = 8 * 60 * 60; // 8 hours in seconds
         if (time() - $auth['logged_in_at'] > $sessionDuration) {
             self::logout();
@@ -90,9 +92,9 @@ class Auth
         // Check if access token is expired and needs refresh
         if (isset($auth['expires_at']) && time() > $auth['expires_at']) {
             // Try to refresh the token
-            if (!empty($auth['refresh_token'])) {
+            if (! empty($auth['refresh_token'])) {
                 $refreshed = self::refreshAccessToken($auth['refresh_token']);
-                if (!$refreshed) {
+                if (! $refreshed) {
                     self::logout();
                     return false;
                 }
@@ -127,18 +129,18 @@ class Auth
         }
 
         // Generate state for CSRF protection
-        $state = bin2hex(random_bytes(16));
+        $state                   = bin2hex(random_bytes(16));
         $_SESSION['oauth_state'] = $state;
 
         $params = [
-            'client_id' => $config['client_id'],
-            'redirect_uri' => $config['redirect_uri'],
+            'client_id'     => $config['client_id'],
+            'redirect_uri'  => $config['redirect_uri'],
             'response_type' => 'code',
-            'scope' => 'email profile openid',
-            'access_type' => 'offline',
-            'prompt' => 'consent',
-            'state' => $state,
-            'hd' => self::$allowedDomain // Restrict to Google Workspace domain
+            'scope'         => 'email profile openid',
+            'access_type'   => 'offline',
+            'prompt'        => 'consent',
+            'state'         => $state,
+            'hd'            => self::$allowedDomain, // Restrict to Google Workspace domain
         ];
 
         return 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
@@ -153,7 +155,7 @@ class Auth
         $config = self::getConfig();
 
         // Verify state for CSRF protection
-        if (empty($state) || !isset($_SESSION['oauth_state']) || $state !== $_SESSION['oauth_state']) {
+        if (empty($state) || ! isset($_SESSION['oauth_state']) || $state !== $_SESSION['oauth_state']) {
             error_log('Auth: Invalid OAuth state');
             return ['success' => false, 'error' => 'Invalid authentication state. Please try again.'];
         }
@@ -165,28 +167,28 @@ class Auth
         }
 
         // Exchange code for tokens
-        $tokenUrl = 'https://oauth2.googleapis.com/token';
+        $tokenUrl  = 'https://oauth2.googleapis.com/token';
         $tokenData = [
-            'code' => $code,
-            'client_id' => $config['client_id'],
+            'code'          => $code,
+            'client_id'     => $config['client_id'],
             'client_secret' => $config['client_secret'],
-            'redirect_uri' => $config['redirect_uri'],
-            'grant_type' => 'authorization_code'
+            'redirect_uri'  => $config['redirect_uri'],
+            'grant_type'    => 'authorization_code',
         ];
 
         $ch = curl_init($tokenUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query($tokenData),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_SSL_VERIFYPEER => true
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => http_build_query($tokenData),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
         ]);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
+        $error    = curl_error($ch);
         curl_close($ch);
 
         if ($error) {
@@ -196,7 +198,7 @@ class Auth
 
         $tokens = json_decode($response, true);
 
-        if ($httpCode !== 200 || !isset($tokens['access_token'])) {
+        if ($httpCode !== 200 || ! isset($tokens['access_token'])) {
             error_log('Auth: Token exchange failed - ' . ($tokens['error_description'] ?? 'Unknown error'));
             return ['success' => false, 'error' => $tokens['error_description'] ?? 'Failed to authenticate with Google.'];
         }
@@ -204,36 +206,56 @@ class Auth
         // Get user info
         $userInfo = self::getUserInfo($tokens['access_token']);
 
-        if (!$userInfo) {
+        if (! $userInfo) {
             return ['success' => false, 'error' => 'Failed to get user information from Google.'];
         }
 
         // Verify email domain
-        if (!self::isAllowedDomain($userInfo['email'])) {
+        if (! self::isAllowedDomain($userInfo['email'])) {
             error_log('Auth: Domain not allowed - ' . $userInfo['email']);
             return [
                 'success' => false,
-                'error' => 'Access denied. Only @' . self::$allowedDomain . ' accounts are allowed.'
+                'error'   => 'Access denied. Only @' . self::$allowedDomain . ' accounts are allowed.',
             ];
         }
 
         // Verify email is verified
-        if (!($userInfo['verified_email'] ?? false)) {
+        if (! ($userInfo['verified_email'] ?? false)) {
             return ['success' => false, 'error' => 'Your Google email is not verified.'];
         }
 
+        // Generate unique session ID
+        $sessionId = session_id();
+
         // Create session
         $_SESSION['google_auth'] = [
-            'email' => $userInfo['email'],
-            'name' => $userInfo['name'] ?? '',
-            'picture' => $userInfo['picture'] ?? '',
-            'access_token' => $tokens['access_token'],
+            'email'         => $userInfo['email'],
+            'name'          => $userInfo['name'] ?? '',
+            'picture'       => $userInfo['picture'] ?? '',
+            'access_token'  => $tokens['access_token'],
             'refresh_token' => $tokens['refresh_token'] ?? null,
-            'expires_at' => time() + ($tokens['expires_in'] ?? 3600),
-            'logged_in_at' => time()
+            'expires_at'    => time() + ($tokens['expires_in'] ?? 3600),
+            'logged_in_at'  => time(),
+            'session_id'    => $sessionId,
         ];
 
         error_log('Auth: User logged in - ' . $userInfo['email']);
+
+        // Log user login to database
+        try {
+            $dbLogger = DatabaseLogger::getInstance();
+            if ($dbLogger->isAvailable()) {
+                $dbLogger->logUserLogin(
+                    $userInfo['email'],
+                    $userInfo['name'] ?? '',
+                    $sessionId,
+                    $_SERVER['REMOTE_ADDR'] ?? null,
+                    $_SERVER['HTTP_USER_AGENT'] ?? null
+                );
+            }
+        } catch (Exception $e) {
+            error_log('Auth: Failed to log user login to database - ' . $e->getMessage());
+        }
 
         return ['success' => true, 'user' => $userInfo];
     }
@@ -246,9 +268,9 @@ class Auth
         $ch = curl_init('https://www.googleapis.com/oauth2/v2/userinfo');
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ["Authorization: Bearer $accessToken"],
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_SSL_VERIFYPEER => true
+            CURLOPT_HTTPHEADER     => ["Authorization: Bearer $accessToken"],
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
         ]);
 
         $response = curl_exec($ch);
@@ -269,22 +291,22 @@ class Auth
     {
         $config = self::getConfig();
 
-        $tokenUrl = 'https://oauth2.googleapis.com/token';
+        $tokenUrl  = 'https://oauth2.googleapis.com/token';
         $tokenData = [
             'refresh_token' => $refreshToken,
-            'client_id' => $config['client_id'],
+            'client_id'     => $config['client_id'],
             'client_secret' => $config['client_secret'],
-            'grant_type' => 'refresh_token'
+            'grant_type'    => 'refresh_token',
         ];
 
         $ch = curl_init($tokenUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query($tokenData),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_SSL_VERIFYPEER => true
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => http_build_query($tokenData),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
         ]);
 
         $response = curl_exec($ch);
@@ -295,7 +317,7 @@ class Auth
             $tokens = json_decode($response, true);
             if (isset($tokens['access_token'])) {
                 $_SESSION['google_auth']['access_token'] = $tokens['access_token'];
-                $_SESSION['google_auth']['expires_at'] = time() + ($tokens['expires_in'] ?? 3600);
+                $_SESSION['google_auth']['expires_at']   = time() + ($tokens['expires_in'] ?? 3600);
                 return true;
             }
         }
@@ -309,6 +331,19 @@ class Auth
     public static function logout()
     {
         self::init();
+
+        // Log user logout to database
+        if (isset($_SESSION['google_auth']['session_id'])) {
+            try {
+                $dbLogger = DatabaseLogger::getInstance();
+                if ($dbLogger->isAvailable()) {
+                    $dbLogger->logUserLogout($_SESSION['google_auth']['session_id']);
+                }
+            } catch (Exception $e) {
+                error_log('Auth: Failed to log user logout to database - ' . $e->getMessage());
+            }
+        }
+
         unset($_SESSION['google_auth']);
         session_destroy();
     }
@@ -345,7 +380,7 @@ class Auth
      */
     public static function requireAuth()
     {
-        if (!self::isLoggedIn()) {
+        if (! self::isLoggedIn()) {
             $loginUrl = '/php/login.php';
             header("Location: $loginUrl");
             exit;
@@ -359,7 +394,7 @@ class Auth
     {
         self::init();
         $config = self::getConfig();
-        return !empty($config['client_id']) && !empty($config['client_secret']) && !empty($config['redirect_uri']);
+        return ! empty($config['client_id']) && ! empty($config['client_secret']) && ! empty($config['redirect_uri']);
     }
 
     /**
