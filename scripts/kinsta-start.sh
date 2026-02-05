@@ -270,14 +270,25 @@ validate_auth() {
 run_migrations() {
     log "===== Database Migrations ====="
     
+    # Support both DB_PASSWORD and DB_PASS (Kinsta compatibility)
+    DB_PASSWORD="${DB_PASSWORD:-${DB_PASS:-}}"
+    
     # Check if database credentials are available
-    if [[ -z "${DB_HOST:-}" ]] || [[ -z "${DB_USER:-}" ]]; then
-        log_warn "Database credentials not available - skipping migrations"
-        log_warn "Required: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME"
+    if [[ -z "${DB_HOST:-}" ]] || [[ -z "${DB_USER:-}" ]] || [[ -z "${DB_PASSWORD:-}" ]]; then
+        log_warn "Database credentials incomplete - skipping migrations"
+        log_warn "Required environment variables:"
+        log_warn "  - DB_HOST: ${DB_HOST:+SET}"
+        log_warn "  - DB_USER: ${DB_USER:+SET}"
+        log_warn "  - DB_PASSWORD or DB_PASS: ${DB_PASSWORD:+SET}"
+        log_warn "  - DB_NAME: ${DB_NAME:-frontline_poc (default)}"
+        log_warn "Database logging will not be available. Set these in Kinsta environment variables."
         return 0
     fi
     
-    log "Database credentials found (DB_HOST=$DB_HOST, DB_USER=$DB_USER)"
+    log "Database credentials validated (DB_HOST=$DB_HOST, DB_USER=$DB_USER, DB_PASSWORD=***)"
+    
+    # Export for PHP scripts
+    export DB_PASSWORD
     
     # Check if migration script exists
     if [[ ! -f "/app/php/run-migrations.php" ]]; then

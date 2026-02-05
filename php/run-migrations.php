@@ -30,9 +30,10 @@ try {
     logMigration('=== Starting Database Migrations ===');
 
     // Get database connection info from environment
+    // Support both DB_PASSWORD and DB_PASS (Kinsta compatibility)
     $dbHost = getenv('DB_HOST');
     $dbUser = getenv('DB_USER');
-    $dbPass = getenv('DB_PASSWORD');
+    $dbPass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
     $dbName = getenv('DB_NAME') ?: 'frontline_poc';
 
     // Validate credentials
@@ -40,7 +41,7 @@ try {
         $errorMsg  = 'Missing database credentials. ';
         $errorMsg .= 'DB_HOST=' . (empty($dbHost) ? 'MISSING' : 'SET') . ', ';
         $errorMsg .= 'DB_USER=' . (empty($dbUser) ? 'MISSING' : 'SET') . ', ';
-        $errorMsg .= 'DB_PASSWORD=' . (empty($dbPass) ? 'MISSING' : 'SET');
+        $errorMsg .= 'DB_PASSWORD/DB_PASS=' . (empty($dbPass) ? 'MISSING' : 'SET');
         throw new Exception($errorMsg);
     }
 

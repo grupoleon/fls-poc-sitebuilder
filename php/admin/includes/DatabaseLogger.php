@@ -38,21 +38,22 @@ class DatabaseLogger
     {
         try {
             // Get Kinsta database credentials from environment
+            // Support both DB_PASSWORD and DB_PASS (Kinsta compatibility)
             $dbHost = getenv('DB_HOST');
             $dbUser = getenv('DB_USER');
-            $dbPass = getenv('DB_PASSWORD');
+            $dbPass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
             $dbName = getenv('DB_NAME') ?: 'frontline_poc'; // Default database name
 
             // Debug logging - show what we found
-            error_log('DatabaseLogger: Checking credentials - DB_HOST=' . ($dbHost ?: 'EMPTY') . ', DB_USER=' . ($dbUser ?: 'EMPTY') . ', DB_PASSWORD=' . ($dbPass ? 'SET' : 'EMPTY') . ', DB_NAME=' . $dbName);
+            error_log('DatabaseLogger: Checking credentials - DB_HOST=' . ($dbHost ?: 'EMPTY') . ', DB_USER=' . ($dbUser ?: 'EMPTY') . ', DB_PASSWORD/DB_PASS=' . ($dbPass ? 'SET' : 'EMPTY') . ', DB_NAME=' . $dbName);
 
             // Validate required credentials
             if (empty($dbHost) || empty($dbUser) || empty($dbPass)) {
                 $errorMsg  = 'DatabaseLogger: Missing required database credentials. ';
                 $errorMsg .= 'DB_HOST=' . (empty($dbHost) ? 'MISSING' : 'SET') . ', ';
                 $errorMsg .= 'DB_USER=' . (empty($dbUser) ? 'MISSING' : 'SET') . ', ';
-                $errorMsg .= 'DB_PASSWORD=' . (empty($dbPass) ? 'MISSING' : 'SET');
-                $errorMsg .= ' | Set these in Kinsta environment variables';
+                $errorMsg .= 'DB_PASSWORD/DB_PASS=' . (empty($dbPass) ? 'MISSING' : 'SET');
+                $errorMsg .= ' | Set DB_PASSWORD or DB_PASS in Kinsta environment variables';
                 error_log($errorMsg);
                 $this->isAvailable  = false;
                 return;
