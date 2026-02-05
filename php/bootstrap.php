@@ -294,7 +294,7 @@ function handleRequest()
 
                             // Deep merge with existing git config to preserve other fields
                             $existingGitConfig = $configManager->getConfig('git');
-                            $mergedGitConfig = deepMergeConfig($existingGitConfig, $data);
+                            $mergedGitConfig   = deepMergeConfig($existingGitConfig, $data);
 
                             $configManager->updateConfig($type, $mergedGitConfig);
                             break;
@@ -306,7 +306,7 @@ function handleRequest()
                             // Deep merge with existing site config to preserve other fields
                             // (e.g., kinsta_token, company, region when only updating site_title)
                             $existingSiteConfig = $configManager->getConfig('site');
-                            $mergedSiteConfig = deepMergeConfig($existingSiteConfig, $data);
+                            $mergedSiteConfig   = deepMergeConfig($existingSiteConfig, $data);
 
                             $configManager->updateConfig($type, $mergedSiteConfig);
                             break;
@@ -1489,16 +1489,28 @@ function importConfigContent($filename, $content, $configDir, $source = null)
         if (file_exists($targetPath)) {
             $backupPath = $targetPath . '.backup.' . date('YmdHis');
             copy($targetPath, $backupPath);
+
+                                       // CRITICAL: Delete old file to avoid permission issues when overwriting
+                                       // If old file is root-owned and we're running as nobody, overwrite will fail
+            @chmod($targetPath, 0666); // Try to make writable first
+            @unlink($targetPath);      // Delete to ensure clean write
         }
 
         $result = file_put_contents(
             $targetPath,
-            json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            LOCK_EX// Exclusive lock for atomic writes
         );
 
         if ($result === false) {
-            throw new Exception('Failed to save config file');
+            $perms     = @fileperms($configDir);
+            $owner     = function_exists('posix_getpwuid') ? @posix_getpwuid(@fileowner($configDir)) : null;
+            $ownerInfo = $owner ? $owner['name'] : 'unknown';
+            throw new Exception("Failed to save config file. Directory: $configDir (permissions: " . substr(sprintf('%o', $perms), -4) . ", owner: $ownerInfo)");
         }
+
+        // Ensure new file is world-writable for future updates
+        @chmod($targetPath, 0666);
 
         return [
             'success' => true,

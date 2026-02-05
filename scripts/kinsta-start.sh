@@ -221,6 +221,28 @@ fix_permissions() {
         fi
     fi
 
+    # CRITICAL FIX: Make all existing config files writable
+    # This fixes root-owned files from previous deployments that would block imports
+    log "Fixing permissions on existing config files..."
+    if [[ -d "/app/config" ]]; then
+        for config_file in /app/config/*.json; do
+            if [[ -f "$config_file" ]]; then
+                local filename=$(basename "$config_file")
+                local current_perms=$(stat -c '%a' "$config_file" 2>/dev/null || stat -f '%Lp' "$config_file" 2>/dev/null)
+                
+                # Try to set ownership first
+                if chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$config_file" 2>/dev/null; then
+                    chmod 644 "$config_file" 2>/dev/null || true
+                    log "  ✓ Fixed ownership for $filename"
+                else
+                    # If chown fails, make it world-writable so PHP can overwrite it
+                    chmod 666 "$config_file" 2>/dev/null || true
+                    log_warn "  ⚠ Made $filename world-writable (was $current_perms, couldn't set ownership)"
+                fi
+            fi
+        done
+    fi
+
     chmod +x /app/scripts/*.sh 2>/dev/null || true
 
     # CRITICAL: Verify config directory is writable
