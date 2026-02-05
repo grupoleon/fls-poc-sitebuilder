@@ -93,6 +93,7 @@ setup_oauth() {
 
     AUTH_FILE="/app/config/auth.json"
     mkdir -p /app/config 2>/dev/null || true
+    chmod 777 /app/config 2>/dev/null || true
 
     # Determine runtime user for ownership (same logic as fix_permissions)
     local RUNTIME_USER="nobody"
@@ -114,8 +115,11 @@ setup_oauth() {
     "allowed_domain": "${allowed_domain:-frontlinestrategies.co}"
 }
 EOF
-        chmod 640 "$AUTH_FILE"
-        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
+        if chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null; then
+            chmod 640 "$AUTH_FILE"
+        else
+            chmod 666 "$AUTH_FILE"
+        fi
         log "OAuth configured from Kinsta env vars (client_id)"
     # Legacy GOOGLE_* naming
     elif [[ -n "${GOOGLE_CLIENT_ID:-}" && -n "${GOOGLE_CLIENT_SECRET:-}" && -n "${GOOGLE_REDIRECT_URI:-}" ]]; then
@@ -127,18 +131,26 @@ EOF
     "allowed_domain": "${GOOGLE_ALLOWED_DOMAIN:-frontlinestrategies.co}"
 }
 EOF
-        chmod 640 "$AUTH_FILE"
-        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
+        if chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null; then
+            chmod 640 "$AUTH_FILE"
+        else
+            chmod 666 "$AUTH_FILE"
+        fi
         log "OAuth configured from GOOGLE_* env vars"
     elif [[ -f "$AUTH_FILE" ]] && [[ -s "$AUTH_FILE" ]]; then
         # Fix ownership on existing file
-        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
-        log "Using existing auth.json (ownership fixed)"
+        if ! chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null; then
+            chmod 666 "$AUTH_FILE" 2>/dev/null || true
+        fi
+        log "Using existing auth.json (permissions fixed)"
     else
         # Create placeholder
         echo '{"client_id":"","client_secret":"","redirect_uri":"","allowed_domain":"frontlinestrategies.co"}' > "$AUTH_FILE"
-        chmod 640 "$AUTH_FILE"
-        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
+        if chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null; then
+            chmod 640 "$AUTH_FILE"
+        else
+            chmod 666 "$AUTH_FILE"
+        fi
         log_warn "OAuth not configured - set client_id, client_secret, redirect_uri in Kinsta"
     fi
 }
@@ -163,33 +175,65 @@ fix_permissions() {
 
     log "Runtime user detected: ${RUNTIME_USER}:${RUNTIME_GROUP}"
 
-    # Create directories with correct ownership
+    # Ensure directories exist and are writable
+    # NOTE: Using 777 for now as chown may fail in containerized environment
+    # Security: These directories are not exposed externally (Nginx blocks access)
     for dir in /app/config /app/logs /app/tmp /app/uploads /app/webhook; do
         mkdir -p "$dir" 2>/dev/null || true
-        chmod 755 "$dir" 2>/dev/null || true
-        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$dir" 2>/dev/null || true
+        chmod 777 "$dir" 2>/dev/null || true
+        
+        # Try to set ownership (may fail in restricted environments)
+        if chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$dir" 2>/dev/null; then
+            log "  ✓ Set ownership for $dir"
+            chmod 755 "$dir" 2>/dev/null || true
+        else
+            log_warn "  ⚠ Cannot set ownership for $dir (using 777 permissions instead)"
+        fi
     done
 
     mkdir -p /app/logs/api /app/logs/deployment /app/webhook/tasks 2>/dev/null || true
-    chmod 755 /app/logs/api /app/logs/deployment /app/webhook/tasks 2>/dev/null || true
-    chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/logs 2>/dev/null || true
-    chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/webhook 2>/dev/null || true
+    chmod 777 /app/logs/api /app/logs/deployment /app/webhook/tasks 2>/dev/null || true
+    
+    # Try recursive ownership (may fail)
+    chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/logs 2>/dev/null || log_warn "  ⚠ Cannot set ownership for /app/logs"
+    chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/webhook 2>/dev/null || log_warn "  ⚠ Cannot set ownership for /app/webhook"
 
     # Fix auth.json ownership (CRITICAL for OAuth)
     if [[ -f "/app/config/auth.json" ]]; then
-        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/config/auth.json 2>/dev/null || true
-        chmod 640 /app/config/auth.json 2>/dev/null || true
+        if chown "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/config/auth.json 2>/dev/null; then
+            chmod 640 /app/config/auth.json 2>/dev/null || true
+            log "  ✓ Set ownership for auth.json"
+        else
+            chmod 666 /app/config/auth.json 2>/dev/null || true
+            log_warn "  ⚠ Cannot set ownership for auth.json (using 666 permissions)"
+        fi
     fi
 
     # Fix SSH directory (keep restrictive but readable by runtime user)
     if [[ -d "/app/.ssh" ]]; then
-        chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/.ssh 2>/dev/null || true
-        chmod 700 /app/.ssh 2>/dev/null || true
-        [[ -f "/app/.ssh/id_rsa" ]] && chmod 600 /app/.ssh/id_rsa 2>/dev/null || true
-        [[ -f "/app/.ssh/id_rsa.pub" ]] && chmod 644 /app/.ssh/id_rsa.pub 2>/dev/null || true
+        if chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/.ssh 2>/dev/null; then
+            chmod 700 /app/.ssh 2>/dev/null || true
+            [[ -f "/app/.ssh/id_rsa" ]] && chmod 600 /app/.ssh/id_rsa 2>/dev/null || true
+            [[ -f "/app/.ssh/id_rsa.pub" ]] && chmod 644 /app/.ssh/id_rsa.pub 2>/dev/null || true
+            log "  ✓ Set ownership for .ssh"
+        else
+            log_warn "  ⚠ Cannot set ownership for .ssh directory"
+        fi
     fi
 
     chmod +x /app/scripts/*.sh 2>/dev/null || true
+
+    # CRITICAL: Verify config directory is writable
+    log "Verifying config directory write permissions..."
+    local test_file="/app/config/.write_test_$$"
+    if touch "$test_file" 2>/dev/null; then
+        rm -f "$test_file"
+        log "  ✓ Config directory is WRITABLE"
+    else
+        log_error "  ✗ Config directory is NOT WRITABLE - JSON import will FAIL"
+        log_error "  This is a critical error. Check directory permissions."
+        ls -la /app/config 2>/dev/null || true
+    fi
 
     log "Permissions configured"
 }
