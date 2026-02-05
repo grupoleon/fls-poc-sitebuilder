@@ -152,11 +152,16 @@ fix_permissions() {
 start_services() {
     log "Starting PHP-FPM and Nginx..."
 
-    # Run Nixpacks prestart if it exists
+    # Run Nixpacks prestart if it exists (generates /nginx.conf from template)
     if [[ -f "/assets/scripts/prestart.mjs" ]]; then
         log "Running Nixpacks prestart script..."
         node /assets/scripts/prestart.mjs /assets/nginx.template.conf /nginx.conf
     fi
+
+    # CRITICAL: Create nginx log directory (Nixpacks doesn't create it)
+    mkdir -p /var/log/nginx 2>/dev/null || true
+    touch /var/log/nginx/error.log /var/log/nginx/access.log 2>/dev/null || true
+    log "Nginx log directory created"
 
     # Check if php-fpm exists
     if ! command -v php-fpm &>/dev/null; then
@@ -184,9 +189,13 @@ start_services() {
     trap "kill $PHP_FPM_PID 2>/dev/null; exit 0" SIGTERM SIGINT
 
     # Start Nginx in foreground
+    # NOTE: Do NOT add "-g daemon off;" - Nixpacks config already includes it
+    # Adding it again causes "daemon directive is duplicate" error
     if [[ -f "/nginx.conf" ]]; then
-        exec nginx -c /nginx.conf -g "daemon off;"
+        log "Starting Nginx with Nixpacks config..."
+        exec nginx -c /nginx.conf
     else
+        log "Starting Nginx with default config..."
         exec nginx -g "daemon off;"
     fi
 }
