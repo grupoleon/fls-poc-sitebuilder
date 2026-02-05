@@ -71,6 +71,26 @@ $adminUser      = $input['admin_user'] ?? null;
 $adminPass      = $input['admin_pass'] ?? null;
 $deploymentDate = $input['deployment_date'] ?? date('Y-m-d H:i:s');
 
+function normalizeUrl($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return $url;
+    }
+    if (preg_match('~^https?://~i', $url)) {
+        return $url;
+    }
+    return 'https://' . $url;
+}
+
+function addCommentPart(array &$comment, $text, array $attributes = [])
+{
+    $comment[] = [
+        'text'       => $text,
+        'attributes' => empty($attributes) ? (object) [] : $attributes,
+    ];
+}
+
 // Get ClickUp config
 $config = getClickUpConfig();
 if (! $config['success']) {
@@ -81,48 +101,56 @@ if (! $config['success']) {
 
 $apiToken = $config['api_token'];
 
-// Prepare comment text with deployment information
-$commentText = "✅ **DEPLOYMENT COMPLETED**
-
-Deployment Date: {$deploymentDate}
-
-";
+// Prepare formatted comment with deployment information (ClickUp comment formatting)
+$commentParts = [];
+addCommentPart($commentParts, '✅ DEPLOYMENT COMPLETED', ['bold' => true]);
+addCommentPart($commentParts, "\n\n");
+addCommentPart($commentParts, 'Deployment Date: ', ['bold' => true]);
+addCommentPart($commentParts, $deploymentDate);
+addCommentPart($commentParts, "\n");
 
 if ($siteUrl) {
-    $commentText .= "🌐 Site URL: [{$siteUrl}](https://{$siteUrl})
-
-";
+    $siteUrl = trim($siteUrl);
+    $siteLink = normalizeUrl($siteUrl);
+    addCommentPart($commentParts, '🌐 Site URL: ', ['bold' => true]);
+    addCommentPart($commentParts, $siteUrl, ['link' => $siteLink]);
+    addCommentPart($commentParts, "\n");
 }
 
 if ($adminUrl) {
-    $commentText .= "🔒 Admin URL: [{$adminUrl}](https://{$adminUrl})
-
-";
+    $adminUrl = trim($adminUrl);
+    $adminLink = normalizeUrl($adminUrl);
+    addCommentPart($commentParts, '🔒 Admin URL: ', ['bold' => true]);
+    addCommentPart($commentParts, $adminUrl, ['link' => $adminLink]);
+    addCommentPart($commentParts, "\n");
 }
 
 if ($adminUser || $adminPass) {
-    $commentText .= "Login Credentials:
-";
+    addCommentPart($commentParts, "\n");
+    addCommentPart($commentParts, 'Login Credentials', ['bold' => true]);
+    addCommentPart($commentParts, "\n");
     if ($adminUser) {
-        $commentText .= "  Username: `{$adminUser}`
-";
+        addCommentPart($commentParts, 'Username: ', ['bold' => true]);
+        addCommentPart($commentParts, $adminUser, ['code' => true]);
+        addCommentPart($commentParts, "\n");
     }
     if ($adminPass) {
-        $commentText .= "  Password: `{$adminPass}`
-";
+        addCommentPart($commentParts, 'Password: ', ['bold' => true]);
+        addCommentPart($commentParts, $adminPass, ['code' => true]);
+        addCommentPart($commentParts, "\n");
     }
 }
 
-// add a note about this is an automated message from site builder
-$commentText .= "
----
-*This is an automated message from the  Site Builder.*";
+addCommentPart($commentParts, "\n");
+addCommentPart($commentParts, "—");
+addCommentPart($commentParts, "\n");
+addCommentPart($commentParts, 'This is an automated message from the Site Builder.', ['italic' => true]);
 
 // Post comment to task
 $commentUrl = "https://api.clickup.com/api/v2/task/{$taskId}/comment";
 
 $commentData = [
-    'comment_text' => $commentText,
+    'comment'      => $commentParts,
     'notify_all'   => true,
 ];
 
@@ -134,7 +162,7 @@ curl_setopt_array($ch, [
         "Authorization: {$apiToken}",
         "Content-Type: application/json",
     ],
-    CURLOPT_POSTFIELDS   => json_encode($commentData),
+    CURLOPT_POSTFIELDS   => json_encode($commentData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     CURLOPT_TIMEOUT      => 30,
     CURLOPT_FORBID_REUSE => true,
 ]);
