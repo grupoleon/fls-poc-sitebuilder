@@ -42,7 +42,7 @@ class DatabaseLogger
             $dbHost = getenv('DB_HOST');
             $dbUser = getenv('DB_USER');
             $dbPass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
-            $dbPort = getenv('DB_PORT') ?: '3306'; // Default MySQL port
+            $dbPort = getenv('DB_PORT') ?: '3306';          // Default MySQL port
             $dbName = getenv('DB_NAME') ?: 'frontline_poc'; // Default database name
 
             // Debug logging - show what we found
