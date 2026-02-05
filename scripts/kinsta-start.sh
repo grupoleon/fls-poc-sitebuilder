@@ -94,6 +94,16 @@ setup_oauth() {
     AUTH_FILE="/app/config/auth.json"
     mkdir -p /app/config 2>/dev/null || true
 
+    # Determine runtime user for ownership (same logic as fix_permissions)
+    local RUNTIME_USER="nobody"
+    local RUNTIME_GROUP="nogroup"
+    if [[ -f "/assets/php-fpm.conf" ]]; then
+        local detected_user=$(grep -E "^user\s*=" /assets/php-fpm.conf 2>/dev/null | awk -F= '{print $2}' | tr -d ' ')
+        local detected_group=$(grep -E "^group\s*=" /assets/php-fpm.conf 2>/dev/null | awk -F= '{print $2}' | tr -d ' ')
+        [[ -n "$detected_user" ]] && RUNTIME_USER="$detected_user"
+        [[ -n "$detected_group" ]] && RUNTIME_GROUP="$detected_group"
+    fi
+
     # Kinsta naming: client_id, client_secret, redirect_uri, allowed_domain
     if [[ -n "${client_id:-}" && -n "${client_secret:-}" && -n "${redirect_uri:-}" ]]; then
         cat > "$AUTH_FILE" << EOF
@@ -105,6 +115,7 @@ setup_oauth() {
 }
 EOF
         chmod 640 "$AUTH_FILE"
+        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
         log "OAuth configured from Kinsta env vars (client_id)"
     # Legacy GOOGLE_* naming
     elif [[ -n "${GOOGLE_CLIENT_ID:-}" && -n "${GOOGLE_CLIENT_SECRET:-}" && -n "${GOOGLE_REDIRECT_URI:-}" ]]; then
@@ -117,33 +128,140 @@ EOF
 }
 EOF
         chmod 640 "$AUTH_FILE"
+        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
         log "OAuth configured from GOOGLE_* env vars"
     elif [[ -f "$AUTH_FILE" ]] && [[ -s "$AUTH_FILE" ]]; then
-        log "Using existing auth.json"
+        # Fix ownership on existing file
+        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
+        log "Using existing auth.json (ownership fixed)"
     else
         # Create placeholder
         echo '{"client_id":"","client_secret":"","redirect_uri":"","allowed_domain":"frontlinestrategies.co"}' > "$AUTH_FILE"
         chmod 640 "$AUTH_FILE"
+        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$AUTH_FILE" 2>/dev/null || true
         log_warn "OAuth not configured - set client_id, client_secret, redirect_uri in Kinsta"
     fi
 }
 
 # =============================================================================
-# 3. PERMISSIONS
+# 3. PERMISSIONS & OWNERSHIP
 # =============================================================================
 fix_permissions() {
-    log "Fixing directory permissions..."
+    log "===== Permission Check ====="
 
+    # Detect PHP-FPM runtime user (Nixpacks uses nobody:nogroup)
+    local RUNTIME_USER="nobody"
+    local RUNTIME_GROUP="nogroup"
+
+    # Try to detect from php-fpm config if available
+    if [[ -f "/assets/php-fpm.conf" ]]; then
+        local detected_user=$(grep -E "^user\s*=" /assets/php-fpm.conf 2>/dev/null | awk -F= '{print $2}' | tr -d ' ')
+        local detected_group=$(grep -E "^group\s*=" /assets/php-fpm.conf 2>/dev/null | awk -F= '{print $2}' | tr -d ' ')
+        [[ -n "$detected_user" ]] && RUNTIME_USER="$detected_user"
+        [[ -n "$detected_group" ]] && RUNTIME_GROUP="$detected_group"
+    fi
+
+    log "Runtime user detected: ${RUNTIME_USER}:${RUNTIME_GROUP}"
+
+    # Create directories with correct ownership
     for dir in /app/config /app/logs /app/tmp /app/uploads /app/webhook; do
         mkdir -p "$dir" 2>/dev/null || true
         chmod 755 "$dir" 2>/dev/null || true
+        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" "$dir" 2>/dev/null || true
     done
 
     mkdir -p /app/logs/api /app/logs/deployment /app/webhook/tasks 2>/dev/null || true
     chmod 755 /app/logs/api /app/logs/deployment /app/webhook/tasks 2>/dev/null || true
+    chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/logs 2>/dev/null || true
+    chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/webhook 2>/dev/null || true
+
+    # Fix auth.json ownership (CRITICAL for OAuth)
+    if [[ -f "/app/config/auth.json" ]]; then
+        chown "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/config/auth.json 2>/dev/null || true
+        chmod 640 /app/config/auth.json 2>/dev/null || true
+    fi
+
+    # Fix SSH directory (keep restrictive but readable by runtime user)
+    if [[ -d "/app/.ssh" ]]; then
+        chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" /app/.ssh 2>/dev/null || true
+        chmod 700 /app/.ssh 2>/dev/null || true
+        [[ -f "/app/.ssh/id_rsa" ]] && chmod 600 /app/.ssh/id_rsa 2>/dev/null || true
+        [[ -f "/app/.ssh/id_rsa.pub" ]] && chmod 644 /app/.ssh/id_rsa.pub 2>/dev/null || true
+    fi
+
     chmod +x /app/scripts/*.sh 2>/dev/null || true
 
     log "Permissions configured"
+}
+
+# =============================================================================
+# 3b. VALIDATE AUTH.JSON ACCESS
+# =============================================================================
+validate_auth() {
+    log "===== Auth Validation ====="
+
+    AUTH_FILE="/app/config/auth.json"
+
+    if [[ ! -f "$AUTH_FILE" ]]; then
+        log_warn "auth.json does not exist"
+        return 1
+    fi
+
+    # Get file info
+    local owner=$(stat -c '%U:%G' "$AUTH_FILE" 2>/dev/null || stat -f '%Su:%Sg' "$AUTH_FILE" 2>/dev/null)
+    local perms=$(stat -c '%a' "$AUTH_FILE" 2>/dev/null || stat -f '%Lp' "$AUTH_FILE" 2>/dev/null)
+    local size=$(stat -c '%s' "$AUTH_FILE" 2>/dev/null || stat -f '%z' "$AUTH_FILE" 2>/dev/null)
+
+    log "auth.json owner: $owner"
+    log "auth.json perms: $perms"
+    log "auth.json size: ${size} bytes"
+
+    # Check if file has content (not just empty JSON)
+    if [[ "$size" -lt 50 ]]; then
+        log_warn "auth.json appears to be empty or placeholder"
+    fi
+
+    # Verify OAuth env vars are available (without printing secrets)
+    if [[ -n "${client_id:-}" ]]; then
+        log "client_id: SET (${#client_id} chars)"
+    else
+        log_warn "client_id: NOT SET"
+    fi
+
+    if [[ -n "${client_secret:-}" ]]; then
+        log "client_secret: SET (${#client_secret} chars)"
+    else
+        log_warn "client_secret: NOT SET"
+    fi
+
+    if [[ -n "${redirect_uri:-}" ]]; then
+        log "redirect_uri: ${redirect_uri}"
+    else
+        log_warn "redirect_uri: NOT SET"
+    fi
+
+    # Test if file is readable by checking JSON validity
+    if command -v jq &>/dev/null; then
+        if jq -e '.client_id' "$AUTH_FILE" &>/dev/null; then
+            local has_client_id=$(jq -r '.client_id // empty' "$AUTH_FILE" 2>/dev/null)
+            if [[ -n "$has_client_id" && "$has_client_id" != "" ]]; then
+                log "Readable by PHP: YES (client_id present)"
+            else
+                log_warn "Readable by PHP: YES but client_id is empty"
+            fi
+        else
+            log_warn "Readable by PHP: NO or invalid JSON"
+        fi
+    else
+        # Fallback without jq
+        if grep -q "client_id" "$AUTH_FILE" 2>/dev/null; then
+            log "Readable by PHP: LIKELY (contains client_id key)"
+        else
+            log_warn "Readable by PHP: UNKNOWN"
+        fi
+    fi
+
+    log "============================="
 }
 
 # =============================================================================
@@ -211,10 +329,11 @@ main() {
     log "PWD: $(pwd)"
     log "User: $(whoami)"
 
-    # Run setup
+    # Run setup (order matters: oauth creates file, permissions fixes ownership)
     setup_ssh
     setup_oauth
     fix_permissions
+    validate_auth
 
     log "=========================================="
     log "Configuration complete, starting services"
