@@ -42,10 +42,11 @@ class DatabaseLogger
             $dbHost = getenv('DB_HOST');
             $dbUser = getenv('DB_USER');
             $dbPass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
+            $dbPort = getenv('DB_PORT') ?: '3306'; // Default MySQL port
             $dbName = getenv('DB_NAME') ?: 'frontline_poc'; // Default database name
 
             // Debug logging - show what we found
-            error_log('DatabaseLogger: Checking credentials - DB_HOST=' . ($dbHost ?: 'EMPTY') . ', DB_USER=' . ($dbUser ?: 'EMPTY') . ', DB_PASSWORD/DB_PASS=' . ($dbPass ? 'SET' : 'EMPTY') . ', DB_NAME=' . $dbName);
+            error_log('DatabaseLogger: Checking credentials - DB_HOST=' . ($dbHost ?: 'EMPTY') . ', DB_PORT=' . $dbPort . ', DB_USER=' . ($dbUser ?: 'EMPTY') . ', DB_PASSWORD/DB_PASS=' . ($dbPass ? 'SET' : 'EMPTY') . ', DB_NAME=' . $dbName);
 
             // Validate required credentials
             if (empty($dbHost) || empty($dbUser) || empty($dbPass)) {
@@ -59,8 +60,8 @@ class DatabaseLogger
                 return;
             }
 
-            // Create DSN
-            $dsn = "mysql:host={$dbHost};dbname={$dbName};charset=utf8mb4";
+            // Create DSN with port support
+            $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4";
 
             // PDO options
             $options = [

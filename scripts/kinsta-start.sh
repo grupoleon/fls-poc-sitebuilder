@@ -273,11 +273,15 @@ run_migrations() {
     # Support both DB_PASSWORD and DB_PASS (Kinsta compatibility)
     DB_PASSWORD="${DB_PASSWORD:-${DB_PASS:-}}"
     
+    # Set default port if not provided
+    DB_PORT="${DB_PORT:-3306}"
+    
     # Check if database credentials are available
     if [[ -z "${DB_HOST:-}" ]] || [[ -z "${DB_USER:-}" ]] || [[ -z "${DB_PASSWORD:-}" ]]; then
         log_warn "Database credentials incomplete - skipping migrations"
         log_warn "Required environment variables:"
         log_warn "  - DB_HOST: ${DB_HOST:+SET}"
+        log_warn "  - DB_PORT: ${DB_PORT:-3306 (default)}"
         log_warn "  - DB_USER: ${DB_USER:+SET}"
         log_warn "  - DB_PASSWORD or DB_PASS: ${DB_PASSWORD:+SET}"
         log_warn "  - DB_NAME: ${DB_NAME:-frontline_poc (default)}"
@@ -285,10 +289,11 @@ run_migrations() {
         return 0
     fi
     
-    log "Database credentials validated (DB_HOST=$DB_HOST, DB_USER=$DB_USER, DB_PASSWORD=***)"
+    log "Database credentials validated (DB_HOST=$DB_HOST, DB_PORT=$DB_PORT, DB_USER=$DB_USER, DB_PASSWORD=***)"
     
     # Export for PHP scripts
     export DB_PASSWORD
+    export DB_PORT
     
     # Check if migration script exists
     if [[ ! -f "/app/php/run-migrations.php" ]]; then

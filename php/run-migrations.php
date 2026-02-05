@@ -34,6 +34,7 @@ try {
     $dbHost = getenv('DB_HOST');
     $dbUser = getenv('DB_USER');
     $dbPass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
+    $dbPort = getenv('DB_PORT') ?: '3306'; // Default MySQL port
     $dbName = getenv('DB_NAME') ?: 'frontline_poc';
 
     // Validate credentials
@@ -45,10 +46,10 @@ try {
         throw new Exception($errorMsg);
     }
 
-    logMigration("Connecting to database: $dbHost/$dbName as $dbUser");
+    logMigration("Connecting to database: $dbHost:$dbPort/$dbName as $dbUser");
 
-    // Create PDO connection
-    $dsn     = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
+    // Create PDO connection with port support
+    $dsn     = "mysql:host=$dbHost;port=$dbPort;dbname=$dbName;charset=utf8mb4";
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
