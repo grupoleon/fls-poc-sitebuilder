@@ -5,11 +5,13 @@ set -euo pipefail
 # Load logging utilities
 source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
 
-# Verify required dependencies (installed by setup.sh)
+# Verify required dependencies
 required_tools=("jq" "curl" "openssl" "git")
 for tool in "${required_tools[@]}"; do
     if ! command -v "$tool" &> /dev/null; then
-        log_error "Required tool '$tool' not found. Please run setup.sh first."
+        log_error "Required tool '$tool' not found. Please ensure it's installed in the container image."
+        log_error "For Kinsta: Check nixpacks.toml includes '$tool' in install phase."
+        log_error "For Docker: Rebuild the image to include missing dependencies."
         exit 1
     fi
 done

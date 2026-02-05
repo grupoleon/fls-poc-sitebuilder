@@ -22,7 +22,9 @@ check_dependencies() {
     
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         log_error "Missing required dependencies: ${missing_deps[*]}"
-        log_error "Please run setup.sh first to install all required tools"
+        log_error "Please ensure these tools are installed in the container image."
+        log_error "For Kinsta: Check nixpacks.toml includes these tools in install phase."
+        log_error "For Docker: Rebuild the image to include missing dependencies."
         exit 1
     fi
 }
