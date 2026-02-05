@@ -1,0 +1,89 @@
+# =============================================================================
+# FLS POC Site Builder - Docker Compose (Local Development)
+# =============================================================================
+# Uses Kinsta's EXACT environment variable naming convention.
+# Copy docker-compose.override.yml.example to docker-compose.override.yml
+# and fill in your secrets.
+# =============================================================================
+
+version: '3.8'
+
+services:
+  sitebuilder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fls-sitebuilder
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+
+    # Environment variables using Kinsta's EXACT naming
+    environment:
+      # Application
+      - APP_ENV=development
+      - TZ=UTC
+
+      # =======================================================================
+      # Kinsta OAuth Variables (EXACT naming from Kinsta dashboard)
+      # =======================================================================
+      # These match EXACTLY what Kinsta injects at runtime
+      - client_id=${client_id:-}
+      - client_secret=${client_secret:-}
+      - redirect_uri=${redirect_uri:-http://localhost:8080/php/login.php}
+      - allowed_domain=${allowed_domain:-frontlinestrategies.co}
+
+      # =======================================================================
+      # SSH for Kinsta Deployments
+      # =======================================================================
+      # Base64-encoded private key: cat ~/.ssh/key | base64 -w0
+      - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY:-}
+      - KINSTA_HOST=${KINSTA_HOST:-}
+      - KINSTA_PORT=${KINSTA_PORT:-22}
+
+      # =======================================================================
+      # API Tokens (stored in config files, read by scripts)
+      # =======================================================================
+      - KINSTA_API_TOKEN=${KINSTA_API_TOKEN:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+
+      # =======================================================================
+      # PHP Configuration (optional overrides)
+      # =======================================================================
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_UPLOAD_MAX_FILESIZE=64M
+
+      # =======================================================================
+      # DB_* variables are IGNORED by entrypoint
+      # They are passed directly to PHP and handled by application layer
+      # =======================================================================
+
+    # Volume mounts for persistence
+    volumes:
+      # Config persistence
+      - ./config:/app/config
+
+      # Logs (bind mount for development access)
+      - ./logs:/app/logs
+
+      # Uploads (persistent storage)
+      - ./uploads:/app/uploads
+
+      # Pages content (edit locally, see changes in container)
+      - ./pages:/app/pages
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
