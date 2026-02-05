@@ -241,10 +241,22 @@ class Auth
 
         error_log('Auth: User logged in - ' . $userInfo['email']);
 
-        // Log user login to database
+        // Log user to database - create/update user and log session
         try {
             $dbLogger = DatabaseLogger::getInstance();
             if ($dbLogger->isAvailable()) {
+                // Create or update user record
+                $userId = $dbLogger->createOrUpdateUser(
+                    $userInfo['email'],
+                    $userInfo['name'] ?? '',
+                    $userInfo['picture'] ?? null
+                );
+
+                if ($userId) {
+                    error_log("Auth: User record created/updated - ID: $userId");
+                }
+
+                // Log session
                 $dbLogger->logUserLogin(
                     $userInfo['email'],
                     $userInfo['name'] ?? '',
@@ -252,9 +264,13 @@ class Auth
                     $_SERVER['REMOTE_ADDR'] ?? null,
                     $_SERVER['HTTP_USER_AGENT'] ?? null
                 );
+
+                error_log("Auth: Session logged to database - Session ID: $sessionId");
+            } else {
+                error_log('Auth: Database logger not available - user and session not logged to database');
             }
         } catch (Exception $e) {
-            error_log('Auth: Failed to log user login to database - ' . $e->getMessage());
+            error_log('Auth: Failed to log user/session to database - ' . $e->getMessage());
         }
 
         return ['success' => true, 'user' => $userInfo];

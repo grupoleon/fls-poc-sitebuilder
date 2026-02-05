@@ -265,6 +265,45 @@ validate_auth() {
 }
 
 # =============================================================================
+# 3c. RUN DATABASE MIGRATIONS
+# =============================================================================
+run_migrations() {
+    log "===== Database Migrations ====="
+    
+    # Check if database credentials are available
+    if [[ -z "${DB_HOST:-}" ]] || [[ -z "${DB_USER:-}" ]]; then
+        log_warn "Database credentials not available - skipping migrations"
+        log_warn "If you expect database logging, ensure DB_HOST, DB_USER, DB_PASS/DB_PASSWORD are set"
+        return 0
+    fi
+    
+    log "Database credentials found (DB_HOST=$DB_HOST, DB_USER=$DB_USER)"
+    
+    # Check if migration script exists
+    if [[ ! -f "/app/php/run-migrations.php" ]]; then
+        log_warn "Migration script not found: /app/php/run-migrations.php"
+        return 0
+    fi
+    
+    # Check if php-cli is available
+    if ! command -v php &>/dev/null; then
+        log_warn "PHP CLI not found - cannot run migrations"
+        return 0
+    fi
+    
+    # Run migrations
+    log "Executing database migrations..."
+    if php /app/php/run-migrations.php 2>&1 | while IFS= read -r line; do
+        log "  $line"
+    done; then
+        log "Database migrations completed successfully"
+    else
+        log_warn "Database migrations completed with warnings (see logs above)"
+        log_warn "Application will continue but database logging may not work fully"
+    fi
+}
+
+# =============================================================================
 # 4. START PHP-FPM + NGINX (Nixpacks default)
 # =============================================================================
 start_services() {
@@ -334,6 +373,7 @@ main() {
     setup_oauth
     fix_permissions
     validate_auth
+    run_migrations
 
     log "=========================================="
     log "Configuration complete, starting services"
