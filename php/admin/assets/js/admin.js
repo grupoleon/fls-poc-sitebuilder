@@ -7789,51 +7789,13 @@ class AdminInterface {
             debugLog('Manual task input not found!','error');
         }
 
-        // Setup ClickUp collapsible section
-        this.setupClickUpCollapsible();
-
-        // Setup ClickUp integration checkbox
+        // Setup ClickUp integration checkbox (toggles visibility)
         this.setupClickUpIntegrationToggle();
-    }
-
-    setupClickUpCollapsible() {
-        const header=document.getElementById('clickup-section-header');
-        const content=document.getElementById('clickup-section-content');
-        const icon=document.getElementById('clickup-section-icon');
-        const checkbox=document.getElementById('clickup-integration-checkbox');
-
-        if(header&&content&&icon) {
-            // Initialize collapsed/expanded state based on checkbox (if present)
-            const initiallyExpanded=checkbox? !!checkbox.checked:false;
-            if(initiallyExpanded) {
-                content.style.display='block';
-                icon.style.transform='rotate(0deg)';
-            } else {
-                content.style.display='none';
-                icon.style.transform='rotate(180deg)';
-            }
-
-            header.addEventListener('click',() => {
-                const isCollapsed=content.style.display==='none';
-
-                if(isCollapsed) {
-                    content.style.display='block';
-                    icon.style.transform='rotate(0deg)';
-                } else {
-                    content.style.display='none';
-                    icon.style.transform='rotate(180deg)';
-                }
-            });
-
-            debugLog('ClickUp collapsible section setup complete');
-        }
     }
 
     setupClickUpIntegrationToggle() {
         const checkbox=document.getElementById('clickup-integration-checkbox');
         const taskSection=document.getElementById('clickup-task-section');
-        const content=document.getElementById('clickup-section-content');
-        const icon=document.getElementById('clickup-section-icon');
         const taskSelect=document.getElementById('clickup-task-select');
 
         if(checkbox&&taskSection) {
@@ -7842,16 +7804,12 @@ class AdminInterface {
                 if(checkbox.checked) {
                     taskSection.style.display='block';
                     if(taskSelect) taskSelect.removeAttribute('disabled');
-                    if(content) content.style.display='block';
-                    if(icon) icon.style.transform='rotate(0deg)';
                 } else {
                     taskSection.style.display='none';
                     if(taskSelect) {
                         taskSelect.value='';
                         taskSelect.setAttribute('disabled','disabled');
                     }
-                    if(content) content.style.display='none';
-                    if(icon) icon.style.transform='rotate(180deg)';
                 }
             };
 

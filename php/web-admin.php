@@ -155,7 +155,7 @@
                             </div>
                             <div class="card-body" id="quick-deploy-body">
                                 <!-- ClickUp Integration Toggle -->
-                                <div class="form-group mb-4">
+                                <div class="form-group mb-3">
                                     <label class="checkbox-label"
                                         style="display: flex; align-items: center; cursor: pointer;">
                                         <input type="checkbox" id="clickup-integration-checkbox"
@@ -169,47 +169,34 @@
                                         automatically fill site details</div>
                                 </div>
 
-                                <!-- Collapsible ClickUp Task Section -->
-                                <div id="clickup-task-section" class="mb-4"
-                                    style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                                    <div id="clickup-section-header"
-                                        style="background: #f9fafb; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <i class="fas fa-tasks" style="color: #6366f1;"></i>
-                                            <span style="font-weight: 600; color: #374151;">ClickUp Task
-                                                Selection</span>
-                                        </div>
-                                        <i id="clickup-section-icon" class="fas fa-chevron-up"
-                                            style="color: #9ca3af; transition: transform 0.3s;"></i>
+                                <!-- ClickUp Task Selection (Toggles with checkbox) -->
+                                <div id="clickup-task-section" class="mb-4" style="display: block;">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">ClickUp Task</label>
+                                        <select id="clickup-task-select" class="form-select">
+                                            <option value="">-- Select a ClickUp task --</option>
+                                        </select>
+                                        <div class="form-help">Select a ClickUp task to track deployment progress
+                                            and automatically fill in site details</div>
                                     </div>
-                                    <div id="clickup-section-content" style="padding: 16px; display: none;">
-                                        <div class="form-group mb-4">
-                                            <label class="form-label">ClickUp Task</label>
-                                            <select id="clickup-task-select" class="form-select">
-                                                <option value="">-- Select a ClickUp task --</option>
-                                            </select>
-                                            <div class="form-help">Select a ClickUp task to track deployment progress
-                                                and automatically fill in site details</div>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label">If Not Found in the List, Fetch It
+                                            Directly</label>
+                                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                            <div style="flex: 1;">
+                                                <input type="text" id="manual-task-id-input" class="form-input"
+                                                    placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
+                                                <div class="form-help">Can't find your task in the dropdown? Enter
+                                                    the task ID to fetch it directly from ClickUp</div>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary"
+                                                id="fetch-manual-task-btn"
+                                                style="white-space: nowrap; margin-top: 0;">
+                                                <i class="fas fa-download me-1"></i>Fetch Task
+                                            </button>
                                         </div>
-                                        <div class="form-group mb-0">
-                                            <label class="form-label">If Not Found in the List, Fetch It
-                                                Directly</label>
-                                            <div style="display: flex; gap: 8px; align-items: flex-start;">
-                                                <div style="flex: 1;">
-                                                    <input type="text" id="manual-task-id-input" class="form-input"
-                                                        placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
-                                                    <div class="form-help">Can't find your task in the dropdown? Enter
-                                                        the task ID to fetch it directly from ClickUp</div>
-                                                </div>
-                                                <button type="button" class="btn btn-outline-primary"
-                                                    id="fetch-manual-task-btn"
-                                                    style="white-space: nowrap; margin-top: 0;">
-                                                    <i class="fas fa-download me-1"></i>Fetch Task
-                                                </button>
-                                            </div>
-                                            <div id="manual-task-status" class="mt-2" style="display: none;">
-                                                <div class="alert" id="manual-task-alert"></div>
-                                            </div>
+                                        <div id="manual-task-status" class="mt-2" style="display: none;">
+                                            <div class="alert" id="manual-task-alert"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -872,72 +859,7 @@
                                                 features</div>
                                         </div>
 
-                                        <hr class="my-6" style="border-color: rgba(0,0,0,0.1); margin: 2rem 0;">
-
-                                        <div class="config-section mb-8">
-                                            <h3 class="font-semibold mb-3">Admin Credentials</h3>
-                                            <div
-                                                class="form-help mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-                                                These credentials are used to create the WordPress admin user when
-                                                security
-                                                hardening is enabled.
-                                                They replace the default admin user for enhanced security.
-                                            </div>
-
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div class="form-group">
-                                                    <label class="form-label">
-                                                        <i class="fas fa-user text-gray-500 mr-2"></i>
-                                                        Admin Username
-                                                    </label>
-                                                    <input type="text" class="form-input config-input"
-                                                        data-path="site.admin_user"
-                                                        placeholder="Enter admin username" required>
-                                                    <div class="form-help">This will be the WordPress admin username
-                                                        after
-                                                        security hardening</div>
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label class="form-label">
-                                                        <i class="fas fa-envelope text-gray-500 mr-2"></i>
-                                                        Admin Email
-                                                    </label>
-                                                    <input type="email" class="form-input config-input"
-                                                        data-path="site.admin_email"
-                                                        placeholder="Enter admin email address" required>
-                                                    <div class="form-help">Used for security notifications and admin
-                                                        account
-                                                        recovery</div>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label class="form-label">
-                                                    <i class="fas fa-key text-gray-500 mr-2"></i>
-                                                    Admin Password
-                                                </label>
-                                                <div class="password-input-wrapper">
-                                                    <input type="password" class="form-input config-input"
-                                                        data-path="site.admin_password"
-                                                        placeholder="Enter secure admin password"
-                                                        id="admin-password-input" required>
-                                                    <button type="button" class="password-toggle-btn"
-                                                        onclick="togglePasswordVisibility('admin-password-input')">
-                                                        <i class="fas fa-eye" id="admin-password-toggle-icon"></i>
-                                                    </button>
-                                                    <button type="button" class="password-generate-btn"
-                                                        onclick="generateSecurePassword('admin-password-input')">
-                                                        <i class="fas fa-random"></i> Generate
-                                                    </button>
-                                                </div>
-                                                <div class="form-help">Use a strong password with at least 12 characters
-                                                    including uppercase, lowercase, numbers, and special characters
-                                                </div>
-                                                <div class="password-strength" id="admin-password-strength"></div>
-                                            </div>
-                                        </div>
+                                        <!-- Note: Admin credentials are auto-generated during deployment for enhanced security -->
 
                                         <hr class="my-6" style="border-color: rgba(0,0,0,0.1);">
 
