@@ -479,6 +479,7 @@ parse_and_extract_site_details() {
         ssh_port=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].ssh_connection.ssh_port // empty')
         ssh_path=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].web_root // empty')
         site_id=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .id // empty')
+        site_url=$(echo "$response" | jq -r --arg target_id "$target_site_id" '.company.sites[] | select(.id == $target_id) | .environments[0].domains[0].name // empty')
     else
         log_info "No target site ID specified, using first available site"
         
@@ -488,6 +489,7 @@ parse_and_extract_site_details() {
         ssh_port=$(echo "$response" | jq -r '.company.sites[0].environments[0].ssh_connection.ssh_port // empty')
         ssh_path=$(echo "$response" | jq -r '.company.sites[0].environments[0].web_root // empty')
         site_id=$(echo "$response" | jq -r '.company.sites[0].id // empty')
+        site_url=$(echo "$response" | jq -r '.company.sites[0].environments[0].domains[0].name // empty')
     fi
     
     # Check if SSH details or path are missing - only check API once since web_root is unreliable
@@ -559,7 +561,7 @@ parse_and_extract_site_details() {
     validate_site_data "$site_name" "$ssh_host" "$ssh_port" "$site_id" "$ssh_path"
     
     # Update git.json with extracted data
-    update_git_json "$site_name" "$ssh_host" "$ssh_port" "$site_id" "$ssh_path"
+    update_git_json "$site_name" "$ssh_host" "$ssh_port" "$site_id" "$ssh_path" "$site_url"
 }
 
 # Function to validate extracted site data
@@ -674,6 +676,7 @@ update_git_json() {
     local ssh_port="$3"
     local site_id="$4"
     local ssh_path="$5"
+    local site_url="$6"
     
     # Validate that we have an actual path (no wildcards or empty values)
     if [[ -z "$ssh_path" || "$ssh_path" == "null" ]]; then
@@ -715,6 +718,36 @@ update_git_json() {
         echo "  Host: $ssh_host"
         echo "  Port: $ssh_port"
         echo "  Path: $ssh_path"
+        echo "  Domain: $site_url"
+        
+        # Create credentials.json for deployment workflows
+        log_info "Creating credentials.json with site domain..."
+        local creds_file="$ROOT_DIR/tmp/credentials.json"
+        mkdir -p "$ROOT_DIR/tmp"
+        
+        jq -n \
+            --arg site_url "$site_url" \
+            --arg site_name "$site_name" \
+            --arg ssh_host "$ssh_host" \
+            --argjson ssh_port "$ssh_port" \
+            --arg ssh_path "$ssh_path" \
+            --arg site_id "$site_id" \
+            '{
+                site_url: $site_url,
+                site_name: $site_name,
+                ssh_connection: {
+                    host: $ssh_host,
+                    port: $ssh_port,
+                    path: $ssh_path
+                },
+                site_id: $site_id
+            }' > "$creds_file"
+        
+        if [[ -f "$creds_file" ]]; then
+            log_success "Created credentials.json with domain: $site_url"
+        else
+            log_warning "Failed to create credentials.json"
+        fi
         
         # Store credentials in GitHub secrets
         if store_github_secrets "$site_name" "$ssh_host" "$ssh_port" "$ssh_path" "$site_id"; then
