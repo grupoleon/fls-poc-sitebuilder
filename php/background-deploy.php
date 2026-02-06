@@ -335,7 +335,8 @@ try {
         $commandTrimmed = strlen($command) > 100 ? substr($command, 0, 100) . '...' : $command;
         # writeDeploymentLog("Executing: $commandTrimmed", 'INFO', $stepKey);
 
-        $process = proc_open($command, $descriptorspec, $pipes);
+        // Pass environment variables directly to proc_open to ensure proper propagation
+        $process = proc_open($command, $descriptorspec, $pipes, $scriptPath, $envVars);
 
         if (is_resource($process)) {
             // Close stdin
