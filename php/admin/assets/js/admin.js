@@ -1917,6 +1917,9 @@ class AdminInterface {
                 debugLog('Loading configuration before prefilling task data...');
                 await this.loadConfiguration();
 
+                // Wait for form fields to be fully populated before capturing values
+                await new Promise(resolve => setTimeout(resolve,300));
+
                 // Capture current values BEFORE prefilling to track changes
                 const beforeValues=this.captureCurrentConfigValues();
 
@@ -2936,6 +2939,9 @@ class AdminInterface {
                     // CRITICAL: Load/reload configuration to ensure all form fields exist
                     debugLog('Loading configuration before prefilling manual task data...');
                     await this.loadConfiguration();
+
+                    // Wait for form fields to be fully populated before capturing values
+                    await new Promise(resolve => setTimeout(resolve,300));
 
                     // Capture current values BEFORE prefilling to track changes
                     const beforeValues=this.captureCurrentConfigValues();
