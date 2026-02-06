@@ -101,65 +101,35 @@ if (! $config['success']) {
 
 $apiToken = $config['api_token'];
 
-// Prepare formatted comment with deployment information (ClickUp comment formatting)
-$commentParts = [];
-addCommentPart($commentParts, '✅ DEPLOYMENT COMPLETED', ['bold' => true]);
-addCommentPart($commentParts, "\n\n");
-addCommentPart($commentParts, 'Deployment Date: ', ['bold' => true]);
-addCommentPart($commentParts, $deploymentDate);
-addCommentPart($commentParts, "\n");
-
-$plainLines = [];
-$plainLines[] = '✅ DEPLOYMENT COMPLETED';
+// Prepare plain text comment with deployment information
+$plainLines   = [];
+$plainLines[] = 'DEPLOYMENT COMPLETED';
 $plainLines[] = '';
 $plainLines[] = 'Deployment Date: ' . $deploymentDate;
 $plainLines[] = '';
 
 if ($siteUrl) {
-    $siteUrl = trim($siteUrl);
-    $siteLink = normalizeUrl($siteUrl);
-    addCommentPart($commentParts, '🌐 Site URL: ', ['bold' => true]);
-    addCommentPart($commentParts, $siteUrl, ['link' => $siteLink]);
-    addCommentPart($commentParts, "\n");
-    $plainLines[] = '🌐 Site URL: ' . $siteLink;
+    $siteUrl      = trim($siteUrl);
+    $siteLink     = normalizeUrl($siteUrl);
+    $plainLines[] = 'Site URL: ' . $siteLink;
 }
 
 if ($adminUrl) {
-    $adminUrl = trim($adminUrl);
-    $adminLink = normalizeUrl($adminUrl);
-    addCommentPart($commentParts, '🔒 Admin URL: ', ['bold' => true]);
-    addCommentPart($commentParts, $adminUrl, ['link' => $adminLink]);
-    addCommentPart($commentParts, "\n");
-    $plainLines[] = '🔒 Admin URL: ' . $adminLink;
+    $adminUrl     = trim($adminUrl);
+    $adminLink    = normalizeUrl($adminUrl);
+    $plainLines[] = 'Admin URL: ' . $adminLink;
 }
 
 if ($adminUser || $adminPass) {
-    addCommentPart($commentParts, "\n");
-    addCommentPart($commentParts, 'Login Credentials', ['bold' => true]);
-    addCommentPart($commentParts, "\n");
     $plainLines[] = '';
-    $plainLines[] = 'Login Credentials';
+    $plainLines[] = 'Login Credentials:';
     if ($adminUser) {
-        addCommentPart($commentParts, 'Username: ', ['bold' => true]);
-        addCommentPart($commentParts, $adminUser, ['code' => true]);
-        addCommentPart($commentParts, "\n");
-        $plainLines[] = 'Username: ' . $adminUser;
+        $plainLines[] = '  Username: ' . $adminUser;
     }
     if ($adminPass) {
-        addCommentPart($commentParts, 'Password: ', ['bold' => true]);
-        addCommentPart($commentParts, $adminPass, ['code' => true]);
-        addCommentPart($commentParts, "\n");
-        $plainLines[] = 'Password: ' . $adminPass;
+        $plainLines[] = '  Password: ' . $adminPass;
     }
 }
-
-addCommentPart($commentParts, "\n");
-addCommentPart($commentParts, "—");
-addCommentPart($commentParts, "\n");
-addCommentPart($commentParts, 'This is an automated message from the Site Builder.', ['italic' => true]);
-$plainLines[] = '';
-$plainLines[] = '—';
-$plainLines[] = 'This is an automated message from the Site Builder.';
 
 $commentTextPlain = implode("\n", $plainLines);
 
@@ -168,7 +138,6 @@ $commentUrl = "https://api.clickup.com/api/v2/task/{$taskId}/comment";
 
 $commentData = [
     'comment_text' => $commentTextPlain,
-    'comment'      => $commentParts,
     'notify_all'   => true,
 ];
 

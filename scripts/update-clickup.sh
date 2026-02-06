@@ -120,30 +120,34 @@ log_info "Admin URL: ${ADMIN_URL:-'N/A'}"
 log_info "Admin User: ${ADMIN_USER:-'N/A'}"
 
 # Prepare comment text with deployment information
-COMMENT_TEXT="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-COMMENT_TEXT+="✅ **DEPLOYMENT COMPLETED**\n"
-COMMENT_TEXT+="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-COMMENT_TEXT+="**Deployment Date:** ${DEPLOYMENT_DATE}\n\n"
+COMMENT_TEXT="DEPLOYMENT COMPLETED
+
+Deployment Date: ${DEPLOYMENT_DATE}
+"
 
 if [[ -n "$SITE_URL" ]]; then
-    COMMENT_TEXT+="**🌐 Site URL:** [${SITE_URL}](https://${SITE_URL})\n"
+    COMMENT_TEXT+="
+Site URL: https://${SITE_URL}"
 fi
 
 if [[ -n "$ADMIN_URL" ]]; then
-    COMMENT_TEXT+="**🔐 Admin URL:** [${ADMIN_URL}](https://${ADMIN_URL})\n"
+    COMMENT_TEXT+="
+Admin URL: https://${ADMIN_URL}"
 fi
 
 if [[ -n "$ADMIN_USER" || -n "$ADMIN_PASS" ]]; then
-    COMMENT_TEXT+="\n**Login Credentials:**\n"
+    COMMENT_TEXT+="
+
+Login Credentials:"
     if [[ -n "$ADMIN_USER" ]]; then
-        COMMENT_TEXT+="- **Username:** \`${ADMIN_USER}\`\n"
+        COMMENT_TEXT+="
+  Username: ${ADMIN_USER}"
     fi
     if [[ -n "$ADMIN_PASS" ]]; then
-        COMMENT_TEXT+="- **Password:** \`${ADMIN_PASS}\`\n"
+        COMMENT_TEXT+="
+  Password: ${ADMIN_PASS}"
     fi
 fi
-
-COMMENT_TEXT+="\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
 # Prepare JSON payload for comment
 COMMENT_PAYLOAD=$(jq -n \
