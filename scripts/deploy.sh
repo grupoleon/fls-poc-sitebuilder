@@ -217,6 +217,16 @@ upload_configs() {
     upload_file "$CONFIG_JSON_FILE"
     upload_file "$THEME_CONFIG_FILE"
     
+    # Upload auth.json if it exists (for Google OAuth configuration)
+    local auth_config_file="$ROOT_DIR/config/auth.json"
+    if [[ -f "$auth_config_file" ]]; then
+        print_info "Uploading auth configuration..."
+        upload_file "$auth_config_file"
+        print_success "Auth configuration uploaded"
+    else
+        print_info "No auth.json found - Google OAuth can be configured later"
+    fi
+    
     # Verify theme config was uploaded correctly
     print_info "Verifying theme config upload..."
     if ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "test -f /tmp/theme-config.json"; then
