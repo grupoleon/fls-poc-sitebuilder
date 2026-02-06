@@ -1987,7 +1987,7 @@ class AdminInterface {
         if(recaptchaSecret) values.recaptcha_secret=recaptchaSecret.value||'';
 
         // Admin email
-        const emailInput=document.querySelector('[data-path="site.admin.email"]');
+        const emailInput=document.querySelector('[data-path="site.admin_email"]');
         if(emailInput) values.admin_email=emailInput.value||'';
 
         // Social links
@@ -2635,7 +2635,7 @@ class AdminInterface {
             // Also fill admin email form input directly
             console.log('Attempting to fill admin email input...');
             this.retrySetElement(() => {
-                const input=document.querySelector('[data-path="site.admin.email"]');
+                const input=document.querySelector('[data-path="site.admin_email"]');
                 console.log('Admin email input found:',!!input);
                 if(input) {
                     const currentValue=input.value||'';
@@ -8721,22 +8721,8 @@ class AdminInterface {
     loadConfigData(configs) {
         debugLog('Loading config data:',configs);
 
-        // Load navigation menu items - check multiple possible paths
-        let menuItems=null;
-        if(configs.site?.navigation?.menu_items) {
-            menuItems=configs.site.navigation.menu_items;
-        } else if(configs.main?.site?.navigation?.menu_items) {
-            menuItems=configs.main.site.navigation.menu_items;
-        } else if(configs.config?.site?.navigation?.menu_items) {
-            menuItems=configs.config.site.navigation.menu_items;
-        } else if(configs.navigation?.menu_items) {
-            menuItems=configs.navigation.menu_items;
-        }
-
-        debugLog('Menu items found:',menuItems);
-        if(menuItems) {
-            this.loadNavigationItems(menuItems);
-        }
+        // Navigation feature removed - skip menu items loading
+        debugLog('Navigation feature disabled - skipping menu items');
 
         // Load plugin lists - check multiple possible paths
         let plugins=null;
@@ -8867,9 +8853,8 @@ class AdminInterface {
                     menuItems.push({title,url});
                 }
             });
-            // Always save menu items, even if empty array (to clear existing items)
-            dynamicData['site.navigation.menu_items']=menuItems;
-            debugLog('DEBUG: Final menu items to save:',menuItems);
+            // Navigation feature removed - skip saving menu items
+            debugLog('DEBUG: Navigation feature disabled - skipping menu items save');
         }
 
         // Collect plugins (only for plugins config)

@@ -67,6 +67,60 @@ print_success() { log_success "$1"; }
 print_warning() { log_warning "$1"; }
 print_error() { log_error "$1"; }
 
+# --- Password Generation ---
+# Generate a strong random password for each deployment
+generate_strong_password() {
+    local length=16
+    local password=""
+    
+    # Define character sets (removed ambiguous characters for clarity)
+    local uppercase="ABCDEFGHJKLMNPQRSTUVWXYZ"  # Removed I, O
+    local lowercase="abcdefghijkmnopqrstuvwxyz"  # Removed l, o
+    local numbers="23456789"  # Removed 0, 1
+    local special="!@#$%^&*()-_=+[]{}|;:,.<>?"
+    
+    # Ensure at least one character from each set
+    password+=$(echo -n "$uppercase" | fold -w1 | shuf | head -c1)
+    password+=$(echo -n "$lowercase" | fold -w1 | shuf | head -c1)
+    password+=$(echo -n "$numbers" | fold -w1 | shuf | head -c1)
+    password+=$(echo -n "$special" | fold -w1 | shuf | head -c1)
+    
+    # Fill remaining length with random characters from all sets
+    local all_chars="${uppercase}${lowercase}${numbers}${special}"
+    local remaining=$((length - 4))
+    password+=$(echo -n "$all_chars" | fold -w1 | shuf | head -c${remaining})
+    
+    # Shuffle the password to randomize character positions
+    echo -n "$password" | fold -w1 | shuf | tr -d '\n'
+}
+
+# Generate and update admin password in config before deployment
+generate_and_update_admin_password() {
+    print_info "Generating new admin password for this deployment..."
+    
+    local new_password
+    new_password=$(generate_strong_password)
+    
+    if [[ -z "$new_password" ]]; then
+        print_error "Failed to generate admin password"
+        exit 1
+    fi
+    
+    print_success "Generated strong admin password (16 characters with mixed case, numbers, special chars)"
+    
+    # Update config.json with new password
+    print_info "Updating config.json with generated password..."
+    if jq --arg pass "$new_password" '.site.admin_password = $pass' "$CONFIG_JSON_FILE" > "${CONFIG_JSON_FILE}.tmp" 2>/dev/null; then
+        mv "${CONFIG_JSON_FILE}.tmp" "$CONFIG_JSON_FILE"
+        print_success "Config file updated with new password"
+        print_info "Password will be uploaded to server and appear in ClickUp comments after deployment"
+    else
+        print_error "Failed to update config.json with new password"
+        rm -f "${CONFIG_JSON_FILE}.tmp"
+        exit 1
+    fi
+}
+
 # --- Core Functions ---
 check_github_token() {
     if [[ -z "${GITHUB_TOKEN:-}" ]]; then
@@ -834,6 +888,11 @@ main() {
     
     # Trap errors to log failures
     trap 'log_step_failed "Deployment" "Script terminated unexpectedly"; end_deployment_session "FAILED"; exit 1' ERR
+    
+    # Generate new admin password before uploading configs (each deployment gets unique credentials)
+    print_info "Preparing security credentials..."
+    generate_and_update_admin_password
+    echo
     
     log_step_start "STEP 1/6: Uploading configuration files"
     upload_configs

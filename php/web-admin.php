@@ -445,7 +445,6 @@
                                 <a href="#" class="tab-link" data-subtab="site-config">Kinsta Settings</a>
                                 <a href="#" class="tab-link" data-subtab="security-config">Security</a>
                                 <a href="#" class="tab-link" data-subtab="integrations-config">Integrations</a>
-                                <a href="#" class="tab-link" data-subtab="navigation-config">Navigation</a>
                                 <a href="#" class="tab-link" data-subtab="plugins-config">Plugins</a>
                                 <a href="#" class="tab-link" data-subtab="policies-config">Policies</a>
                             </div>
@@ -893,7 +892,7 @@
                                                         Admin Username
                                                     </label>
                                                     <input type="text" class="form-input config-input"
-                                                        data-path="site.admin.username"
+                                                        data-path="site.admin_user"
                                                         placeholder="Enter admin username" required>
                                                     <div class="form-help">This will be the WordPress admin username
                                                         after
@@ -906,7 +905,7 @@
                                                         Admin Email
                                                     </label>
                                                     <input type="email" class="form-input config-input"
-                                                        data-path="site.admin.email"
+                                                        data-path="site.admin_email"
                                                         placeholder="Enter admin email address" required>
                                                     <div class="form-help">Used for security notifications and admin
                                                         account
@@ -921,7 +920,7 @@
                                                 </label>
                                                 <div class="password-input-wrapper">
                                                     <input type="password" class="form-input config-input"
-                                                        data-path="site.admin.password"
+                                                        data-path="site.admin_password"
                                                         placeholder="Enter secure admin password"
                                                         id="admin-password-input" required>
                                                     <button type="button" class="password-toggle-btn"
@@ -2450,67 +2449,6 @@
                                         <button type="button" class="btn btn-primary save-config-btn"
                                             data-type="integrations">
                                             Save Integrations Configuration
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Navigation Configuration -->
-                        <!-- Note: Navigation is saved to config.json (main config) to avoid duplication in site.json -->
-                        <div id="navigation-config-tab" class="subtab-content">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h2 class="card-title">Navigation Configuration</h2>
-                                </div>
-                                <div class="card-body">
-                                    <form id="main-config-form">
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div class="form-group">
-                                                <div class="toggle-container">
-                                                    <div class="toggle-wrapper">
-                                                        <input type="checkbox" class="config-input toggle-input"
-                                                            id="custom-navigation-toggle"
-                                                            data-path="site.navigation.enabled">
-                                                        <div class="toggle-switch"></div>
-                                                    </div>
-                                                    <label class="toggle-label" for="custom-navigation-toggle">
-                                                        <i class="fas fa-bars toggle-icon"></i>
-                                                        Enable Custom Navigation
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="toggle-container">
-                                                    <div class="toggle-wrapper">
-                                                        <input type="checkbox" class="config-input toggle-input"
-                                                            id="replace-menus-toggle"
-                                                            data-path="site.navigation.replace_existing">
-                                                        <div class="toggle-switch"></div>
-                                                    </div>
-                                                    <label class="toggle-label" for="replace-menus-toggle">
-                                                        <i class="fas fa-exchange-alt toggle-icon"></i>
-                                                        Replace Existing Menus
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <label class="form-label">Menu Items</label>
-                                                <button type="button" class="btn btn-outline-primary btn-sm"
-                                                    id="add-menu-item-btn">
-                                                    <i class="fas fa-plus"></i> Add Menu Item
-                                                </button>
-                                            </div>
-                                            <div id="menu-items-container">
-                                                <!-- Menu items will be dynamically populated -->
-                                            </div>
-                                        </div>
-
-                                        <button type="button" class="btn btn-primary save-config-btn" data-type="main">
-                                            Save Navigation Configuration
                                         </button>
                                     </form>
                                 </div>

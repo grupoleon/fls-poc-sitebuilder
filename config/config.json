@@ -1,46 +1,7 @@
 {
     "site": {
-        "admin": {
-            "username": "FrontlineStrategies",
-            "email": "vishnu@frontlinestrategies.co",
-            "password": ""
-        },
         "settings": {
             "delete_default_pages": true
-        },
-        "navigation": {
-            "enabled": false,
-            "replace_existing": false,
-            "menu_items": [
-                {
-                    "title": "Home",
-                    "url": "/"
-                },
-                {
-                    "title": "About",
-                    "url": "/about"
-                },
-                {
-                    "title": "Get Involved",
-                    "url": "/get-involved"
-                },
-                {
-                    "title": "Issues",
-                    "url": "/issues"
-                },
-                {
-                    "title": "Endorsements",
-                    "url": "/endorsements"
-                },
-                {
-                    "title": "Contact",
-                    "url": "/contact"
-                },
-                {
-                    "title": "News",
-                    "url": "/news"
-                }
-            ]
         },
         "kinsta_token": "",
         "logo": "logo_1763567165.png",
