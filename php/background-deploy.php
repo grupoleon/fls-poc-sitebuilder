@@ -322,16 +322,15 @@ try {
             'echo "=== End Debug ==="',
         ];
 
-        $envString = '';
+        // Build environment string using env command for reliable propagation
+        $envPairs = [];
         foreach ($envVars as $key => $value) {
-            $envString .= "export $key='$value'; ";
+            $envPairs[] = escapeshellarg($key . '=' . $value);
         }
-
-        // Explicitly unset problematic environment variables
-        $envString .= 'unset SUDO_USER SUDO_UID SUDO_GID; ';
+        $envString = 'env ' . implode(' ', $envPairs);
 
         $debugString = implode('; ', $debugCommands) . '; ';
-        $command     = "cd " . escapeshellarg($scriptPath) . " && $envString $debugString /bin/bash {$stepInfo['script']}";
+        $command     = "cd " . escapeshellarg($scriptPath) . " && $envString /bin/bash -c " . escapeshellarg("$debugString /bin/bash {$stepInfo['script']}");
         #shorten command for logging upto 100 chars and add ... if longer
         $commandTrimmed = strlen($command) > 100 ? substr($command, 0, 100) . '...' : $command;
         # writeDeploymentLog("Executing: $commandTrimmed", 'INFO', $stepKey);
