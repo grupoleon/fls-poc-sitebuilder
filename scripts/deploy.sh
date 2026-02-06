@@ -54,6 +54,9 @@ KINSTA_HOST="$(read_config '.host')"
 KINSTA_USER="$(read_config '.user')"
 KINSTA_PORT="$(read_config '.port')"
 
+# SSH options to suppress warnings and avoid known_hosts issues
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+
 # Preserve USER environment variable if properly set, otherwise set it to avoid UID fallback
 if [[ -z "${USER:-}" ]] || [[ "$USER" =~ ^[0-9]+$ ]]; then
     # Fallback to vishnu since background-deploy.php should have set USER=vishnu

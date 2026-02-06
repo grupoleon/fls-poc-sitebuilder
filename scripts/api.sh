@@ -170,9 +170,31 @@ api_request() {
                     log_error "DNS resolution failed for $url. Exit code: $curl_exit_code" "API" >&2
                     exit 1
                 fi
+            elif [[ $curl_exit_code -eq 35 ]]; then
+                # SSL connection error - retry with exponential backoff
+                if [[ $retry_count -lt $max_retries ]]; then
+                    local delay=$((base_delay * (2 ** retry_count)))
+                    log_warning "SSL connection error for $url, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                    sleep "$delay"
+                    ((retry_count++))
+                    continue
+                else
+                    log_error "SSL connection failed after $max_retries retries: $url (Exit code: 35)" "API"
+                    log_error "This may be a temporary network issue. Please try again in a few minutes." "API"
+                    exit 1
+                fi
             else
-                log_error "API request failed: $url (Exit code: $curl_exit_code)" "API"
-                exit 1
+                # Other curl errors - check if retryable
+                if [[ $retry_count -lt $max_retries ]]; then
+                    local delay=$((base_delay * (2 ** retry_count)))
+                    log_warning "API request failed with exit code $curl_exit_code, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                    sleep "$delay"
+                    ((retry_count++))
+                    continue
+                else
+                    log_error "API request failed: $url (Exit code: $curl_exit_code)" "API"
+                    exit 1
+                fi
             fi
         fi
         
