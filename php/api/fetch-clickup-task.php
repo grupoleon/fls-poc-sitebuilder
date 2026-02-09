@@ -349,6 +349,10 @@ function saveTaskToFile($taskId, $processedData, $rawData)
 }
 
 // ========== Main Execution ==========
+// Guard: skip execution when included by another file for helper functions only
+if (defined('CLICKUP_HELPERS_ONLY')) {
+    return;
+}
 
 // Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -410,8 +414,22 @@ $processedData = processTaskData($rawTaskData);
 try {
     saveTaskToFile($taskId, $processedData, $rawTaskData);
 } catch (Exception $e) {
-    // Continue even if saving fails
     error_log("Failed to save task {$taskId}: " . $e->getMessage());
+}
+
+// Save task ID to database for persistence
+try {
+    require_once __DIR__ . '/../admin/includes/DatabaseLogger.php';
+    $db = DatabaseLogger::getInstance();
+    if ($db->isAvailable()) {
+        $db->saveClickUpTaskId(
+            $taskId,
+            $processedData['task_name'] ?? null,
+            $processedData['status'] ?? null
+        );
+    }
+} catch (Exception $e) {
+    error_log("Failed to save task ID to database: " . $e->getMessage());
 }
 
 // Return processed task data

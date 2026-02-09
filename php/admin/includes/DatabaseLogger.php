@@ -539,6 +539,79 @@ class DatabaseLogger
         }
     }
 
+    // ============================================
+    // CLICKUP TASK MANAGEMENT
+    // ============================================
+
+    /**
+     * Save a ClickUp task ID to the database
+     * Uses INSERT ... ON DUPLICATE KEY UPDATE to upsert
+     *
+     * @param string $taskId ClickUp task ID
+     * @param string|null $taskName Task name
+     * @param string|null $status Task status
+     * @return bool Success status
+     */
+    public function saveClickUpTaskId($taskId, $taskName = null, $status = null)
+    {
+        if (! $this->isAvailable || empty($taskId)) {
+            return false;
+        }
+
+        try {
+            $sql = "INSERT INTO clickup_tasks (task_id, task_name, status, last_fetched_at)
+                    VALUES (?, ?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE
+                        task_name = COALESCE(VALUES(task_name), task_name),
+                        status = COALESCE(VALUES(status), status),
+                        last_fetched_at = NOW()";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$taskId, $taskName, $status]);
+            return true;
+        } catch (PDOException $e) {
+            error_log('DatabaseLogger: Failed to save ClickUp task ID - ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get all saved ClickUp task IDs from the database
+     *
+     * @return array Array of task records [{task_id, task_name, status, last_fetched_at}]
+     */
+    public function getAllClickUpTaskIds()
+    {
+        if (! $this->isAvailable) {
+            return [];
+        }
+
+        try {
+            $sql  = "SELECT task_id, task_name, status, last_fetched_at
+                     FROM clickup_tasks ORDER BY last_fetched_at DESC";
+            $stmt = $this->pdo->query($sql);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('DatabaseLogger: Failed to fetch ClickUp task IDs - ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Remove a ClickUp task ID from the database
+     *
+     * @param string $taskId ClickUp task ID
+     * @return bool Success status
+     */
+    public function removeClickUpTaskId($taskId)
+    {
+        $stmt = $this->execute(
+            "DELETE FROM clickup_tasks WHERE task_id = ?",
+            [$taskId]
+        );
+        return $stmt !== false;
+    }
+
     /**
      * Close database connection
      */

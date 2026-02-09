@@ -1876,6 +1876,9 @@ class AdminInterface {
 
             if(data.success&&data.tasks) {
                 this.populateClickUpTasksSelect(data.tasks);
+                if(data.recovered>0) {
+                    debugLog(`Auto-recovered ${data.recovered} task(s) from ClickUp API`);
+                }
             } else {
                 debugLog('No ClickUp tasks found or API error');
             }
