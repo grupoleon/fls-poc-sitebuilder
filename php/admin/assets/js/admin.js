@@ -1930,11 +1930,33 @@ class AdminInterface {
                 debugLog('Task prefilling started - form values captured');
 
                 // Now prefill with task data after config is loaded
+                this._pendingPrefillOps=0; // Reset pending ops counter
                 this.prefillDeploymentForm(data.task);
 
-                // Wait for all async prefill operations to complete
-                // Using 1500ms to account for retrySetElement (up to 10 retries * 300ms for theme)
-                setTimeout(async () => {
+                // Wait for all retrySetElement operations to complete before saving
+                // Polls _pendingPrefillOps counter instead of using a fixed timeout
+                const waitForPrefillComplete=() => {
+                    return new Promise((resolve) => {
+                        let elapsed=0;
+                        const maxWait=6000; // Safety cap at 6 seconds
+                        const pollInterval=200;
+                        const check=() => {
+                            elapsed+=pollInterval;
+                            if((this._pendingPrefillOps||0)<=0||elapsed>=maxWait) {
+                                if(elapsed>=maxWait) {
+                                    debugLog(`Prefill wait timed out after ${maxWait}ms with ${this._pendingPrefillOps} pending ops`,'warn');
+                                }
+                                resolve();
+                            } else {
+                                setTimeout(check,pollInterval);
+                            }
+                        };
+                        // Start polling after initial 500ms to allow first attempts
+                        setTimeout(check,500);
+                    });
+                };
+
+                waitForPrefillComplete().then(async () => {
                     // Clear the prefilling flag
                     this.isTaskPrefilling=false;
                     debugLog('Task prefilling completed - flag cleared');
@@ -1952,7 +1974,7 @@ class AdminInterface {
 
                     // Show changes preview (will auto-close)
                     this.showChangesPreview(changes,data.task);
-                },1500); // Wait for retrySetElement operations to complete (increased from 800ms)
+                });
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
             }
@@ -1988,16 +2010,20 @@ class AdminInterface {
         const recaptchaSecret=document.querySelector('[data-path="authentication.api_keys.recaptcha.secret_key"]');
         if(recaptchaSecret) values.recaptcha_secret=recaptchaSecret.value||'';
 
-        // Admin email
-        const emailInput=document.querySelector('[data-path="site.admin_email"]');
+        // Admin email (data-path="admin_email" in site-config-form)
+        const emailInput=document.querySelector('[data-path="admin_email"]');
         if(emailInput) values.admin_email=emailInput.value||'';
 
         // Social links
-        const socialPaths=['facebook','twitter','instagram','youtube','winred'];
+        const socialPaths=['facebook','twitter','instagram','youtube'];
         socialPaths.forEach(platform => {
             const input=document.querySelector(`[data-path="integrations.social_links.${platform}"]`);
             if(input) values[`social_${platform}`]=input.value||'';
         });
+
+        // WinRed donation link (separate path from social links)
+        const winredInput=document.querySelector('[data-path="integrations.donation.winred"]');
+        if(winredInput) values.social_winred=winredInput.value||'';
 
         // Security toggles
         const securityToggles=[
@@ -2183,30 +2209,39 @@ class AdminInterface {
                 await this.saveActiveTheme(themeSelect.value);
             }
 
-            // Save site_title and display_name to site.json from task_name
-            if(taskData&&taskData.task_name) {
-                const siteTitle=taskData.task_name;
-                const displayName=this.slugify(taskData.task_name);
+            // Save site_title, display_name, and admin_email to site.json
+            if(taskData) {
+                const siteData={};
 
-                console.log(`Saving to site.json: site_title="${siteTitle}", display_name="${displayName}"`);
+                if(taskData.task_name) {
+                    siteData.site_title=taskData.task_name;
+                    siteData.display_name=this.slugify(taskData.task_name);
+                }
 
-                const siteResponse=await fetch('?action=save_config',{
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        type: 'site',
-                        data: {
-                            site_title: siteTitle,
-                            display_name: displayName
-                        }
-                    })
-                });
-                const siteResult=await siteResponse.json();
+                // Also persist admin_email to site.json if available
+                const adminEmailInput=document.querySelector('[data-path="admin_email"]');
+                if(adminEmailInput&&adminEmailInput.value) {
+                    siteData.admin_email=adminEmailInput.value;
+                }
 
-                if(siteResult.success) {
-                    console.log('✅ site.json updated with site_title and display_name');
-                } else {
-                    console.error('Failed to update site.json:',siteResult.message);
+                if(Object.keys(siteData).length>0) {
+                    console.log('Saving to site.json:',siteData);
+
+                    const siteResponse=await fetch('?action=save_config',{
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            type: 'site',
+                            data: siteData
+                        })
+                    });
+                    const siteResult=await siteResponse.json();
+
+                    if(siteResult.success) {
+                        console.log('✅ site.json updated successfully');
+                    } else {
+                        console.error('Failed to update site.json:',siteResult.message);
+                    }
                 }
             }
 
@@ -2411,6 +2446,10 @@ class AdminInterface {
 
     // Helper method to retry setting element values with delays
     retrySetElement(setter,elementName,maxAttempts=5,delayMs=200) {
+        // Track pending prefill operations for race-condition-free saving
+        if(!this._pendingPrefillOps) this._pendingPrefillOps=0;
+        this._pendingPrefillOps++;
+
         let attempts=0;
         const trySet=() => {
             attempts++;
@@ -2418,10 +2457,13 @@ class AdminInterface {
             if(!success&&attempts<maxAttempts) {
                 debugLog(`${elementName} not found, retry ${attempts}/${maxAttempts} in ${delayMs}ms`,'warn');
                 setTimeout(trySet,delayMs);
-            } else if(!success) {
-                debugLog(`${elementName} not found after ${maxAttempts} attempts`,'error');
             } else {
-                debugLog(`${elementName} set successfully on attempt ${attempts}`);
+                if(!success) {
+                    debugLog(`${elementName} not found after ${maxAttempts} attempts`,'error');
+                } else {
+                    debugLog(`${elementName} set successfully on attempt ${attempts}`);
+                }
+                this._pendingPrefillOps--;
             }
         };
         // Start first attempt immediately
@@ -2637,7 +2679,8 @@ class AdminInterface {
             // Also fill admin email form input directly
             console.log('Attempting to fill admin email input...');
             this.retrySetElement(() => {
-                const input=document.querySelector('[data-path="site.admin_email"]');
+                // Try the site-config-form input (data-path="admin_email") first
+                const input=document.querySelector('[data-path="admin_email"]');
                 console.log('Admin email input found:',!!input);
                 if(input) {
                     const currentValue=input.value||'';
@@ -2949,17 +2992,35 @@ class AdminInterface {
                     const beforeValues=this.captureCurrentConfigValues();
 
                     // Now prefill with task data after config is loaded
+                    this._pendingPrefillOps=0;
                     this.prefillDeploymentForm(data.task);
 
-                    // Wait for async prefill operations then save and show preview
-                    setTimeout(async () => {
+                    // Wait for all retrySetElement operations to complete before saving
+                    const waitForOps=() => {
+                        return new Promise((resolve) => {
+                            let elapsed=0;
+                            const maxWait=6000;
+                            const pollInterval=200;
+                            const check=() => {
+                                elapsed+=pollInterval;
+                                if((this._pendingPrefillOps||0)<=0||elapsed>=maxWait) {
+                                    resolve();
+                                } else {
+                                    setTimeout(check,pollInterval);
+                                }
+                            };
+                            setTimeout(check,500);
+                        });
+                    };
+
+                    waitForOps().then(async () => {
                         const afterValues=this.captureCurrentConfigValues();
                         const changes=this.calculateChanges(beforeValues,afterValues,data.task);
                         if(Object.keys(changes).length>0) {
                             await this.saveClickUpChangesToBackend(changes,data.task);
                         }
                         this.showChangesPreview(changes,data.task);
-                    },800);
+                    });
                 } catch(prefillError) {
                     debugLog('Error during prefillDeploymentForm:',prefillError,'error');
                     // Inform user the fetch succeeded but prefill had issues
@@ -3808,6 +3869,25 @@ class AdminInterface {
                 }
             });
         });
+
+        // Populate deployment-tab fields that don't have data-path attributes
+        if(configs.site) {
+            const deploymentSiteTitle=document.getElementById('deployment-site-title');
+            if(deploymentSiteTitle&&configs.site.site_title&&!deploymentSiteTitle.value) {
+                deploymentSiteTitle.value=configs.site.site_title;
+            }
+        }
+
+        // Pre-select the active theme in deployment dropdown if theme config is available
+        if(configs.theme&&configs.theme.active_theme) {
+            const deploymentThemeSelect=document.getElementById('deployment-theme-select');
+            if(deploymentThemeSelect) {
+                const option=deploymentThemeSelect.querySelector(`option[value="${configs.theme.active_theme}"]`);
+                if(option) {
+                    option.selected=true;
+                }
+            }
+        }
 
         // Load dynamic configuration data for new components
         // Pass the full configs object to handle all config sections

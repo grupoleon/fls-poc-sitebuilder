@@ -270,7 +270,8 @@ function handleRequest()
 
         switch ($action) {
             case 'get_configs':
-                $mainConfig = $configManager->getConfig('main') ?: $configManager->getConfig('config');
+                $mainConfig  = $configManager->getConfig('main') ?: $configManager->getConfig('config');
+                $themeConfig = $configManager->getConfig('theme');
                 echo json_encode([
                     'success' => true,
                     'data'    => [
@@ -278,6 +279,7 @@ function handleRequest()
                         'site'   => $configManager->getConfig('site'),
                         'main'   => $mainConfig,
                         'config' => $mainConfig, // Fallback for different naming
+                        'theme'  => $themeConfig,
                     ],
                 ]);
                 break;
