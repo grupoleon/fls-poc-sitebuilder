@@ -121,28 +121,43 @@ if ($action === 'list') {
     // 2. Save filesystem tasks to DB (populate DB from existing files)
     syncFilesystemToDb($fsTasks, $db);
 
-    // 3. Find task IDs in DB that don't have JSON files
+    // 3. Find task IDs in DB that don't have JSON files OR are missing either file
     $dbTasks    = $db->isAvailable() ? $db->getAllClickUpTaskIds() : [];
     $missingIds = [];
 
     foreach ($dbTasks as $dbTask) {
-        if (! isset($fsTasks[$dbTask['task_id']])) {
-            $missingIds[] = $dbTask['task_id'];
+        $taskId   = $dbTask['task_id'];
+        $mainFile = $tasksDir . '/' . $taskId . '.json';
+        $rawFile  = $tasksDir . '/' . $taskId . '-raw.json';
+
+        // Check if task is completely missing or if either file is missing
+        if (! isset($fsTasks[$taskId]) || ! file_exists($mainFile) || ! file_exists($rawFile)) {
+            $missingIds[] = $taskId;
+            // Remove from fsTasks if incomplete to ensure clean recovery
+            if (isset($fsTasks[$taskId])) {
+                unset($fsTasks[$taskId]);
+            }
         }
     }
 
-    // 4. Auto-fetch missing tasks from ClickUp API
+    // 4. Auto-fetch missing/incomplete tasks from ClickUp API
     $recovered = 0;
     if (! empty($missingIds)) {
         $config = getClickUpConfig();
         if ($config['success']) {
+            error_log("Auto-recovering " . count($missingIds) . " missing/incomplete task(s): " . implode(', ', $missingIds));
             foreach ($missingIds as $missingId) {
                 $task = fetchAndSaveMissingTask($missingId, $config['api_token'], $tasksDir, $db);
                 if ($task) {
                     $fsTasks[$task['task_id']] = $task;
                     $recovered++;
+                    error_log("Successfully recovered task: {$missingId}");
+                } else {
+                    error_log("Failed to recover task: {$missingId}");
                 }
             }
+        } else {
+            error_log("Cannot recover tasks: " . ($config['message'] ?? 'ClickUp config error'));
         }
     }
 
@@ -153,16 +168,19 @@ if ($action === 'list') {
     ]);
 
 } elseif ($action === 'get' && $taskId) {
-    $filename = $tasksDir . '/' . $taskId . '.json';
+    $mainFile = $tasksDir . '/' . $taskId . '.json';
+    $rawFile  = $tasksDir . '/' . $taskId . '-raw.json';
 
-    // Try filesystem first
-    if (! file_exists($filename)) {
-        // Auto-recover: fetch from ClickUp API
+    // Check if BOTH files exist
+    if (! file_exists($mainFile) || ! file_exists($rawFile)) {
+        // Auto-recover: fetch from ClickUp API (will create both files)
+        error_log("Task files missing for {$taskId}, attempting recovery...");
         $config = getClickUpConfig();
         if ($config['success']) {
             $task = fetchAndSaveMissingTask($taskId, $config['api_token'], $tasksDir, $db);
-            if ($task && file_exists($filename)) {
-                $taskData = json_decode(file_get_contents($filename), true);
+            if ($task && file_exists($mainFile) && file_exists($rawFile)) {
+                $taskData = json_decode(file_get_contents($mainFile), true);
+                error_log("Successfully recovered task {$taskId}");
                 echo json_encode([
                     'success'   => true,
                     'task'      => $taskData,
@@ -172,15 +190,16 @@ if ($action === 'list') {
             }
         }
 
+        error_log("Failed to recover task {$taskId}");
         http_response_code(404);
         echo json_encode([
             'success' => false,
-            'message' => 'Task not found',
+            'message' => 'Task not found and could not be recovered',
         ]);
         exit;
     }
 
-    $taskData = json_decode(file_get_contents($filename), true);
+    $taskData = json_decode(file_get_contents($mainFile), true);
 
     // Ensure this task is in the DB
     if ($db->isAvailable() && $taskData) {

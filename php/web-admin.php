@@ -156,13 +156,19 @@
                             <div class="card-body" id="quick-deploy-body">
                                 <!-- Selected Task Display (shown when task is selected) -->
                                 <div id="selected-task-display" class="mb-3" style="display: none;">
-                                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; border-radius: 8px;">
-                                        <i class="fas fa-check-circle" style="color: #16a34a; font-size: 16px; flex-shrink: 0;"></i>
+                                    <div
+                                        style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; border-radius: 8px;">
+                                        <i class="fas fa-check-circle"
+                                            style="color: #16a34a; font-size: 16px; flex-shrink: 0;"></i>
                                         <div style="flex: 1; min-width: 0;">
-                                            <span id="selected-task-title" style="display: block; font-weight: 600; font-size: 13px; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
-                                            <span id="selected-task-id" style="display: block; font-size: 11px; color: #6b7280; font-family: monospace;"></span>
+                                            <span id="selected-task-title"
+                                                style="display: block; font-weight: 600; font-size: 13px; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                                            <span id="selected-task-id"
+                                                style="display: block; font-size: 11px; color: #6b7280; font-family: monospace;"></span>
                                         </div>
-                                        <button type="button" id="remove-selected-task-btn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer; flex-shrink: 0;" title="Remove task selection">
+                                        <button type="button" id="remove-selected-task-btn" class="btn"
+                                            style="padding: 4px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer; flex-shrink: 0;"
+                                            title="Remove task selection">
                                             <i class="fas fa-times" style="margin-right: 4px;"></i>Remove
                                         </button>
                                     </div>
@@ -172,16 +178,20 @@
                                 <div id="clickup-task-section" class="mb-4" style="display: block;">
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                         <div class="form-group mb-0">
-                                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">ClickUp Task</label>
-                                            <select id="clickup-task-select" class="form-select" style="font-size: 13px; padding: 6px 10px;">
+                                            <label class="form-label"
+                                                style="font-size: 12px; margin-bottom: 4px;">ClickUp Task</label>
+                                            <select id="clickup-task-select" class="form-select"
+                                                style="font-size: 13px; padding: 20px 10px;">
                                                 <option value="">-- Select a task --</option>
                                             </select>
                                         </div>
                                         <div class="form-group mb-0">
-                                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Fetch by Task ID</label>
+                                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Fetch
+                                                by Task ID</label>
                                             <div style="display: flex; gap: 6px;">
                                                 <input type="text" id="manual-task-id-input" class="form-input"
-                                                    placeholder="e.g., 86dzf0rkn" style="font-size: 13px; padding: 6px 10px; flex: 1;">
+                                                    placeholder="e.g., 86dzf0rkn"
+                                                    style="font-size: 13px; padding: 6px 10px; flex: 1;">
                                                 <button type="button" class="btn btn-outline-primary"
                                                     id="fetch-manual-task-btn"
                                                     style="white-space: nowrap; padding: 6px 12px; font-size: 12px;">
@@ -191,7 +201,8 @@
                                         </div>
                                     </div>
                                     <div id="manual-task-status" class="mt-2" style="display: none;">
-                                        <div class="alert" id="manual-task-alert" style="font-size: 13px; padding: 8px 12px;"></div>
+                                        <div class="alert" id="manual-task-alert"
+                                            style="font-size: 13px; padding: 8px 12px;"></div>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
@@ -2186,7 +2197,8 @@
 
                                         <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Social Media Links</h3>
-                                            <p class="text-sm text-gray-600 mb-4">Social icons will be displayed in the footer across all themes</p>
+                                            <p class="text-sm text-gray-600 mb-4">Social icons will be displayed in the
+                                                footer across all themes</p>
 
                                             <div class="grid grid-cols-1 gap-4 mb-4">
                                                 <div class="form-group">
@@ -2241,7 +2253,8 @@
 
                                         <div class="config-section mb-8">
                                             <h3 class="font-semibold mb-3">Donation Platform</h3>
-                                            <p class="text-sm text-gray-600 mb-4">WinRed integration is handled by a separate extension</p>
+                                            <p class="text-sm text-gray-600 mb-4">WinRed integration is handled by a
+                                                separate extension</p>
 
                                             <div class="grid grid-cols-1 gap-4">
                                                 <div class="form-group">
@@ -2249,7 +2262,8 @@
                                                     <input type="url" class="form-input config-input"
                                                         data-path="integrations.donation.winred"
                                                         placeholder="https://secure.winred.com/yourpage">
-                                                    <p class="text-xs text-gray-500 mt-1">Configure WinRed donation page URL for the extension</p>
+                                                    <p class="text-xs text-gray-500 mt-1">Configure WinRed donation page
+                                                        URL for the extension</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -3462,7 +3476,8 @@
                                 <input type="file" id="config-import-input" accept=".json,.zip" multiple
                                     style="display: none;">
                                 <button class="btn btn-info" id="config-load-all-defaults-btn"
-                                    onclick="window.rawConfigManager.loadAllDefaults()" title="Load all default configurations from database">
+                                    onclick="window.rawConfigManager.loadAllDefaults()"
+                                    title="Load all default configurations from database">
                                     <i class="fas fa-cloud-download-alt"></i> Load All Defaults
                                 </button>
                                 <button class="btn btn-success" id="config-save-default-btn"
