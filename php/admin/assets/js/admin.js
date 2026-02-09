@@ -2209,39 +2209,55 @@ class AdminInterface {
                 await this.saveActiveTheme(themeSelect.value);
             }
 
-            // Save site_title, display_name, and admin_email to site.json
-            if(taskData) {
-                const siteData={};
+            // Save ALL site.json fields from form inputs
+            const siteData={};
 
-                if(taskData.task_name) {
-                    siteData.site_title=taskData.task_name;
-                    siteData.display_name=this.slugify(taskData.task_name);
-                }
-
-                // Also persist admin_email to site.json if available
-                const adminEmailInput=document.querySelector('[data-path="admin_email"]');
-                if(adminEmailInput&&adminEmailInput.value) {
-                    siteData.admin_email=adminEmailInput.value;
-                }
-
-                if(Object.keys(siteData).length>0) {
-                    console.log('Saving to site.json:',siteData);
-
-                    const siteResponse=await fetch('?action=save_config',{
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            type: 'site',
-                            data: siteData
-                        })
-                    });
-                    const siteResult=await siteResponse.json();
-
-                    if(siteResult.success) {
-                        console.log('✅ site.json updated successfully');
-                    } else {
-                        console.error('Failed to update site.json:',siteResult.message);
+            // Collect all site.json path inputs from the form
+            siteJsonPaths.forEach(path => {
+                const input=document.querySelector(`[data-path="${path}"]`);
+                if(input) {
+                    if(input.type==='checkbox') {
+                        siteData[path]=input.checked;
+                    } else if(input.type==='number') {
+                        siteData[path]=parseFloat(input.value)||0;
+                    } else if(input.value) {
+                        siteData[path]=input.value;
                     }
+                }
+            });
+
+            // Add site_title from deployment tab (has no data-path)
+            const siteTitleInput=document.getElementById('deployment-site-title');
+            if(siteTitleInput&&siteTitleInput.value) {
+                siteData.site_title=siteTitleInput.value;
+                if(!siteData.display_name) {
+                    siteData.display_name=this.slugify(siteTitleInput.value);
+                }
+            }
+
+            // Override with task data if available (task_name is authoritative for site_title)
+            if(taskData&&taskData.task_name) {
+                siteData.site_title=taskData.task_name;
+                siteData.display_name=this.slugify(taskData.task_name);
+            }
+
+            if(Object.keys(siteData).length>0) {
+                console.log('Saving to site.json:',siteData);
+
+                const siteResponse=await fetch('?action=save_config',{
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'site',
+                        data: siteData
+                    })
+                });
+                const siteResult=await siteResponse.json();
+
+                if(siteResult.success) {
+                    console.log('✅ site.json updated successfully');
+                } else {
+                    console.error('Failed to update site.json:',siteResult.message);
                 }
             }
 
