@@ -389,6 +389,91 @@ run_migrations() {
 }
 
 # =============================================================================
+# 3.5. LOAD DEFAULT CONFIGURATIONS
+# =============================================================================
+load_default_configs() {
+    log "===== Loading Default Configurations ====="
+    
+    # Validate database credentials before attempting to load defaults
+    if [[ -z "${DB_HOST:-}" ]] || [[ -z "${DB_USER:-}" ]] || [[ -z "${DB_PASSWORD:-}${DB_PASS:-}" ]]; then
+        log_warn "Database credentials not configured - skipping default config loading"
+        return 0
+    fi
+    
+    # Check if required scripts exist
+    if [[ ! -f "/app/php/admin/includes/ConfigDefaultsManager.php" ]]; then
+        log_warn "ConfigDefaultsManager not found - skipping default config loading"
+        return 0
+    fi
+    
+    # Create temporary PHP script to load defaults
+    local temp_script="/tmp/load-defaults-$$.php"
+    cat > "$temp_script" << 'EOPHP'
+<?php
+// Temporary script to load default configurations on startup
+
+require_once '/app/php/admin/includes/ConfigDefaultsManager.php';
+
+echo "Checking for default configurations...\n";
+
+try {
+    $manager = new ConfigDefaultsManager();
+    
+    if (!$manager->isAvailable()) {
+        echo "Database not available - skipping default config load\n";
+        exit(0);
+    }
+    
+    echo "Loading default configurations from database...\n";
+    $result = $manager->loadAllDefaults();
+    
+    if ($result['success']) {
+        $loadedCount = count($result['loaded']);
+        $failedCount = count($result['failed']);
+        
+        echo "Default config loading completed:\n";
+        echo "  - Loaded: $loadedCount file(s)\n";
+        
+        if ($loadedCount > 0) {
+            foreach ($result['loaded'] as $filename) {
+                echo "    ✓ $filename\n";
+            }
+        } else {
+            echo "    (No defaults found in database)\n";
+        }
+        
+        if ($failedCount > 0) {
+            echo "  - Failed: $failedCount file(s)\n";
+            foreach ($result['failed'] as $failure) {
+                echo "    ✗ {$failure['filename']}: {$failure['error']}\n";
+            }
+        }
+        
+        exit(0);
+    } else {
+        echo "Failed to load defaults: " . $result['message'] . "\n";
+        exit(0); // Don't fail startup on config load error
+    }
+} catch (Exception $e) {
+    echo "Error loading default configurations: " . $e->getMessage() . "\n";
+    exit(0); // Don't fail startup on config load error
+}
+EOPHP
+    
+    # Run the script
+    if php "$temp_script" 2>&1 | while IFS= read -r line; do
+        log "  $line"
+    done; then
+        log "Default configurations loaded successfully"
+    else
+        log_warn "Default configuration loading completed with warnings"
+    fi
+    
+    # Clean up
+    rm -f "$temp_script"
+}
+
+# =============================================================================
 # 4. START PHP-FPM + NGINX (Nixpacks default)
 # =============================================================================
 start_services() {
@@ -459,6 +544,7 @@ main() {
     fix_permissions
     validate_auth
     run_migrations
+    load_default_configs
 
     log "=========================================="
     log "Configuration complete, starting services"
