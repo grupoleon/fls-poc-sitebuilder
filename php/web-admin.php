@@ -173,7 +173,10 @@
                                 <div id="selected-task-display" class="mb-3" style="display: none;">
                                     <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; border-radius: 8px;">
                                         <i class="fas fa-check-circle" style="color: #16a34a; font-size: 16px; flex-shrink: 0;"></i>
-                                        <span id="selected-task-title" style="flex: 1; font-weight: 600; font-size: 13px; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <span id="selected-task-title" style="display: block; font-weight: 600; font-size: 13px; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                                            <span id="selected-task-id" style="display: block; font-size: 11px; color: #6b7280; font-family: monospace;"></span>
+                                        </div>
                                         <button type="button" id="remove-selected-task-btn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer; flex-shrink: 0;" title="Remove task selection">
                                             <i class="fas fa-times" style="margin-right: 4px;"></i>Remove
                                         </button>

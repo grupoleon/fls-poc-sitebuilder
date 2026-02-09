@@ -1922,6 +1922,11 @@ class AdminInterface {
             if(data.success&&data.task) {
                 console.log('Task object:',JSON.stringify(data.task,null,2));
 
+                // Persist task selection to localStorage
+                localStorage.setItem('clickup-selected-task-id',data.task.task_id||taskId);
+                localStorage.setItem('clickup-selected-task-name',data.task.task_name||'');
+                debugLog(`Task selection persisted: ${data.task.task_id} (${data.task.task_name})`);
+
                 // Set flag BEFORE loading configuration to prevent any overwrites
                 this.isTaskPrefilling=true;
                 debugLog('Task prefilling flag set - config loading will be blocked');
@@ -2197,6 +2202,13 @@ class AdminInterface {
             if(siteTitleInput&&siteTitleInput.value) {
                 if(!configData.site) configData.site={};
                 configData.site.site_title=siteTitleInput.value;
+            }
+
+            // Save admin_email under site.admin_email in config.json (mirrors site.json)
+            const adminEmailInput=document.querySelector('[data-path="admin_email"]');
+            if(adminEmailInput&&adminEmailInput.value) {
+                if(!configData.site) configData.site={};
+                configData.site.admin_email=adminEmailInput.value;
             }
 
             console.log('Config data to save:',Object.keys(configData));
@@ -2512,7 +2524,8 @@ class AdminInterface {
 
     async saveEmailToSiteConfig(email) {
         try {
-            const response=await fetch('?action=save_config',{
+            // Save to site.json (root-level admin_email)
+            const siteResponse=await fetch('?action=save_config',{
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -2520,11 +2533,27 @@ class AdminInterface {
                     data: {admin_email: email}
                 })
             });
-            const result=await response.json();
-            if(result.success) {
+            const siteResult=await siteResponse.json();
+            if(siteResult.success) {
                 console.log('✅ Admin email saved to site.json successfully');
             } else {
-                console.error('❌ Failed to save admin email:',result.message);
+                console.error('❌ Failed to save admin email to site.json:',siteResult.message);
+            }
+
+            // Also save to config.json (site.admin_email)
+            const mainResponse=await fetch('?action=save_config',{
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    type: 'main',
+                    data: {site: {admin_email: email}}
+                })
+            });
+            const mainResult=await mainResponse.json();
+            if(mainResult.success) {
+                console.log('✅ Admin email saved to config.json (site.admin_email) successfully');
+            } else {
+                console.error('❌ Failed to save admin email to config.json:',mainResult.message);
             }
         } catch(error) {
             console.error('❌ Error saving admin email:',error);
@@ -3028,12 +3057,18 @@ class AdminInterface {
             if(data.success&&data.task) {
                 debugLog('Manual task fetched successfully:',data.task);
 
+                // Persist task selection to localStorage
+                const taskDisplayName=`${data.task.task_name} ${data.task.website_url? '('+data.task.website_url+')':''}`;
+                localStorage.setItem('clickup-selected-task-id',data.task.task_id||taskId);
+                localStorage.setItem('clickup-selected-task-name',taskDisplayName.trim());
+                debugLog(`Manual task selection persisted: ${data.task.task_id} (${data.task.task_name})`);
+
                 // Add task to select dropdown
                 const existingOption=Array.from(taskSelect.options).find(opt => opt.value===taskId);
                 if(!existingOption) {
                     const option=document.createElement('option');
                     option.value=data.task.task_id;
-                    option.textContent=`${data.task.task_name} ${data.task.website_url? '('+data.task.website_url+')':''}`;
+                    option.textContent=taskDisplayName;
                     taskSelect.appendChild(option);
                 }
 
@@ -7951,6 +7986,7 @@ class AdminInterface {
         const taskSelect=document.getElementById('clickup-task-select');
         const selectedTaskDisplay=document.getElementById('selected-task-display');
         const selectedTaskTitle=document.getElementById('selected-task-title');
+        const selectedTaskId=document.getElementById('selected-task-id');
         const removeTaskBtn=document.getElementById('remove-selected-task-btn');
 
         if(checkbox&&taskSection) {
@@ -7964,11 +8000,30 @@ class AdminInterface {
 
             // Update section visibility based on checkbox and task selection
             const updateVisibility=() => {
+                const persistedTaskId=localStorage.getItem('clickup-selected-task-id');
+                const persistedTaskName=localStorage.getItem('clickup-selected-task-name');
+
                 if(checkbox.checked) {
-                    // If a task is selected, show the selected display and hide the section
-                    if(taskSelect&&taskSelect.value&&selectedTaskDisplay) {
-                        const selectedOption=taskSelect.options[taskSelect.selectedIndex];
-                        if(selectedTaskTitle) selectedTaskTitle.textContent=selectedOption.textContent;
+                    // Check if a task is selected (either in dropdown or persisted)
+                    const hasDropdownSelection=taskSelect&&taskSelect.value;
+                    const hasPersistedSelection=persistedTaskId&&persistedTaskName;
+
+                    if((hasDropdownSelection||hasPersistedSelection)&&selectedTaskDisplay) {
+                        // Determine display values
+                        let displayName='';
+                        let displayId='';
+
+                        if(hasDropdownSelection) {
+                            const selectedOption=taskSelect.options[taskSelect.selectedIndex];
+                            displayName=selectedOption.textContent.trim();
+                            displayId=taskSelect.value;
+                        } else if(hasPersistedSelection) {
+                            displayName=persistedTaskName;
+                            displayId=persistedTaskId;
+                        }
+
+                        if(selectedTaskTitle) selectedTaskTitle.textContent=displayName;
+                        if(selectedTaskId) selectedTaskId.textContent=`ID: ${displayId}`;
                         selectedTaskDisplay.style.display='block';
                         taskSection.style.display='none';
                     } else {
@@ -7990,25 +8045,76 @@ class AdminInterface {
             // Initial state
             updateVisibility();
 
+            // Restore persisted task selection on page load
+            this._restorePersistedTask();
+
             // Listen for checkbox changes
             checkbox.addEventListener('change',() => {
                 updateVisibility();
                 debugLog(`ClickUp integration toggle changed to: ${checkbox.checked}`);
             });
 
-            // Listen for task selection changes to show/hide selected task display
+            // Listen for task selection changes to persist and show/hide selected task display
             if(taskSelect) {
                 taskSelect.addEventListener('change',() => {
+                    if(taskSelect.value) {
+                        const selectedOption=taskSelect.options[taskSelect.selectedIndex];
+                        localStorage.setItem('clickup-selected-task-id',taskSelect.value);
+                        localStorage.setItem('clickup-selected-task-name',selectedOption.textContent.trim());
+                        debugLog(`Task selection persisted: ${taskSelect.value}`);
+                    }
                     updateVisibility();
                 });
             }
 
-            // Remove task button - unselect and toggle back to ClickUp section
+            // Remove task button - unselect, clear persistence, reload defaults
             if(removeTaskBtn) {
-                removeTaskBtn.addEventListener('click',() => {
+                removeTaskBtn.addEventListener('click',async () => {
+                    // Clear task selection from dropdown
                     if(taskSelect) taskSelect.value='';
+
+                    // Clear persisted task data from localStorage
+                    localStorage.removeItem('clickup-selected-task-id');
+                    localStorage.removeItem('clickup-selected-task-name');
+
+                    // Clear current task data reference
+                    this.currentTaskData=null;
+
+                    // Clear session storage for task-specific data
+                    sessionStorage.removeItem('clickup_email');
+                    sessionStorage.removeItem('clickup_privacy_policy');
+                    sessionStorage.removeItem('clickup_google_drive');
+                    sessionStorage.removeItem('clickup_facebook_link');
+                    sessionStorage.removeItem('clickup_instagram_link');
+                    sessionStorage.removeItem('clickup_twitter_link');
+                    sessionStorage.removeItem('clickup_youtube_link');
+                    sessionStorage.removeItem('clickup_winred_link');
+
+                    // Reload default configs from file system (not task-prefilled)
+                    debugLog('Task removed - reloading default configurations...');
+                    try {
+                        const response=await fetch('?action=load_all_config_defaults',{
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({})
+                        });
+                        const result=await response.json();
+                        if(result.success) {
+                            debugLog('Default configs restored successfully');
+                            // Reload configuration to refresh form fields
+                            await this.loadConfiguration();
+                        } else {
+                            debugLog('No saved defaults found, reloading current configs','warn');
+                            await this.loadConfiguration();
+                        }
+                    } catch(error) {
+                        debugLog('Error restoring defaults, reloading current configs:'+error,'warn');
+                        await this.loadConfiguration();
+                    }
+
                     updateVisibility();
-                    debugLog('Task selection removed');
+                    debugLog('Task selection removed and defaults reloaded');
+                    showNotification('Task selection removed. Default configurations restored.','info');
                 });
             }
 
@@ -8017,6 +8123,41 @@ class AdminInterface {
 
             debugLog(`ClickUp integration toggle setup complete (initial state: ${checkbox.checked})`);
         }
+    }
+
+    /**
+     * Restore persisted task selection on page load
+     */
+    async _restorePersistedTask() {
+        const persistedTaskId=localStorage.getItem('clickup-selected-task-id');
+        const persistedTaskName=localStorage.getItem('clickup-selected-task-name');
+
+        if(!persistedTaskId||!persistedTaskName) return;
+
+        debugLog(`Restoring persisted task: ${persistedTaskId} (${persistedTaskName})`);
+
+        const taskSelect=document.getElementById('clickup-task-select');
+
+        // Wait a bit for the tasks dropdown to be populated by loadClickUpTasks
+        await new Promise(resolve => setTimeout(resolve,800));
+
+        if(taskSelect) {
+            // Check if the option already exists in the dropdown
+            const existingOption=Array.from(taskSelect.options).find(opt => opt.value===persistedTaskId);
+            if(existingOption) {
+                taskSelect.value=persistedTaskId;
+            } else {
+                // Add the option and select it
+                const option=document.createElement('option');
+                option.value=persistedTaskId;
+                option.textContent=persistedTaskName;
+                taskSelect.appendChild(option);
+                taskSelect.value=persistedTaskId;
+            }
+        }
+
+        // Update visibility to show the selected task display
+        if(this._updateClickUpVisibility) this._updateClickUpVisibility();
     }
 
     initializeDeploymentSteps() {
