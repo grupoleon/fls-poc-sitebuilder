@@ -256,7 +256,17 @@ function handleRequest()
     header('Content-Type: application/json');
 
     try {
-        $action = $_POST['action'] ?? $_GET['action'] ?? '';
+        // Handle JSON request body
+        $jsonInput   = null;
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        if (strpos($contentType, 'application/json') !== false) {
+            $rawInput  = file_get_contents('php://input');
+            $jsonInput = json_decode($rawInput, true);
+        }
+
+        // Get action from POST, GET, or JSON body
+        $action = $_POST['action'] ?? $_GET['action'] ?? ($jsonInput['action'] ?? '');
 
         switch ($action) {
             case 'get_configs':
@@ -1188,7 +1198,7 @@ function handleRequest()
 
             case 'save_config_default':
                 try {
-                    $postData = json_decode(file_get_contents('php://input'), true);
+                    $postData = $jsonInput ?? json_decode(file_get_contents('php://input'), true);
                     $filename = $postData['filename'] ?? '';
 
                     if (empty($filename)) {
@@ -1217,7 +1227,7 @@ function handleRequest()
 
             case 'load_config_default':
                 try {
-                    $postData = json_decode(file_get_contents('php://input'), true);
+                    $postData = $jsonInput ?? json_decode(file_get_contents('php://input'), true);
                     $filename = $postData['filename'] ?? '';
 
                     if (empty($filename)) {
