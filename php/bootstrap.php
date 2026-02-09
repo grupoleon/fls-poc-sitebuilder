@@ -11,9 +11,9 @@ require_once __DIR__ . '/admin/includes/DeploymentManager.php';
 require_once __DIR__ . '/admin/includes/ConfigDefaultsManager.php';
 
 // Initialize managers
-$configManager     = new ConfigManager();
-$pageManager       = new PageContentManager();
-$deploymentManager = new DeploymentManager();
+$configManager         = new ConfigManager();
+$pageManager           = new PageContentManager();
+$deploymentManager     = new DeploymentManager();
 $configDefaultsManager = new ConfigDefaultsManager();
 
 // Handle AJAX requests
@@ -1171,7 +1171,7 @@ function handleRequest()
                     ];
 
                     // Check if a default exists for this config
-                    $hasDefault = $configDefaultsManager->hasDefault($filename);
+                    $hasDefault  = $configDefaultsManager->hasDefault($filename);
                     $defaultInfo = $hasDefault ? $configDefaultsManager->getDefaultInfo($filename) : null;
 
                     echo json_encode([
@@ -1248,7 +1248,7 @@ function handleRequest()
                         throw new Exception('Filename is required');
                     }
 
-                    $hasDefault = $configDefaultsManager->hasDefault($filename);
+                    $hasDefault  = $configDefaultsManager->hasDefault($filename);
                     $defaultInfo = $hasDefault ? $configDefaultsManager->getDefaultInfo($filename) : null;
 
                     echo json_encode([

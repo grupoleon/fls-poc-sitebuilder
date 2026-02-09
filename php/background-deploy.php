@@ -200,17 +200,17 @@ try {
     try {
         require_once __DIR__ . '/admin/includes/ConfigDefaultsManager.php';
         $configDefaultsManager = new ConfigDefaultsManager();
-        
+
         if ($configDefaultsManager->isAvailable()) {
             writeDeploymentLog('Loading default configurations from database...', 'INFO', 'load-defaults');
             $loadResult = $configDefaultsManager->loadAllDefaults();
-            
+
             if ($loadResult['success'] && count($loadResult['loaded']) > 0) {
                 writeDeploymentLog('Loaded ' . count($loadResult['loaded']) . ' default config(s): ' . implode(', ', $loadResult['loaded']), 'SUCCESS', 'load-defaults');
             } elseif (count($loadResult['loaded']) === 0) {
                 writeDeploymentLog('No default configurations found in database', 'INFO', 'load-defaults');
             }
-            
+
             if (count($loadResult['failed']) > 0) {
                 foreach ($loadResult['failed'] as $failure) {
                     writeDeploymentLog("Failed to load {$failure['filename']}: {$failure['error']}", 'WARNING', 'load-defaults');

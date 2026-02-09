@@ -72,10 +72,10 @@ class ConfigDefaultsManager
      */
     public function saveDefault($filename, $userEmail = null)
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return [
                 'success' => false,
-                'message' => 'Database is not available'
+                'message' => 'Database is not available',
             ];
         }
 
@@ -83,10 +83,10 @@ class ConfigDefaultsManager
             // Read the config file
             $filePath = $this->configDir . '/' . $filename;
 
-            if (!file_exists($filePath)) {
+            if (! file_exists($filePath)) {
                 return [
                     'success' => false,
-                    'message' => "Config file not found: {$filename}"
+                    'message' => "Config file not found: {$filename}",
                 ];
             }
 
@@ -97,13 +97,13 @@ class ConfigDefaultsManager
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid JSON in config file: ' . json_last_error_msg()
+                    'message' => 'Invalid JSON in config file: ' . json_last_error_msg(),
                 ];
             }
 
             // Beautify JSON for storage
             $rawContent = json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            $fileHash = hash('sha256', $rawContent);
+            $fileHash   = hash('sha256', $rawContent);
 
             // Check if default already exists
             $stmt = $this->pdo->prepare('SELECT id FROM config_defaults WHERE filename = ?');
@@ -113,8 +113,8 @@ class ConfigDefaultsManager
             if ($existing) {
                 // Update existing default
                 $stmt = $this->pdo->prepare(
-                    'UPDATE config_defaults 
-                     SET raw_content = ?, file_hash = ?, updated_by = ?, updated_at = NOW() 
+                    'UPDATE config_defaults
+                     SET raw_content = ?, file_hash = ?, updated_by = ?, updated_at = NOW()
                      WHERE filename = ?'
                 );
                 $stmt->execute([$rawContent, $fileHash, $userEmail, $filename]);
@@ -124,12 +124,12 @@ class ConfigDefaultsManager
                 return [
                     'success' => true,
                     'message' => "Default configuration for {$filename} updated successfully",
-                    'action' => 'updated'
+                    'action' => 'updated',
                 ];
             } else {
                 // Insert new default
                 $stmt = $this->pdo->prepare(
-                    'INSERT INTO config_defaults (filename, raw_content, file_hash, created_by, updated_by) 
+                    'INSERT INTO config_defaults (filename, raw_content, file_hash, created_by, updated_by)
                      VALUES (?, ?, ?, ?, ?)'
                 );
                 $stmt->execute([$filename, $rawContent, $fileHash, $userEmail, $userEmail]);
@@ -139,20 +139,20 @@ class ConfigDefaultsManager
                 return [
                     'success' => true,
                     'message' => "Default configuration for {$filename} saved successfully",
-                    'action' => 'created'
+                    'action' => 'created',
                 ];
             }
         } catch (PDOException $e) {
             error_log('ConfigDefaultsManager: Failed to save default - ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Database error: ' . $e->getMessage()
+                'message' => 'Database error: ' . $e->getMessage(),
             ];
         } catch (Exception $e) {
             error_log('ConfigDefaultsManager: Failed to save default - ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -165,10 +165,10 @@ class ConfigDefaultsManager
      */
     public function loadDefault($filename)
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return [
                 'success' => false,
-                'message' => 'Database is not available'
+                'message' => 'Database is not available',
             ];
         }
 
@@ -178,10 +178,10 @@ class ConfigDefaultsManager
             $stmt->execute([$filename]);
             $result = $stmt->fetch();
 
-            if (!$result) {
+            if (! $result) {
                 return [
                     'success' => false,
-                    'message' => "No default found for {$filename}"
+                    'message' => "No default found for {$filename}",
                 ];
             }
 
@@ -192,15 +192,15 @@ class ConfigDefaultsManager
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid JSON in stored default: ' . json_last_error_msg()
+                    'message' => 'Invalid JSON in stored default: ' . json_last_error_msg(),
                 ];
             }
 
             // Create backup of current file
             $filePath = $this->configDir . '/' . $filename;
             if (file_exists($filePath)) {
-                $backupPath = $this->configDir . '/' . pathinfo($filename, PATHINFO_FILENAME) . 
-                              '_backup_' . date('Y-m-d_H-i-s') . '.json';
+                $backupPath = $this->configDir . '/' . pathinfo($filename, PATHINFO_FILENAME) .
+                '_backup_' . date('Y-m-d_H-i-s') . '.json';
                 copy($filePath, $backupPath);
                 error_log("ConfigDefaultsManager: Created backup at {$backupPath}");
             }
@@ -211,7 +211,7 @@ class ConfigDefaultsManager
             if ($result === false) {
                 return [
                     'success' => false,
-                    'message' => "Failed to write config file: {$filename}"
+                    'message' => "Failed to write config file: {$filename}",
                 ];
             }
 
@@ -219,19 +219,19 @@ class ConfigDefaultsManager
 
             return [
                 'success' => true,
-                'message' => "Default configuration loaded for {$filename}"
+                'message' => "Default configuration loaded for {$filename}",
             ];
         } catch (PDOException $e) {
             error_log('ConfigDefaultsManager: Failed to load default - ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Database error: ' . $e->getMessage()
+                'message' => 'Database error: ' . $e->getMessage(),
             ];
         } catch (Exception $e) {
             error_log('ConfigDefaultsManager: Failed to load default - ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -244,7 +244,7 @@ class ConfigDefaultsManager
      */
     public function hasDefault($filename)
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return false;
         }
 
@@ -267,14 +267,14 @@ class ConfigDefaultsManager
      */
     public function getAllDefaults()
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return [];
         }
 
         try {
             $stmt = $this->pdo->prepare(
-                'SELECT filename, created_by, updated_by, created_at, updated_at 
-                 FROM config_defaults 
+                'SELECT filename, created_by, updated_by, created_at, updated_at
+                 FROM config_defaults
                  ORDER BY filename'
             );
             $stmt->execute();
@@ -294,14 +294,14 @@ class ConfigDefaultsManager
      */
     public function getDefaultInfo($filename)
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return null;
         }
 
         try {
             $stmt = $this->pdo->prepare(
-                'SELECT filename, created_by, updated_by, created_at, updated_at 
-                 FROM config_defaults 
+                'SELECT filename, created_by, updated_by, created_at, updated_at
+                 FROM config_defaults
                  WHERE filename = ?'
             );
             $stmt->execute([$filename]);
@@ -320,12 +320,12 @@ class ConfigDefaultsManager
      */
     public function loadAllDefaults()
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return [
                 'success' => false,
                 'message' => 'Database is not available',
-                'loaded' => [],
-                'failed' => []
+                'loaded'  => [],
+                'failed'  => [],
             ];
         }
 
@@ -337,14 +337,14 @@ class ConfigDefaultsManager
 
             foreach ($defaults as $default) {
                 $filename = $default['filename'];
-                $result = $this->loadDefault($filename);
+                $result   = $this->loadDefault($filename);
 
                 if ($result['success']) {
                     $loaded[] = $filename;
                 } else {
                     $failed[] = [
                         'filename' => $filename,
-                        'error' => $result['message']
+                        'error'    => $result['message'],
                     ];
                 }
             }
@@ -352,16 +352,16 @@ class ConfigDefaultsManager
             return [
                 'success' => true,
                 'message' => 'Loaded ' . count($loaded) . ' default configs',
-                'loaded' => $loaded,
-                'failed' => $failed
+                'loaded'  => $loaded,
+                'failed'  => $failed,
             ];
         } catch (Exception $e) {
             error_log('ConfigDefaultsManager: Failed to load all defaults - ' . $e->getMessage());
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
-                'loaded' => $loaded,
-                'failed' => $failed
+                'loaded'  => $loaded,
+                'failed'  => $failed,
             ];
         }
     }
@@ -374,10 +374,10 @@ class ConfigDefaultsManager
      */
     public function deleteDefault($filename)
     {
-        if (!$this->isAvailable) {
+        if (! $this->isAvailable) {
             return [
                 'success' => false,
-                'message' => 'Database is not available'
+                'message' => 'Database is not available',
             ];
         }
 
@@ -389,19 +389,19 @@ class ConfigDefaultsManager
                 error_log("ConfigDefaultsManager: Deleted default for {$filename}");
                 return [
                     'success' => true,
-                    'message' => "Default configuration for {$filename} deleted successfully"
+                    'message' => "Default configuration for {$filename} deleted successfully",
                 ];
             } else {
                 return [
                     'success' => false,
-                    'message' => "No default found for {$filename}"
+                    'message' => "No default found for {$filename}",
                 ];
             }
         } catch (PDOException $e) {
             error_log('ConfigDefaultsManager: Failed to delete default - ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Database error: ' . $e->getMessage()
+                'message' => 'Database error: ' . $e->getMessage(),
             ];
         }
     }
