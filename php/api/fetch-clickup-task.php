@@ -4,9 +4,14 @@
  * This API allows fetching a task directly from ClickUp API by task ID
  */
 
-header('Content-Type: application/json');
-
-require_once __DIR__ . '/../bootstrap.php';
+// Guard: skip bootstrap and main execution when included by another file for helper functions only
+if (defined('CLICKUP_HELPERS_ONLY')) {
+    // Only define helper functions, don't load bootstrap or execute main code
+} else {
+    // Load bootstrap only when accessed directly
+    header('Content-Type: application/json');
+    require_once __DIR__ . '/../bootstrap.php';
+}
 
 /**
  * Get ClickUp configuration from local-config.json
