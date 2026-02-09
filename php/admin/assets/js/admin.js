@@ -764,14 +764,19 @@ class AdminInterface {
         // Update status text
         const statusElement=compactStep.querySelector('.step-status');
         if(statusElement) {
-            const statusText={
-                'pending': 'pending',
-                'in-progress': 'running',
-                'completed': 'done',
-                'error': 'error'
-            };
-            statusElement.textContent=statusText[status]||status;
-            debugLog(`Updated status text for ${stepId} to: ${statusText[status]||status}`);
+            if(status==='completed'&&this.stepDurations.has(stepId)) {
+                // Show actual duration instead of "done"
+                statusElement.textContent=this.stepDurations.get(stepId);
+            } else {
+                const statusText={
+                    'pending': 'pending',
+                    'in-progress': 'running',
+                    'completed': 'done',
+                    'error': 'error'
+                };
+                statusElement.textContent=statusText[status]||status;
+            }
+            debugLog(`Updated status text for ${stepId} to: ${statusElement.textContent}`);
         } else {
             debugLog(`No status element found in step ${stepId}`,'warn');
         }
@@ -918,11 +923,12 @@ class AdminInterface {
 
         // Update status indicator
         if(statusIndicator) {
+            const completedLabel=this.stepDurations.has(stepId)? this.stepDurations.get(stepId):'DONE';
             const indicators={
                 'pending': '<div class="status-pending-icon text-gray-400 text-xl">WAIT</div>',
                 'in-progress': '<div class="status-spinner"><div class="animate-pulse bg-blue-500 w-4 h-4 rounded-full"></div></div>',
                 'running': '<div class="status-spinner"><div class="animate-pulse bg-blue-500 w-4 h-4 rounded-full"></div></div>',
-                'completed': '<div class="status-check-mark text-emerald-500 text-2xl">DONE</div>',
+                'completed': `<div class="status-check-mark text-emerald-500 text-xl font-mono">${completedLabel}</div>`,
                 'failed': '<div class="status-error-mark text-red-500 text-2xl">ERROR</div>'
             };
 
@@ -1974,6 +1980,9 @@ class AdminInterface {
 
                     // Show changes preview (will auto-close)
                     this.showChangesPreview(changes,data.task);
+
+                    // Update ClickUp section visibility to show selected task display
+                    if(this._updateClickUpVisibility) this._updateClickUpVisibility();
                 });
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
@@ -3035,6 +3044,9 @@ class AdminInterface {
                             await this.saveClickUpChangesToBackend(changes,data.task);
                         }
                         this.showChangesPreview(changes,data.task);
+
+                        // Update ClickUp section visibility to show selected task display
+                        if(this._updateClickUpVisibility) this._updateClickUpVisibility();
                     });
                 } catch(prefillError) {
                     debugLog('Error during prefillDeploymentForm:',prefillError,'error');
@@ -7900,6 +7912,9 @@ class AdminInterface {
         const checkbox=document.getElementById('clickup-integration-checkbox');
         const taskSection=document.getElementById('clickup-task-section');
         const taskSelect=document.getElementById('clickup-task-select');
+        const selectedTaskDisplay=document.getElementById('selected-task-display');
+        const selectedTaskTitle=document.getElementById('selected-task-title');
+        const removeTaskBtn=document.getElementById('remove-selected-task-btn');
 
         if(checkbox&&taskSection) {
             // Restore saved state from localStorage
@@ -7907,34 +7922,61 @@ class AdminInterface {
             if(savedState!==null) {
                 checkbox.checked=(savedState==='true');
             } else {
-                // Default to checked if no saved state
                 checkbox.checked=true;
             }
 
-            // Update section visibility based on checkbox
+            // Update section visibility based on checkbox and task selection
             const updateVisibility=() => {
                 if(checkbox.checked) {
-                    taskSection.style.display='block';
+                    // If a task is selected, show the selected display and hide the section
+                    if(taskSelect&&taskSelect.value&&selectedTaskDisplay) {
+                        const selectedOption=taskSelect.options[taskSelect.selectedIndex];
+                        if(selectedTaskTitle) selectedTaskTitle.textContent=selectedOption.textContent;
+                        selectedTaskDisplay.style.display='block';
+                        taskSection.style.display='none';
+                    } else {
+                        if(selectedTaskDisplay) selectedTaskDisplay.style.display='none';
+                        taskSection.style.display='block';
+                    }
                     if(taskSelect) taskSelect.removeAttribute('disabled');
                 } else {
                     taskSection.style.display='none';
+                    if(selectedTaskDisplay) selectedTaskDisplay.style.display='none';
                     if(taskSelect) {
                         taskSelect.value='';
                         taskSelect.setAttribute('disabled','disabled');
                     }
                 }
-                // Save state to localStorage
                 localStorage.setItem('clickup-integration-enabled',checkbox.checked.toString());
             };
 
             // Initial state
             updateVisibility();
 
-            // Listen for changes
+            // Listen for checkbox changes
             checkbox.addEventListener('change',() => {
                 updateVisibility();
                 debugLog(`ClickUp integration toggle changed to: ${checkbox.checked}`);
             });
+
+            // Listen for task selection changes to show/hide selected task display
+            if(taskSelect) {
+                taskSelect.addEventListener('change',() => {
+                    updateVisibility();
+                });
+            }
+
+            // Remove task button - unselect and toggle back to ClickUp section
+            if(removeTaskBtn) {
+                removeTaskBtn.addEventListener('click',() => {
+                    if(taskSelect) taskSelect.value='';
+                    updateVisibility();
+                    debugLog('Task selection removed');
+                });
+            }
+
+            // Expose updateVisibility so other code can call it after programmatic task selection
+            this._updateClickUpVisibility=updateVisibility;
 
             debugLog(`ClickUp integration toggle setup complete (initial state: ${checkbox.checked})`);
         }

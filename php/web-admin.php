@@ -169,35 +169,41 @@
                                         automatically fill site details</div>
                                 </div>
 
-                                <!-- ClickUp Task Selection (Toggles with checkbox) -->
-                                <div id="clickup-task-section" class="mb-4" style="display: block;">
-                                    <div class="form-group mb-3">
-                                        <label class="form-label">ClickUp Task</label>
-                                        <select id="clickup-task-select" class="form-select">
-                                            <option value="">-- Select a ClickUp task --</option>
-                                        </select>
-                                        <div class="form-help">Select a ClickUp task to track deployment progress
-                                            and automatically fill in site details</div>
+                                <!-- Selected Task Display (shown when task is selected) -->
+                                <div id="selected-task-display" class="mb-3" style="display: none;">
+                                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; border-radius: 8px;">
+                                        <i class="fas fa-check-circle" style="color: #16a34a; font-size: 16px; flex-shrink: 0;"></i>
+                                        <span id="selected-task-title" style="flex: 1; font-weight: 600; font-size: 13px; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                                        <button type="button" id="remove-selected-task-btn" class="btn" style="padding: 4px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer; flex-shrink: 0;" title="Remove task selection">
+                                            <i class="fas fa-times" style="margin-right: 4px;"></i>Remove
+                                        </button>
                                     </div>
-                                    <div class="form-group mb-0">
-                                        <label class="form-label">If Not Found in the List, Fetch It
-                                            Directly</label>
-                                        <div style="display: flex; gap: 8px; align-items: flex-start;">
-                                            <div style="flex: 1;">
+                                </div>
+
+                                <!-- ClickUp Task Selection - 2-column compact layout -->
+                                <div id="clickup-task-section" class="mb-4" style="display: block;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                        <div class="form-group mb-0">
+                                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">ClickUp Task</label>
+                                            <select id="clickup-task-select" class="form-select" style="font-size: 13px; padding: 6px 10px;">
+                                                <option value="">-- Select a task --</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Fetch by Task ID</label>
+                                            <div style="display: flex; gap: 6px;">
                                                 <input type="text" id="manual-task-id-input" class="form-input"
-                                                    placeholder="Enter ClickUp Task ID (e.g., 86dzf0rkn)">
-                                                <div class="form-help">Can't find your task in the dropdown? Enter
-                                                    the task ID to fetch it directly from ClickUp</div>
+                                                    placeholder="e.g., 86dzf0rkn" style="font-size: 13px; padding: 6px 10px; flex: 1;">
+                                                <button type="button" class="btn btn-outline-primary"
+                                                    id="fetch-manual-task-btn"
+                                                    style="white-space: nowrap; padding: 6px 12px; font-size: 12px;">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
                                             </div>
-                                            <button type="button" class="btn btn-outline-primary"
-                                                id="fetch-manual-task-btn"
-                                                style="white-space: nowrap; margin-top: 0;">
-                                                <i class="fas fa-download me-1"></i>Fetch Task
-                                            </button>
                                         </div>
-                                        <div id="manual-task-status" class="mt-2" style="display: none;">
-                                            <div class="alert" id="manual-task-alert"></div>
-                                        </div>
+                                    </div>
+                                    <div id="manual-task-status" class="mt-2" style="display: none;">
+                                        <div class="alert" id="manual-task-alert" style="font-size: 13px; padding: 8px 12px;"></div>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
