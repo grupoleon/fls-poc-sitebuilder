@@ -580,6 +580,63 @@ class RawConfigManager {
     }
 
     /**
+     * Load all default configs and overwrite all files
+     */
+    async loadAllDefaults() {
+        const confirmMsg=`Are you sure you want to load ALL default configurations?\n\n`+
+            `This will:\n`+
+            `• Load all saved defaults from the database\n`+
+            `• Overwrite/create ALL corresponding config files\n`+
+            `• Create backups of current files automatically\n\n`+
+            `This action will affect multiple configuration files.`;
+
+        if(!confirm(confirmMsg)) {
+            return;
+        }
+
+        try {
+            const response=await fetch('/php/bootstrap.php',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'load_all_config_defaults'
+                })
+            });
+
+            const result=await response.json();
+
+            if(result.success) {
+                const loadedCount=result.loaded? result.loaded.length:0;
+                const failedCount=result.failed? result.failed.length:0;
+
+                let message=result.message||`Loaded ${loadedCount} default configuration(s)`;
+
+                if(loadedCount>0) {
+                    message+=`\n\nLoaded files: ${result.loaded.join(', ')}`;
+                }
+
+                if(failedCount>0) {
+                    message+=`\n\nFailed files: ${result.failed.map(f => `${f.filename} (${f.error})`).join(', ')}`;
+                }
+
+                this.showSuccess(message);
+
+                // Reload current file if it was loaded
+                if(this.currentFile&&result.loaded&&result.loaded.includes(this.currentFile)) {
+                    await this.loadConfigFile(this.currentFile);
+                }
+            } else {
+                throw new Error(result.message||'Failed to load default configurations');
+            }
+        } catch(error) {
+            console.error('Error loading all defaults:',error);
+            this.showError('Failed to load all default configurations: '+error.message);
+        }
+    }
+
+    /**
      * Show success message
      */
     showSuccess(message) {

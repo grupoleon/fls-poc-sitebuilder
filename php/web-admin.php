@@ -3467,6 +3467,10 @@
                                 </button>
                                 <input type="file" id="config-import-input" accept=".json,.zip" multiple
                                     style="display: none;">
+                                <button class="btn btn-info" id="config-load-all-defaults-btn"
+                                    onclick="window.rawConfigManager.loadAllDefaults()" title="Load all default configurations from database">
+                                    <i class="fas fa-cloud-download-alt"></i> Load All Defaults
+                                </button>
                                 <button class="btn btn-success" id="config-save-default-btn"
                                     onclick="window.rawConfigManager.saveAsDefault()" style="display: none;">
                                     <i class="fas fa-save"></i> Save as Default
@@ -3478,6 +3482,15 @@
                                 <button class="btn btn-secondary" id="config-copy-btn"
                                     onclick="window.rawConfigManager.copyToClipboard()">
                                     <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button class="btn btn-secondary" id="config-download-btn"
+                                    onclick="window.rawConfigManager.downloadCurrentConfig()">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                                <span class="text-muted" style="margin-left: 8px; font-size: 0.875rem;">
+                                    Import multiple `.json` files or a `.zip` containing JSONs.
+                                </span>
+                            </div>
                                 </button>
                                 <button class="btn btn-secondary" id="config-download-btn"
                                     onclick="window.rawConfigManager.downloadCurrentConfig()">

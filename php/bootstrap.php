@@ -1288,6 +1288,17 @@ function handleRequest()
                 }
                 break;
 
+            case 'load_all_config_defaults':
+                try {
+                    $postData = $jsonInput ?? json_decode(file_get_contents('php://input'), true);
+
+                    $result = $configDefaultsManager->loadAllDefaults();
+                    echo json_encode($result);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
             case 'get_clickup_config':
                 try {
                     $localConfig   = $configManager->getConfig('local');

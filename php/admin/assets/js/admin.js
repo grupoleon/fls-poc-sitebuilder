@@ -1913,19 +1913,21 @@ class AdminInterface {
             if(data.success&&data.task) {
                 console.log('Task object:',JSON.stringify(data.task,null,2));
 
+                // Set flag BEFORE loading configuration to prevent any overwrites
+                this.isTaskPrefilling=true;
+                debugLog('Task prefilling flag set - config loading will be blocked');
+
                 // CRITICAL: Load/reload configuration to ensure all form fields exist
                 debugLog('Loading configuration before prefilling task data...');
                 await this.loadConfiguration();
 
                 // Wait for form fields to be fully populated before capturing values
-                await new Promise(resolve => setTimeout(resolve,300));
+                await new Promise(resolve => setTimeout(resolve,500));
 
                 // Capture current values BEFORE prefilling to track changes
                 const beforeValues=this.captureCurrentConfigValues();
 
-                // Set flag to prevent populateConfigForms from overwriting task values
-                this.isTaskPrefilling=true;
-                debugLog('Task prefilling started - populateConfigForms will preserve existing values');
+                debugLog('Task prefilling started - form values captured');
 
                 // Now prefill with task data after config is loaded
                 this.prefillDeploymentForm(data.task);
@@ -1935,7 +1937,7 @@ class AdminInterface {
                 setTimeout(async () => {
                     // Clear the prefilling flag
                     this.isTaskPrefilling=false;
-                    debugLog('Task prefilling completed - populateConfigForms will resume normal behavior');
+                    debugLog('Task prefilling completed - flag cleared');
 
                     // Capture values AFTER prefilling
                     const afterValues=this.captureCurrentConfigValues();
@@ -3748,6 +3750,12 @@ class AdminInterface {
     }
 
     populateConfigForms(configs) {
+        // CRITICAL: Skip if task prefilling is in progress to prevent overwriting
+        if(this.isTaskPrefilling) {
+            debugLog('Skipping populateConfigForms - task prefilling in progress','warn');
+            return;
+        }
+
         debugLog('Config data loaded:',configs);
 
         // Populate git config
@@ -7799,6 +7807,15 @@ class AdminInterface {
         const taskSelect=document.getElementById('clickup-task-select');
 
         if(checkbox&&taskSection) {
+            // Restore saved state from localStorage
+            const savedState=localStorage.getItem('clickup-integration-enabled');
+            if(savedState!==null) {
+                checkbox.checked=(savedState==='true');
+            } else {
+                // Default to checked if no saved state
+                checkbox.checked=true;
+            }
+
             // Update section visibility based on checkbox
             const updateVisibility=() => {
                 if(checkbox.checked) {
@@ -7811,14 +7828,20 @@ class AdminInterface {
                         taskSelect.setAttribute('disabled','disabled');
                     }
                 }
+                // Save state to localStorage
+                localStorage.setItem('clickup-integration-enabled',checkbox.checked.toString());
             };
 
             // Initial state
             updateVisibility();
 
-            checkbox.addEventListener('change',updateVisibility);
+            // Listen for changes
+            checkbox.addEventListener('change',() => {
+                updateVisibility();
+                debugLog(`ClickUp integration toggle changed to: ${checkbox.checked}`);
+            });
 
-            debugLog('ClickUp integration toggle setup complete');
+            debugLog(`ClickUp integration toggle setup complete (initial state: ${checkbox.checked})`);
         }
     }
 
