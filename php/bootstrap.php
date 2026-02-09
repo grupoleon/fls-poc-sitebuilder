@@ -612,17 +612,34 @@ function handleRequest()
                 break;
 
             case 'upload_logo':
-                if (isset($_FILES['logo'])) {
-                    $filename = $pageManager->handleLogoUpload($_FILES['logo']);
+                try {
+                    if (! isset($_FILES['logo'])) {
+                        throw new Exception('No logo file provided');
+                    }
+
+                    $file = $_FILES['logo'];
+
+                    // Log upload attempt for debugging
+                    error_log('Logo upload attempt - Name: ' . ($file['name'] ?? 'N/A') .
+                        ', Size: ' . ($file['size'] ?? 'N/A') .
+                        ', Error: ' . ($file['error'] ?? 'N/A') .
+                        ', Tmp: ' . ($file['tmp_name'] ?? 'N/A'));
+
+                    $filename = $pageManager->handleLogoUpload($file);
+
                     echo json_encode([
                         'success' => true,
                         'data'    => [
                             'filename' => $filename,
-                            'url'      => 'uploads/images/' . $filename, // Fixed: Remove ../ relative path
+                            'url'      => 'uploads/images/' . $filename,
                         ],
                     ]);
-                } else {
-                    throw new Exception('No logo file provided');
+                } catch (Exception $e) {
+                    error_log('Logo upload failed: ' . $e->getMessage());
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $e->getMessage(),
+                    ]);
                 }
                 break;
 

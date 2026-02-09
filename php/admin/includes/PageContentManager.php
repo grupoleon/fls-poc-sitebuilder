@@ -861,8 +861,17 @@ class PageContentManager
 
         // Create uploads directory if it doesn't exist
         $uploadsDir = dirname(dirname(dirname(__DIR__))) . '/uploads/images';
+
         if (! is_dir($uploadsDir)) {
-            mkdir($uploadsDir, 0755, true);
+            if (! @mkdir($uploadsDir, 0755, true)) {
+                $error = error_get_last();
+                throw new Exception('Failed to create uploads directory: ' . ($error['message'] ?? 'Unknown error') . ' - Path: ' . $uploadsDir);
+            }
+        }
+
+        // Check if directory is writable
+        if (! is_writable($uploadsDir)) {
+            throw new Exception('Uploads directory is not writable. Please check permissions: ' . $uploadsDir . ' (current permissions: ' . substr(sprintf('%o', fileperms($uploadsDir)), -4) . ')');
         }
 
         // Generate unique filename with timestamp
@@ -870,10 +879,36 @@ class PageContentManager
         $filename  = 'logo_' . time() . '.' . $extension;
         $filepath  = $uploadsDir . '/' . $filename;
 
-        // Move uploaded file
-        if (! move_uploaded_file($file['tmp_name'], $filepath)) {
-            throw new Exception('Failed to save logo file');
+        // Check if temp file exists and is readable
+        if (! is_uploaded_file($file['tmp_name'])) {
+            throw new Exception('Invalid upload - temp file not found or not uploaded via HTTP POST');
         }
+
+        // Move uploaded file with better error reporting
+        if (! @move_uploaded_file($file['tmp_name'], $filepath)) {
+            $error    = error_get_last();
+            $errorMsg = 'Failed to save logo file: ';
+
+            if ($error && isset($error['message'])) {
+                $errorMsg .= $error['message'];
+            } else {
+                $errorMsg .= 'Unknown error';
+            }
+
+            $errorMsg .= ' | Source: ' . $file['tmp_name'];
+            $errorMsg .= ' | Destination: ' . $filepath;
+            $errorMsg .= ' | Parent dir writable: ' . (is_writable($uploadsDir) ? 'yes' : 'no');
+
+            throw new Exception($errorMsg);
+        }
+
+        // Verify file was actually written
+        if (! file_exists($filepath)) {
+            throw new Exception('File upload appeared successful but file does not exist at destination: ' . $filepath);
+        }
+
+        // Set appropriate permissions on the uploaded file
+        @chmod($filepath, 0644);
 
         // Save logo filename to config.json
         $this->saveLogoToConfig($filename);
