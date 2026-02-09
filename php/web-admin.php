@@ -3491,15 +3491,6 @@
                                     Import multiple `.json` files or a `.zip` containing JSONs.
                                 </span>
                             </div>
-                                </button>
-                                <button class="btn btn-secondary" id="config-download-btn"
-                                    onclick="window.rawConfigManager.downloadCurrentConfig()">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
-                                <span class="text-muted" style="margin-left: 8px; font-size: 0.875rem;">
-                                    Import multiple `.json` files or a `.zip` containing JSONs.
-                                </span>
-                            </div>
 
                             <div id="config-import-summary" class="config-import-summary is-hidden" aria-live="polite">
                             </div>
