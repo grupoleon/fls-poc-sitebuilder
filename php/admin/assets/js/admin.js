@@ -5761,7 +5761,13 @@ class AdminInterface {
     async handleDeployment(action,step=null) {
         // ClickUp integration is always enabled - validate task selection
         const taskSelect=document.getElementById('clickup-task-select');
-        const selectedTaskId=taskSelect? taskSelect.value:'';
+        let selectedTaskId=taskSelect? taskSelect.value:'';
+
+        // Fallback to localStorage if dropdown is not yet populated
+        if(!selectedTaskId) {
+            selectedTaskId=localStorage.getItem('clickup-selected-task-id')||'';
+            debugLog(`Using persisted task ID from localStorage: ${selectedTaskId}`);
+        }
 
         if(!selectedTaskId) {
             this.showAlert('Please select a ClickUp task to proceed.','error');
@@ -7984,7 +7990,8 @@ class AdminInterface {
 
         if(taskSection) {
             // ClickUp integration is always enabled - update visibility based on task selection only
-            const updateVisibility=() => {
+            // Store as class method so it can be called from _restorePersistedTask
+            this._updateClickUpVisibility=() => {
                 const persistedTaskId=localStorage.getItem('clickup-selected-task-id');
                 const persistedTaskName=localStorage.getItem('clickup-selected-task-name');
 
@@ -8017,7 +8024,7 @@ class AdminInterface {
             };
 
             // Initial state - always show task section or selected task display
-            updateVisibility();
+            this._updateClickUpVisibility();
 
             // Restore persisted task selection on page load
             this._restorePersistedTask();
@@ -8031,7 +8038,7 @@ class AdminInterface {
                         localStorage.setItem('clickup-selected-task-name',selectedOption.textContent.trim());
                         debugLog(`Task selection persisted: ${taskSelect.value}`);
                     }
-                    updateVisibility();
+                    this._updateClickUpVisibility();
                 });
             }
 
@@ -8080,7 +8087,7 @@ class AdminInterface {
                         await this.loadConfiguration();
                     }
 
-                    updateVisibility();
+                    this._updateClickUpVisibility();
                     debugLog('Task selection removed and defaults reloaded');
                     showNotification('Task selection removed. Default configurations restored.','info');
                 });
@@ -8122,6 +8129,10 @@ class AdminInterface {
                 taskSelect.appendChild(option);
                 taskSelect.value=persistedTaskId;
             }
+
+            // Load the task data to prefill the form
+            debugLog(`Loading task data for persisted task: ${persistedTaskId}`);
+            await this.loadTaskDataAndPrefill(persistedTaskId);
         }
 
         // Update visibility to show the selected task display
