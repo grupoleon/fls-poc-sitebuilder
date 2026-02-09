@@ -154,21 +154,6 @@
                                 <h2 class="card-title">Deploy Your Website</h2>
                             </div>
                             <div class="card-body" id="quick-deploy-body">
-                                <!-- ClickUp Integration Toggle -->
-                                <div class="form-group mb-3">
-                                    <label class="checkbox-label"
-                                        style="display: flex; align-items: center; cursor: pointer;">
-                                        <input type="checkbox" id="clickup-integration-checkbox"
-                                            style="margin-right: 10px;" checked>
-                                        <span style="font-weight: 600;">
-                                            <i class="fas fa-tasks" style="margin-right: 6px;"></i>
-                                            Connect to ClickUp Task
-                                        </span>
-                                    </label>
-                                    <div class="form-help">Enable to track deployment progress in ClickUp and
-                                        automatically fill site details</div>
-                                </div>
-
                                 <!-- Selected Task Display (shown when task is selected) -->
                                 <div id="selected-task-display" class="mb-3" style="display: none;">
                                     <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; border-radius: 8px;">

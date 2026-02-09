@@ -1902,13 +1902,15 @@ class AdminInterface {
                 taskSelect.appendChild(option);
             });
 
-            // Add change event listener
-            taskSelect.addEventListener('change',async (e) => {
+            // Add change event listener once (outside the loop) to avoid duplicates
+            taskSelect.removeEventListener('change',this._taskSelectHandler); // Remove old listener if any
+            this._taskSelectHandler=async (e) => {
                 const taskId=e.target.value;
                 if(taskId) {
                     await this.loadTaskDataAndPrefill(taskId);
                 }
-            });
+            };
+            taskSelect.addEventListener('change',this._taskSelectHandler);
         }
     }
 
@@ -5757,26 +5759,18 @@ class AdminInterface {
     }
 
     async handleDeployment(action,step=null) {
-        // Check if ClickUp integration is enabled
-        const clickUpCheckbox=document.getElementById('clickup-integration-checkbox');
-        const isClickUpEnabled=clickUpCheckbox? clickUpCheckbox.checked:true; // Default to true if checkbox not found
-
-        // Validate ClickUp task selection only if integration is enabled
+        // ClickUp integration is always enabled - validate task selection
         const taskSelect=document.getElementById('clickup-task-select');
         const selectedTaskId=taskSelect? taskSelect.value:'';
 
-        if(isClickUpEnabled&&!selectedTaskId) {
-            this.showAlert('Please select a ClickUp task or disable ClickUp integration to proceed.','error');
+        if(!selectedTaskId) {
+            this.showAlert('Please select a ClickUp task to proceed.','error');
             return;
         }
 
-        // Store ClickUp status for later use
-        sessionStorage.setItem('clickup_integration_enabled',isClickUpEnabled? 'true':'false');
-        if(!isClickUpEnabled) {
-            sessionStorage.setItem('clickup_integration_skipped','true');
-        } else {
-            sessionStorage.removeItem('clickup_integration_skipped');
-        }
+        // Store ClickUp status for later use (always enabled)
+        sessionStorage.setItem('clickup_integration_enabled','true');
+        sessionStorage.removeItem('clickup_integration_skipped');
 
         // Check if user wants to delete existing site first
         const deleteCheckbox=document.getElementById('delete-existing-site-checkbox');
@@ -7981,7 +7975,6 @@ class AdminInterface {
     }
 
     setupClickUpIntegrationToggle() {
-        const checkbox=document.getElementById('clickup-integration-checkbox');
         const taskSection=document.getElementById('clickup-task-section');
         const taskSelect=document.getElementById('clickup-task-select');
         const selectedTaskDisplay=document.getElementById('selected-task-display');
@@ -7989,70 +7982,45 @@ class AdminInterface {
         const selectedTaskId=document.getElementById('selected-task-id');
         const removeTaskBtn=document.getElementById('remove-selected-task-btn');
 
-        if(checkbox&&taskSection) {
-            // Restore saved state from localStorage
-            const savedState=localStorage.getItem('clickup-integration-enabled');
-            if(savedState!==null) {
-                checkbox.checked=(savedState==='true');
-            } else {
-                checkbox.checked=true;
-            }
-
-            // Update section visibility based on checkbox and task selection
+        if(taskSection) {
+            // ClickUp integration is always enabled - update visibility based on task selection only
             const updateVisibility=() => {
                 const persistedTaskId=localStorage.getItem('clickup-selected-task-id');
                 const persistedTaskName=localStorage.getItem('clickup-selected-task-name');
 
-                if(checkbox.checked) {
-                    // Check if a task is selected (either in dropdown or persisted)
-                    const hasDropdownSelection=taskSelect&&taskSelect.value;
-                    const hasPersistedSelection=persistedTaskId&&persistedTaskName;
+                // Check if a task is selected (either in dropdown or persisted)
+                const hasDropdownSelection=taskSelect&&taskSelect.value;
+                const hasPersistedSelection=persistedTaskId&&persistedTaskName;
 
-                    if((hasDropdownSelection||hasPersistedSelection)&&selectedTaskDisplay) {
-                        // Determine display values
-                        let displayName='';
-                        let displayId='';
+                if((hasDropdownSelection||hasPersistedSelection)&&selectedTaskDisplay) {
+                    // Determine display values
+                    let displayName='';
+                    let displayId='';
 
-                        if(hasDropdownSelection) {
-                            const selectedOption=taskSelect.options[taskSelect.selectedIndex];
-                            displayName=selectedOption.textContent.trim();
-                            displayId=taskSelect.value;
-                        } else if(hasPersistedSelection) {
-                            displayName=persistedTaskName;
-                            displayId=persistedTaskId;
-                        }
-
-                        if(selectedTaskTitle) selectedTaskTitle.textContent=displayName;
-                        if(selectedTaskId) selectedTaskId.textContent=`ID: ${displayId}`;
-                        selectedTaskDisplay.style.display='block';
-                        taskSection.style.display='none';
-                    } else {
-                        if(selectedTaskDisplay) selectedTaskDisplay.style.display='none';
-                        taskSection.style.display='block';
+                    if(hasDropdownSelection) {
+                        const selectedOption=taskSelect.options[taskSelect.selectedIndex];
+                        displayName=selectedOption.textContent.trim();
+                        displayId=taskSelect.value;
+                    } else if(hasPersistedSelection) {
+                        displayName=persistedTaskName;
+                        displayId=persistedTaskId;
                     }
-                    if(taskSelect) taskSelect.removeAttribute('disabled');
-                } else {
+
+                    if(selectedTaskTitle) selectedTaskTitle.textContent=displayName;
+                    if(selectedTaskId) selectedTaskId.textContent=`ID: ${displayId}`;
+                    selectedTaskDisplay.style.display='block';
                     taskSection.style.display='none';
+                } else {
                     if(selectedTaskDisplay) selectedTaskDisplay.style.display='none';
-                    if(taskSelect) {
-                        taskSelect.value='';
-                        taskSelect.setAttribute('disabled','disabled');
-                    }
+                    taskSection.style.display='block';
                 }
-                localStorage.setItem('clickup-integration-enabled',checkbox.checked.toString());
             };
 
-            // Initial state
+            // Initial state - always show task section or selected task display
             updateVisibility();
 
             // Restore persisted task selection on page load
             this._restorePersistedTask();
-
-            // Listen for checkbox changes
-            checkbox.addEventListener('change',() => {
-                updateVisibility();
-                debugLog(`ClickUp integration toggle changed to: ${checkbox.checked}`);
-            });
 
             // Listen for task selection changes to persist and show/hide selected task display
             if(taskSelect) {
