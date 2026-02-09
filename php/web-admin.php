@@ -3467,6 +3467,14 @@
                                 </button>
                                 <input type="file" id="config-import-input" accept=".json,.zip" multiple
                                     style="display: none;">
+                                <button class="btn btn-success" id="config-save-default-btn"
+                                    onclick="window.rawConfigManager.saveAsDefault()" style="display: none;">
+                                    <i class="fas fa-save"></i> Save as Default
+                                </button>
+                                <button class="btn btn-warning" id="config-load-default-btn"
+                                    onclick="window.rawConfigManager.loadDefault()" style="display: none;">
+                                    <i class="fas fa-download"></i> Load Default
+                                </button>
                                 <button class="btn btn-secondary" id="config-copy-btn"
                                     onclick="window.rawConfigManager.copyToClipboard()">
                                     <i class="fas fa-copy"></i> Copy

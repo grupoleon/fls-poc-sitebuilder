@@ -39,6 +39,7 @@ class RawConfigManager {
             document.getElementById('raw-config-viewer').textContent='Select a file to view its contents';
             this.updateMetadata(null);
             this.currentFile=null;
+            this.updateDefaultButtons(false);
             return;
         }
 
@@ -49,6 +50,7 @@ class RawConfigManager {
             if(result.success) {
                 this.currentFile=filename;
                 this.displayConfig(result.content,result.metadata);
+                this.updateDefaultButtons(result.has_default||false,result.default_info||null);
             } else {
                 throw new Error(result.message||'Failed to load config file');
             }
@@ -56,6 +58,7 @@ class RawConfigManager {
             console.error('Error loading config file:',error);
             this.showError('Failed to load configuration file: '+error.message);
             document.getElementById('raw-config-viewer').textContent='Error loading file';
+            this.updateDefaultButtons(false);
         }
     }
 
@@ -444,6 +447,135 @@ class RawConfigManager {
         } catch(error) {
             console.error('Error loading local config:',error);
             viewer.textContent='Error loading local-config.json';
+        }
+    }
+
+    /**
+     * Update the visibility and state of default buttons
+     */
+    updateDefaultButtons(hasDefault,defaultInfo) {
+        const saveBtn=document.getElementById('config-save-default-btn');
+        const loadBtn=document.getElementById('config-load-default-btn');
+
+        if(!this.currentFile) {
+            if(saveBtn) saveBtn.style.display='none';
+            if(loadBtn) loadBtn.style.display='none';
+            return;
+        }
+
+        // Always show save button when a file is selected
+        if(saveBtn) {
+            saveBtn.style.display='inline-block';
+            if(hasDefault) {
+                saveBtn.innerHTML='<i class="fas fa-save"></i> Update Default';
+                saveBtn.title='Update the default configuration';
+            } else {
+                saveBtn.innerHTML='<i class="fas fa-save"></i> Save as Default';
+                saveBtn.title='Save current configuration as default';
+            }
+        }
+
+        // Show load button only if a default exists
+        if(loadBtn) {
+            if(hasDefault) {
+                loadBtn.style.display='inline-block';
+                if(defaultInfo) {
+                    const updatedDate=new Date(defaultInfo.updated_at);
+                    const formattedDate=updatedDate.toLocaleString();
+                    loadBtn.title=`Load default (last updated: ${formattedDate})`;
+                } else {
+                    loadBtn.title='Load default configuration';
+                }
+            } else {
+                loadBtn.style.display='none';
+            }
+        }
+    }
+
+    /**
+     * Save current config as default
+     */
+    async saveAsDefault() {
+        if(!this.currentFile) {
+            this.showError('No configuration file selected');
+            return;
+        }
+
+        const confirmMsg=`Are you sure you want to save "${this.currentFile}" as the default configuration?\n\n`+
+            `This will store the current state of this file in the database and can be loaded later.`;
+
+        if(!confirm(confirmMsg)) {
+            return;
+        }
+
+        try {
+            const response=await fetch('/php/bootstrap.php',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'save_config_default',
+                    filename: this.currentFile
+                })
+            });
+
+            const result=await response.json();
+
+            if(result.success) {
+                this.showSuccess(result.message||'Configuration saved as default successfully');
+                // Reload the file to update button states
+                await this.loadConfigFile(this.currentFile);
+            } else {
+                throw new Error(result.message||'Failed to save default configuration');
+            }
+        } catch(error) {
+            console.error('Error saving default:',error);
+            this.showError('Failed to save default configuration: '+error.message);
+        }
+    }
+
+    /**
+     * Load default config and overwrite current file
+     */
+    async loadDefault() {
+        if(!this.currentFile) {
+            this.showError('No configuration file selected');
+            return;
+        }
+
+        const confirmMsg=`Are you sure you want to load the default configuration for "${this.currentFile}"?\n\n`+
+            `This will overwrite the current file with the saved default.\n`+
+            `A backup of the current file will be created automatically.`;
+
+        if(!confirm(confirmMsg)) {
+            return;
+        }
+
+        try {
+            const response=await fetch('/php/bootstrap.php',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'load_config_default',
+                    filename: this.currentFile
+                })
+            });
+
+            const result=await response.json();
+
+            if(result.success) {
+                this.showSuccess(result.message||'Default configuration loaded successfully');
+                // Reload the file to show updated content
+                await this.loadConfigFile(this.currentFile);
+            } else {
+                throw new Error(result.message||'Failed to load default configuration');
+            }
+        } catch(error) {
+            console.error('Error loading default:',error);
+            this.showError('Failed to load default configuration: '+error.message);
         }
     }
 

@@ -8,11 +8,13 @@ error_reporting(E_ERROR | E_PARSE);
 require_once __DIR__ . '/admin/includes/ConfigManager.php';
 require_once __DIR__ . '/admin/includes/PageContentManager.php';
 require_once __DIR__ . '/admin/includes/DeploymentManager.php';
+require_once __DIR__ . '/admin/includes/ConfigDefaultsManager.php';
 
 // Initialize managers
 $configManager     = new ConfigManager();
 $pageManager       = new PageContentManager();
 $deploymentManager = new DeploymentManager();
+$configDefaultsManager = new ConfigDefaultsManager();
 
 // Handle AJAX requests
 if (isset($_SERVER['REQUEST_METHOD']) &&
@@ -249,7 +251,7 @@ function filterConfigBySchema($config, $type)
  */
 function handleRequest()
 {
-    global $configManager, $pageManager, $deploymentManager;
+    global $configManager, $pageManager, $deploymentManager, $configDefaultsManager;
 
     header('Content-Type: application/json');
 
@@ -1168,10 +1170,91 @@ function handleRequest()
                         'modified' => filemtime($filePath),
                     ];
 
+                    // Check if a default exists for this config
+                    $hasDefault = $configDefaultsManager->hasDefault($filename);
+                    $defaultInfo = $hasDefault ? $configDefaultsManager->getDefaultInfo($filename) : null;
+
                     echo json_encode([
-                        'success'  => true,
-                        'content'  => $content,
-                        'metadata' => $metadata,
+                        'success'      => true,
+                        'content'      => $content,
+                        'metadata'     => $metadata,
+                        'has_default'  => $hasDefault,
+                        'default_info' => $defaultInfo,
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'save_config_default':
+                try {
+                    $postData = json_decode(file_get_contents('php://input'), true);
+                    $filename = $postData['filename'] ?? '';
+
+                    if (empty($filename)) {
+                        throw new Exception('Filename is required');
+                    }
+
+                    // Validate filename
+                    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                        throw new Exception('Invalid file name');
+                    }
+
+                    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                        throw new Exception('Only JSON files are allowed');
+                    }
+
+                    // Get user email from session if available
+                    require_once __DIR__ . '/admin/includes/Auth.php';
+                    $userEmail = Auth::getEmail();
+
+                    $result = $configDefaultsManager->saveDefault($filename, $userEmail);
+                    echo json_encode($result);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'load_config_default':
+                try {
+                    $postData = json_decode(file_get_contents('php://input'), true);
+                    $filename = $postData['filename'] ?? '';
+
+                    if (empty($filename)) {
+                        throw new Exception('Filename is required');
+                    }
+
+                    // Validate filename
+                    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                        throw new Exception('Invalid file name');
+                    }
+
+                    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                        throw new Exception('Only JSON files are allowed');
+                    }
+
+                    $result = $configDefaultsManager->loadDefault($filename);
+                    echo json_encode($result);
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+
+            case 'check_config_default':
+                try {
+                    $filename = $_GET['filename'] ?? '';
+
+                    if (empty($filename)) {
+                        throw new Exception('Filename is required');
+                    }
+
+                    $hasDefault = $configDefaultsManager->hasDefault($filename);
+                    $defaultInfo = $hasDefault ? $configDefaultsManager->getDefaultInfo($filename) : null;
+
+                    echo json_encode([
+                        'success'      => true,
+                        'has_default'  => $hasDefault,
+                        'default_info' => $defaultInfo,
                     ]);
                 } catch (Exception $e) {
                     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
