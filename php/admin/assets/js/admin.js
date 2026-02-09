@@ -2360,7 +2360,7 @@ class AdminInterface {
         });
     }
 
-    prefillDeploymentForm(taskData) {
+    async prefillDeploymentForm(taskData) {
         console.log('=== PREFILLING FORM ===');
         console.log('Full task data received:',JSON.stringify(taskData,null,2));
 
@@ -2443,6 +2443,7 @@ class AdminInterface {
                     themeSelect.value=themeName;
                     console.log('✅ Theme selected:',themeName);
                     localStorage.setItem('deploymentTheme',themeName);
+                    // Save theme immediately and synchronously
                     this.saveActiveTheme(themeName);
                     this.updatePageOptionsForTheme(themeName);
                     this.updatePageThemeSelect(themeName);
@@ -2460,10 +2461,22 @@ class AdminInterface {
                     return false;
                 }
             },'deployment-theme-select',10,300); // More retries with longer delay for theme loading
+
+            // Ensure theme is saved to theme-config.json after selection
+            setTimeout(async () => {
+                await this.saveActiveTheme(themeName);
+                console.log('✅ Theme saved to theme-config.json:',themeName);
+            },500);
         }
 
         // Enable services based on selected_services and prefill API keys
-        this.prefillServicesAndConfigs(taskData);
+        await this.prefillServicesAndConfigs(taskData);
+
+        // Ensure admin email is saved to site.json immediately
+        if(taskData.email) {
+            console.log('💾 Saving admin email to site.json:',taskData.email);
+            await this.saveEmailToSiteConfig(taskData.email);
+        }
 
         // Note: Notification is now shown via showChangesPreview() in loadTaskDataAndPrefill()
     }
@@ -2494,7 +2507,28 @@ class AdminInterface {
         trySet();
     }
 
-    prefillServicesAndConfigs(taskData) {
+    async saveEmailToSiteConfig(email) {
+        try {
+            const response=await fetch('?action=save_config',{
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    type: 'site',
+                    data: {admin_email: email}
+                })
+            });
+            const result=await response.json();
+            if(result.success) {
+                console.log('✅ Admin email saved to site.json successfully');
+            } else {
+                console.error('❌ Failed to save admin email:',result.message);
+            }
+        } catch(error) {
+            console.error('❌ Error saving admin email:',error);
+        }
+    }
+
+    async prefillServicesAndConfigs(taskData) {
         console.log('=== PREFILLING SERVICES AND CONFIGS ===');
         console.log('Task data received:',{
             google_analytics_token: taskData.google_analytics_token,

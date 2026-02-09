@@ -68,15 +68,39 @@ log_debug() {
     fi
 }
 
-# Progress indicators
+# Progress indicators with timing
+declare -A STEP_START_TIMES
+
 log_step_start() {
     local step_name="$1"
+    # Store start time for this step
+    STEP_START_TIMES["$step_name"]=$(date +%s)
     log_info "Starting: $step_name" "step"
 }
 
 log_step_complete() {
     local step_name="$1"
-    log_success "Completed: $step_name" "step"
+    local start_time="${STEP_START_TIMES[$step_name]:-0}"
+    
+    if [[ $start_time -gt 0 ]]; then
+        local end_time=$(date +%s)
+        local elapsed=$((end_time - start_time))
+        local time_display=""
+        
+        if [[ $elapsed -ge 60 ]]; then
+            local minutes=$((elapsed / 60))
+            local seconds=$((elapsed % 60))
+            time_display="${minutes}m ${seconds}s"
+        else
+            time_display="${elapsed}s"
+        fi
+        
+        log_success "Completed: $step_name (took ${time_display})" "step"
+        # Clean up the start time
+        unset STEP_START_TIMES["$step_name"]
+    else
+        log_success "Completed: $step_name" "step"
+    fi
 }
 
 log_step_failed() {
