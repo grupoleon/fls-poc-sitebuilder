@@ -2226,8 +2226,7 @@ class AdminInterface {
                 }
             });
 
-            // Add site_title from deployment tab (has no data-path)
-            const siteTitleInput=document.getElementById('deployment-site-title');
+            // Add site_title from deployment tab (has no data-path, reuse existing ref)
             if(siteTitleInput&&siteTitleInput.value) {
                 siteData.site_title=siteTitleInput.value;
                 if(!siteData.display_name) {

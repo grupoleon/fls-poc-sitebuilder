@@ -3532,8 +3532,8 @@
         <script src="/php/admin/assets/js/tools.js"></script>
         <script src="/php/admin/assets/js/forms.js"></script>
         <script src="/php/admin/assets/js/raw-config.js"></script>
-        <script src="/php/admin/assets/js/local-config.js"></script>
         <script src="/php/admin/assets/js/admin.js"></script>
+        <script src="/php/admin/assets/js/local-config.js"></script>
     </body>
 
 </html>
