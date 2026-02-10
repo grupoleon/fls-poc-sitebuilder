@@ -5978,6 +5978,7 @@ class AdminInterface {
         }
 
         // Save ClickUp integration status for backend to know whether to post comment
+        const isClickUpEnabled=sessionStorage.getItem('clickup_integration_enabled')==='true';
         data.clickup_integration_enabled=isClickUpEnabled;
 
         try {
