@@ -102,7 +102,7 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             /* background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%); */
-            background: linear - gradient(254deg, #d42f2f 0%, #2a87ca 100%);
+            background: linear-gradient(254deg, #d42f2f 0%, #2a87ca 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;

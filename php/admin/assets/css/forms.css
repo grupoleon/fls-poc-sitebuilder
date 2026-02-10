@@ -921,7 +921,7 @@
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
-    font-size: 0.95rem;
+    font-size: 14px;
 }
 
 .grid-section .form-label .fas,
@@ -929,7 +929,7 @@
 .form-label .fas {
     margin-right: 0.5rem;
     color: #6b7280;
-    font-size: 0.9rem;
+    font-size: 12px;
 }
 
 .form-control,
@@ -937,7 +937,7 @@
     border: 1px solid #d1d5db;
     border-radius: 6px;
     padding: 0.75rem 1rem;
-    font-size: 0.95rem;
+    font-size: 14px;
     transition: all 0.2s ease;
     background: white;
 }
@@ -998,7 +998,7 @@
     color: #374151;
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    font-size: 0.875rem;
+    font-size: 14px;
     font-weight: 600;
     min-width: 60px;
     text-align: center;
@@ -1095,7 +1095,7 @@
 /* Enhanced Badge styling */
 .badge {
     padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    font-size: 14px;
     font-weight: 600;
     border-radius: 20px;
     text-transform: uppercase;
