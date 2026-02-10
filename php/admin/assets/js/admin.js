@@ -8098,9 +8098,8 @@ class AdminInterface {
             }
 
             // Expose updateVisibility so other code can call it after programmatic task selection
-            this._updateClickUpVisibility=updateVisibility;
-
-            debugLog(`ClickUp integration toggle setup complete (initial state: ${checkbox.checked})`);
+            // (Already stored above as this._updateClickUpVisibility)
+            debugLog('ClickUp integration toggle setup complete');
         }
     }
 
