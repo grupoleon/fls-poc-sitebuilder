@@ -6,6 +6,9 @@ ini_set('error_log', __DIR__ . '/../logs/webhook_errors.log');
 
 header('Content-Type: application/json');
 
+// Include database logger for task persistence
+require_once __DIR__ . '/../php/admin/includes/DatabaseLogger.php';
+
 function sendResponse($success, $message, $data = null, $statusCode = 200)
 {
     http_response_code($statusCode);
@@ -457,6 +460,27 @@ try {
 
     logWebhook("Saving task data to file", ['task_id' => $taskId, 'task_name' => $taskData['name'] ?? 'N/A']);
     $fileInfo = saveTaskToFile($taskData);
+
+    // Save task to database for persistence and auto-recovery
+    try {
+        $db = DatabaseLogger::getInstance();
+        if ($db->isAvailable()) {
+            $db->saveClickUpTaskId(
+                $taskId,
+                $taskData['name'] ?? null,
+                $taskData['status']['status'] ?? null
+            );
+            logWebhook("Task saved to database", ['task_id' => $taskId]);
+        } else {
+            logWebhook("Database not available, task saved to file only", ['task_id' => $taskId]);
+        }
+    } catch (Exception $e) {
+        logWebhook("Failed to save task to database", [
+            'task_id' => $taskId,
+            'error'   => $e->getMessage(),
+        ]);
+        // Continue even if database save fails - file save is primary
+    }
 
     logWebhook("Task successfully processed", [
         'task_id' => $taskId,
