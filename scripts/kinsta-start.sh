@@ -178,7 +178,7 @@ fix_permissions() {
     # Ensure directories exist and are writable
     # NOTE: Using 777 for now as chown may fail in containerized environment
     # Security: These directories are not exposed externally (Nginx blocks access)
-    for dir in /app/config /app/logs /app/tmp /app/uploads /app/webhook; do
+    for dir in /app/config /app/logs /app/tmp /app/uploads /app/uploads/images /app/uploads/images/slides /app/webhook; do
         mkdir -p "$dir" 2>/dev/null || true
         chmod 777 "$dir" 2>/dev/null || true
         
