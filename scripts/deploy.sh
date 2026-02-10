@@ -592,14 +592,15 @@ upload_pages() {
 }
 
 upload_images() {
-    local uploads_dir="$ROOT_DIR/uploads/images"
+    # Upload entire uploads directory to preserve structure (uploads/images/slides/)
+    local uploads_dir="$ROOT_DIR/uploads"
     
     if [[ ! -d "$uploads_dir" ]]; then
         print_warning "No uploads directory found at $uploads_dir"
         return
     fi
     
-    print_info "Uploading images and logos..."
+    print_info "Uploading images and logos (preserving directory structure)..."
     
     # Get active theme from config for logo detection
     local active_theme="FLS-One"  # Default
@@ -635,25 +636,27 @@ upload_images() {
     # Upload current logo preserving file extension
     # current_logo may be a bare filename or a path — accept both
     # Normalize current_logo to a filename (accept bare filename or path)
+    # Logo files are in uploads/images/ subdirectory
+    local logo_search_dir="$uploads_dir/images"
     if [[ -n "$current_logo" ]]; then
-        if [[ -f "$uploads_dir/$current_logo" ]]; then
+        if [[ -f "$logo_search_dir/$current_logo" ]]; then
             : # keep as-is
-        elif [[ -f "$uploads_dir/$(basename "$current_logo")" ]]; then
+        elif [[ -f "$logo_search_dir/$(basename "$current_logo")" ]]; then
             current_logo="$(basename "$current_logo")"
         fi
     fi
 
-    if [[ -n "$current_logo" && -f "$uploads_dir/$current_logo" ]]; then
+    if [[ -n "$current_logo" && -f "$logo_search_dir/$current_logo" ]]; then
         # Get file extension
         local logo_ext="${current_logo##*.}"
         local logo_target="/tmp/logo.$logo_ext"
         
         print_info "Uploading current logo: $current_logo"
-        print_info "Logo file size: $(stat -f%z "$uploads_dir/$current_logo" 2>/dev/null || echo "unknown") bytes"
+        print_info "Logo file size: $(stat -f%z "$logo_search_dir/$current_logo" 2>/dev/null || echo "unknown") bytes"
         print_info "Logo extension: $logo_ext"
         print_info "SSH key file: $HOME/.ssh/id_rsa (exists: $(test -f $HOME/.ssh/id_rsa && echo "yes" || echo "no"))"
         
-        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" -v "$uploads_dir/$current_logo" "${KINSTA_USER}@${KINSTA_HOST}:$logo_target" 2>&1; then
+        if scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -P "$KINSTA_PORT" -v "$logo_search_dir/$current_logo" "${KINSTA_USER}@${KINSTA_HOST}:$logo_target" 2>&1; then
             print_success "Logo uploaded successfully: $current_logo -> $logo_target"
         else
             scp_exit_code=$?
@@ -665,35 +668,46 @@ upload_images() {
         fi
     else
         print_warning "No current logo found to upload"
-        print_info "Checked directory: $uploads_dir"
+        print_info "Checked directory: $logo_search_dir"
         print_info "Logo pattern searched: logo_*"
-        ls -la "$uploads_dir"/logo_* 2>/dev/null || print_info "No logo files found matching pattern"
+        ls -la "$logo_search_dir"/logo_* 2>/dev/null || print_info "No logo files found matching pattern"
     fi
     
-    # Upload all files recursively to server uploads directory
-    print_info "Uploading all files recursively from framework-interface/uploads/images..."
+    # Upload entire uploads directory recursively to preserve structure
+    print_info "Uploading entire uploads directory (preserves images/slides/ structure)..."
     
-    # Create uploads directory on server  
+    # Create uploads directory on server (parent directory)
     ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/uploads"
     
-    # Upload all files recursively via rsync for efficiency
-    if find "$uploads_dir" -type f -print -quit | grep -q .; then
-        file_count=$(find "$uploads_dir" -type f | wc -l)
-        print_info "Found $file_count files to upload (all file types, recursive)"
+    # Count all files in uploads directory (excluding .DS_Store)
+    if find "$uploads_dir" -type f ! -name ".DS_Store" -print -quit | grep -q .; then
+        file_count=$(find "$uploads_dir" -type f ! -name ".DS_Store" | wc -l | tr -d ' ')
+        print_info "Found $file_count files to upload from uploads/ directory"
         
-        if rsync -azv -e "ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p $KINSTA_PORT" \
+        # Upload with rsync - preserve directory structure by uploading the contents
+        # This will create /tmp/uploads/images/slides/ structure on server
+        if rsync -azv --exclude='.DS_Store' -e "ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p $KINSTA_PORT" \
             "$uploads_dir/" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/" 2>&1; then
-            print_success "All files uploaded successfully ($file_count files, recursive)"
+            print_success "All uploads directory contents transferred ($file_count files)"
+            print_success "Server structure: /tmp/uploads/images/slides/"
+            
+            # Verify upload by listing server directory structure
+            print_info "Verifying uploaded structure on server..."
+            ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
+                "find /tmp/uploads -type d | sort" 2>/dev/null || print_warning "Could not verify server directory structure"
         else
             rsync_exit_code=$?
-            print_error "Failed to upload files (exit code: $rsync_exit_code)"
-            print_error "Source directory: $uploads_dir"
-            print_error "Target: ${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/"
-            print_error "File count attempted: $file_count"
+            print_error "Failed to upload files via rsync (exit code: $rsync_exit_code)"
+            print_error "Check SSH connectivity and permissions:"
+            print_error "  • Source: $uploads_dir/"
+            print_error "  • Destination: ${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/"
+            print_error "  • SSH key: $HOME/.ssh/id_rsa"
+            print_error "  • Port: $KINSTA_PORT"
+            print_error "  • File count: $file_count files"
             exit 1
         fi
     else
-        print_info "No files found to upload"
+        print_warning "No files found to upload in uploads directory"
         print_info "Checked directory: $uploads_dir"
         print_info "Directory contents:"
         ls -la "$uploads_dir" 2>/dev/null || print_info "Directory not accessible"
