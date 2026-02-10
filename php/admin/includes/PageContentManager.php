@@ -619,7 +619,10 @@ class PageContentManager
     public function handleImageUpload($file, $type = 'general')
     {
         if (! is_dir($this->uploadsDir)) {
-            mkdir($this->uploadsDir, 0755, true);
+            @mkdir($this->uploadsDir, 0775, true);
+        }
+        if (! is_writable($this->uploadsDir)) {
+            @chmod($this->uploadsDir, 0775);
         }
 
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -650,7 +653,10 @@ class PageContentManager
         if ($subfolder) {
             $subfolderPath = $this->uploadsDir . '/' . $subfolder;
             if (! is_dir($subfolderPath)) {
-                mkdir($subfolderPath, 0755, true);
+                @mkdir($subfolderPath, 0775, true);
+            }
+            if (! is_writable($subfolderPath)) {
+                @chmod($subfolderPath, 0775);
             }
         }
 
@@ -863,13 +869,22 @@ class PageContentManager
         $uploadsDir = dirname(dirname(dirname(__DIR__))) . '/uploads/images';
 
         if (! is_dir($uploadsDir)) {
-            if (! @mkdir($uploadsDir, 0755, true)) {
+            if (! @mkdir($uploadsDir, 0775, true)) {
                 $error = error_get_last();
                 throw new Exception('Failed to create uploads directory: ' . ($error['message'] ?? 'Unknown error') . ' - Path: ' . $uploadsDir);
             }
         }
 
-        // Check if directory is writable
+        // Check if directory is writable, attempt to fix permissions if not
+        if (! is_writable($uploadsDir)) {
+            @chmod($uploadsDir, 0775);
+            // Also try to fix parent directory permissions
+            $parentDir = dirname($uploadsDir);
+            if (is_dir($parentDir) && ! is_writable($parentDir)) {
+                @chmod($parentDir, 0775);
+            }
+        }
+
         if (! is_writable($uploadsDir)) {
             throw new Exception('Uploads directory is not writable. Please check permissions: ' . $uploadsDir . ' (current permissions: ' . substr(sprintf('%o', fileperms($uploadsDir)), -4) . ')');
         }

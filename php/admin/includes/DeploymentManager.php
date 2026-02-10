@@ -89,11 +89,12 @@ class DeploymentManager
         }
 
         $initialStatus = [
-            'status'    => 'starting',
-            'step'      => 'initializing',
-            'message'   => 'Deployment initialization...',
-            'timestamp' => time(),
-            'logs'      => ['Deployment requested from web interface'],
+            'status'       => 'starting',
+            'step'         => 'initializing',
+            'current_step' => 'create-site',
+            'message'      => 'Deployment initialization...',
+            'timestamp'    => time(),
+            'logs'         => ['Deployment requested from web interface'],
         ];
 
         // Preserve clickup_task_id if it exists

@@ -516,7 +516,7 @@ jobs:
     .glossary-term h3 {
         color: var(--primary-color);
         margin-bottom: 0.75rem;
-        font-size: 1.25rem;
+        font-size: 1rem;
     }
 
     .glossary-term p {
@@ -566,7 +566,7 @@ jobs:
     .glossary-term-compact strong {
         display: block;
         color: var(--primary-color);
-        font-size: 1.1rem;
+        font-size: 0.9375rem;
         margin-bottom: 0.5rem;
     }
 

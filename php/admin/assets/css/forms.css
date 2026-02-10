@@ -25,7 +25,7 @@
 .forms-manager-header h2 {
     margin: 0;
     color: #1e40af;
-    font-size: 1.75rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 
@@ -250,7 +250,7 @@
 
 .form-editor-header h3 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -444,7 +444,7 @@
     cursor: pointer;
     color: #dc2626;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
     line-height: 1;
     padding: 0 0.25rem;
     border-radius: 3px;
@@ -645,7 +645,7 @@
 
 .options-modal-header h3 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -653,7 +653,7 @@
     background: none;
     border: none;
     color: #374151;
-    font-size: 2rem;
+    font-size: 1rem;
     line-height: 1;
     cursor: pointer;
     padding: 0;
@@ -817,7 +817,7 @@
 #page-sections .card.mb-6 .card-header .card-title {
     position: relative;
     z-index: 2;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--color-blue);
     margin: 0;
@@ -827,7 +827,7 @@
 
 #page-sections .card.mb-6 .card-header .card-title .fas {
     margin-right: 0.75rem;
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
     color: #166534;
     color: #6b7280;
 }
@@ -1199,7 +1199,7 @@
 
 .grid-section .image-upload .image-upload-text .fas,
 .widget-section .image-upload .image-upload-text .fas {
-    font-size: 2rem;
+    font-size: 1rem;
     color: #9ca3af;
     margin-bottom: 0.75rem;
     transition: all 0.2s ease;

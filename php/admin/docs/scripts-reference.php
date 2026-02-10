@@ -669,7 +669,7 @@ decrypt_credential()   # Decrypt sensitive data</code></pre>
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 1.2rem;
+        font-size: 1rem;
         margin-right: 1.5rem;
         flex-shrink: 0;
     }
@@ -686,7 +686,7 @@ decrypt_credential()   # Decrypt sensitive data</code></pre>
 
     .flow-arrow {
         text-align: center;
-        font-size: 2rem;
+        font-size: 1rem;
         color: var(--primary-color);
         margin: 0.5rem 0;
     }

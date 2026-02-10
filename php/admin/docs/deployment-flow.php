@@ -922,7 +922,7 @@ cat /tmp/deployment_status.json | jq .</code></pre>
     .component-header {
         padding: 1rem;
         font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 0.9375rem;
         color: white;
         text-align: center;
     }
@@ -954,7 +954,7 @@ cat /tmp/deployment_status.json | jq .</code></pre>
     }
 
     .arch-arrow {
-        font-size: 2rem;
+        font-size: 1rem;
         color: var(--primary-color);
         font-weight: bold;
     }
@@ -986,14 +986,14 @@ cat /tmp/deployment_status.json | jq .</code></pre>
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 1.4rem;
+        font-size: 1rem;
         flex-shrink: 0;
     }
 
     .step-header h3 {
         flex: 1;
         margin: 0;
-        font-size: 1.3rem;
+        font-size: 1rem;
     }
 
     .step-time {
@@ -1012,7 +1012,7 @@ cat /tmp/deployment_status.json | jq .</code></pre>
         color: var(--primary-color);
         margin-top: 1.5rem;
         margin-bottom: 0.75rem;
-        font-size: 1.1rem;
+        font-size: 0.9375rem;
     }
 
     .step-content h4:first-child {

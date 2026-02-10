@@ -966,13 +966,16 @@ class AdminInterface {
             {id: 'github-actions',name: 'Actions'}
         ];
 
-        const currentStep=status.current_step||'config';
+        // Treat 'starting' as 'running' for UI purposes - the background process is initializing
+        const effectiveStatus=status.status==='starting'? 'running':status.status;
+
+        const currentStep=status.current_step||((effectiveStatus==='running')? 'create-site':'config');
         const currentStepIndex=deploymentSteps.findIndex(s => s.id===currentStep);
 
         debugLog('Current step:',currentStep,'Current step index:',currentStepIndex);
 
         // If deployment is idle, completed, or failed, handle appropriately
-        if(status.status==='idle'||status.status==='completed') {
+        if(effectiveStatus==='idle'||effectiveStatus==='completed') {
             debugLog('Deployment is not running, resetting all steps to pending');
             deploymentSteps.forEach((step) => {
                 this.updateCompactStepStatus(step.id,'pending',step.name);
@@ -995,7 +998,7 @@ class AdminInterface {
         }
 
         // Handle failed deployments - show which step failed
-        if(status.status==='failed'||status.status==='error') {
+        if(effectiveStatus==='failed'||effectiveStatus==='error') {
             debugLog('Deployment failed, showing failed step');
             deploymentSteps.forEach((step,index) => {
                 let stepStatus='pending';
@@ -1032,7 +1035,7 @@ class AdminInterface {
             let stepStatus='pending';
             let timingInfo=null;
 
-            if(status.status==='completed'||(status.status==='running'&&index<currentStepIndex)) {
+            if(effectiveStatus==='completed'||(effectiveStatus==='running'&&index<currentStepIndex)) {
                 stepStatus='completed';
                 // Get duration from step_timings if available
                 if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].duration) {
@@ -1045,7 +1048,7 @@ class AdminInterface {
                 } else if(this.stepDurations.has(step.id)) {
                     timingInfo=this.stepDurations.get(step.id);
                 }
-            } else if(index===currentStepIndex&&status.status==='running') {
+            } else if(index===currentStepIndex&&effectiveStatus==='running') {
                 stepStatus='in-progress';
                 // For in-progress steps, calculate elapsed time if we have start time
                 if(this.stepStartTimes.has(step.id)) {
@@ -1058,7 +1061,7 @@ class AdminInterface {
                     // Store start time if not already set
                     this.stepStartTimes.set(step.id,Date.now());
                 }
-            } else if(status.status==='error'&&index<=currentStepIndex) {
+            } else if(effectiveStatus==='error'&&index<=currentStepIndex) {
                 stepStatus='error';
                 timingInfo='Failed';
             }

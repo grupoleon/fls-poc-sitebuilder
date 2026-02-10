@@ -73,7 +73,7 @@
 }
 
 .toggle-icon {
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
     color: var(--brand-blue);
     transition: all var(--transition-fast);
 }
@@ -137,7 +137,7 @@
 .dynamic-list-title {
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
 }
 
 .dynamic-list-add {
@@ -312,7 +312,7 @@
 }
 
 .dynamic-list-empty-icon {
-    font-size: 2rem;
+    font-size: 1rem;
     color: var(--gray-400);
     margin-bottom: var(--space-3);
 }
@@ -459,7 +459,7 @@
 }
 
 .modal-title {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary) !important;
 }
@@ -467,7 +467,7 @@
 .modal-close {
     background: var(--gray-100);
     border: none;
-    font-size: 1.5rem;
+    font-size: 1rem;
     color: var(--text-primary);
     cursor: pointer;
     padding: var(--space-2);
@@ -974,13 +974,13 @@ input[type="file"].file-input {
 
 .content-header h3 {
     color: var(--text-primary);
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0;
 }
 
 .content-title {
-    font-size: 1.125rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 var(--space-2) 0;
@@ -1021,7 +1021,7 @@ input[type="file"].file-input {
 }
 
 .content-empty i {
-    font-size: 3rem;
+    font-size: 1rem;
     margin-bottom: var(--space-4);
     opacity: 0.5;
 }
@@ -1158,7 +1158,7 @@ input[type="file"].file-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: bold;
     box-shadow: var(--shadow-md);
 }
@@ -1185,7 +1185,7 @@ input[type="file"].file-input {
 }
 
 .status-step-title {
-    font-size: 1.125rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
@@ -1478,13 +1478,13 @@ input[type="file"].file-input {
 }
 
 .deployment-progress-notice i {
-    font-size: 1.5rem;
+    font-size: 1rem;
     margin-right: var(--space-2);
     animation: pulse 2s infinite;
 }
 
 .deployment-progress-notice .notice-title {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 700;
     margin-bottom: var(--space-1);
 }
@@ -1543,7 +1543,7 @@ input[type="file"].file-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    font-size: 1rem;
     font-weight: 700;
     transition: all var(--transition-normal);
     background: var(--gray-400);
@@ -1577,7 +1577,7 @@ input[type="file"].file-input {
 }
 
 .step-status {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     padding: 4px 10px;
     border-radius: var(--radius-md);
     text-transform: uppercase;
@@ -1591,7 +1591,7 @@ input[type="file"].file-input {
 }
 
 .step-time {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     color: var(--gray-500);
     font-family: 'JetBrains Mono', monospace;
     text-align: center;
@@ -1848,7 +1848,7 @@ input[type="file"].file-input {
     }
 
     .step-label {
-        font-size: 0.625rem;
+        font-size: 0.75rem;
     }
 
     .step-connector {
@@ -1870,7 +1870,7 @@ input[type="file"].file-input {
 
 .accordion-icon {
     transition: transform var(--transition-normal);
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--brand-blue);
 }
 
@@ -1959,7 +1959,7 @@ input[type="file"].file-input {
 }
 
 .changes-preview-title i {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .changes-preview-close {
@@ -2006,7 +2006,7 @@ input[type="file"].file-input {
 }
 
 .changes-category-name {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;

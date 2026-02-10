@@ -236,7 +236,7 @@ body {
     color: var(--white);
     text-decoration: none;
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 1rem;
     transition: all var(--transition-normal);
     padding: var(--space-3);
     border-radius: var(--radius-lg);
@@ -266,7 +266,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: var(--brand-blue);
 }
 
@@ -365,7 +365,7 @@ body {
     width: 24px;
     height: 24px;
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -406,7 +406,7 @@ body {
 }
 
 .header-title {
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: var(--space-2);
@@ -893,7 +893,7 @@ form>button {
     right: var(--space-3);
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 16px;
     cursor: pointer;
     opacity: 0.6;
     transition: all var(--transition-fast);
@@ -1360,7 +1360,7 @@ form>button {
     }
 
     .logo {
-        font-size: 1.2rem;
+        font-size: 1rem;
     }
 
     .sidebar-nav {
@@ -1802,12 +1802,12 @@ form>button {
 }
 
 .modal-status-icon {
-    font-size: 3rem;
+    font-size: 1rem;
     animation: bounceOnce 1s ease-out;
 }
 
 .modal-title {
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1816,7 +1816,7 @@ form>button {
 }
 
 .modal-subtitle {
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
     opacity: 0.95;
     margin-bottom: 1rem;
     line-height: 1.5;
@@ -1867,7 +1867,7 @@ form>button {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: white;
 }
 
@@ -1884,7 +1884,7 @@ form>button {
 }
 
 .stat-value {
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: #1f2937;
     margin-bottom: 0.25rem;
@@ -2050,7 +2050,7 @@ form>button {
     }
 
     .modal-title {
-        font-size: 1.5rem;
+        font-size: 1rem;
     }
 
     .modal-icon-ring {
@@ -2059,7 +2059,7 @@ form>button {
     }
 
     .modal-status-icon {
-        font-size: 2rem;
+        font-size: 1rem;
     }
 }
 
