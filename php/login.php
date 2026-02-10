@@ -1,25 +1,25 @@
 <?php
-/**
+    /**
  * Login Page - Google Workspace Authentication
  *
  * Authenticates users using Google OAuth2
  * Only allows @frontlinestrategies.co domain
  */
 
-require_once __DIR__ . '/admin/includes/Auth.php';
+    require_once __DIR__ . '/admin/includes/Auth.php';
 
-Auth::init();
+    Auth::init();
 
-// Handle logout
-if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    // Handle logout
+    if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     Auth::logout();
     header('Location: /php/login.php?logged_out=1');
     exit;
-}
+    }
 
-// Handle OAuth callback
-if (isset($_GET['code'])) {
-    $code = $_GET['code'];
+    // Handle OAuth callback
+    if (isset($_GET['code'])) {
+    $code  = $_GET['code'];
     $state = $_GET['state'] ?? '';
 
     $result = Auth::handleOAuthCallback($code, $state);
@@ -33,45 +33,45 @@ if (isset($_GET['code'])) {
     } else {
         $error = $result['error'];
     }
-}
+    }
 
-// Handle OAuth error from Google
-if (isset($_GET['error'])) {
+    // Handle OAuth error from Google
+    if (isset($_GET['error'])) {
     $error = match ($_GET['error']) {
-        'access_denied' => 'Access was denied. Please try again.',
+        'access_denied'   => 'Access was denied. Please try again.',
         'invalid_request' => 'Invalid request. Please try again.',
-        default => 'Authentication failed. Please try again.'
+        default           => 'Authentication failed. Please try again.'
     };
-}
+    }
 
-// Check if already logged in
-if (Auth::isLoggedIn()) {
+    // Check if already logged in
+    if (Auth::isLoggedIn()) {
     header('Location: /php/web-admin.php');
     exit;
-}
+    }
 
-// Get Google auth URL
-$googleAuthUrl = Auth::getGoogleAuthUrl();
-$isConfigured = Auth::isConfigured();
-$allowedDomain = Auth::getAllowedDomain();
+    // Get Google auth URL
+    $googleAuthUrl = Auth::getGoogleAuthUrl();
+    $isConfigured  = Auth::isConfigured();
+    $allowedDomain = Auth::getAllowedDomain();
 
-// Check for messages
-$loggedOut = isset($_GET['logged_out']);
-$error = $error ?? null;
+    // Check for messages
+    $loggedOut = isset($_GET['logged_out']);
+    $error     = $error ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Frontline Framework</title>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Frontline Framework</title>
 
-    <link rel="icon" href="/php/admin/assets/img/favicon.ico">
-    <link rel="stylesheet" href="//fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+        <link rel="icon" href="/php/admin/assets/img/favicon.ico">
+        <link rel="stylesheet" href="//fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-    <style>
+        <style>
         :root {
             --bg-dark: #0f172a;
             --bg-card: #1e293b;
@@ -101,7 +101,8 @@ $error = $error ?? null;
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
+            /* background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%); */
+            background: linear - gradient(254deg, #d42f2f 0%, #2a87ca 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -116,7 +117,8 @@ $error = $error ?? null;
         }
 
         .login-card {
-            background: var(--bg-card);
+            /* background: var(--bg-card); */
+            background: #fff;
             border-radius: 16px;
             padding: 48px 40px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -129,7 +131,7 @@ $error = $error ?? null;
         }
 
         .login-logo {
-            width: 80px;
+            width: 160px;
             height: auto;
             margin-bottom: 24px;
         }
@@ -281,33 +283,34 @@ $error = $error ?? null;
                 padding: 32px 24px;
             }
         }
-    </style>
-</head>
 
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <img src="/php/admin/assets/img/logo.png" alt="Frontline" class="login-logo">
-                <h1 class="login-title">Frontline Framework</h1>
-                <p class="login-subtitle">Sign in with your Google Workspace account to continue</p>
-            </div>
+        </style>
+    </head>
 
-            <?php if ($error): ?>
+    <body>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <img src="/php/admin/assets/img/logo.png" alt="Frontline" class="login-logo">
+                    <!-- <h1 class="login-title">Frontline Framework</h1> -->
+                    <p class="login-subtitle">Sign in with your Google Workspace account to continue</p>
+                </div>
+
+                <?php if ($error): ?>
                 <div class="alert alert-error">
                     <i class="fas fa-exclamation-circle"></i>
                     <span><?php echo htmlspecialchars($error); ?></span>
                 </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <?php if ($loggedOut): ?>
+                <?php if ($loggedOut): ?>
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i>
                     <span>You have been logged out successfully.</span>
                 </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <?php if ($isConfigured): ?>
+                <?php if ($isConfigured): ?>
                 <a href="<?php echo htmlspecialchars($googleAuthUrl); ?>" class="google-btn">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path fill="#fff"
@@ -332,7 +335,7 @@ $error = $error ?? null;
                         Google Workspace accounts are allowed to access this system.
                     </p>
                 </div>
-            <?php else: ?>
+                <?php else: ?>
                 <button class="google-btn disabled" disabled>
                     <i class="fas fa-lock"></i>
                     Authentication Unavailable
@@ -342,13 +345,13 @@ $error = $error ?? null;
                     <i class="fas fa-exclamation-triangle"></i>
                     <span>Authentication is not configured. Please contact your administrator.</span>
                 </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <div class="login-footer">
-                <p>&copy; <?php echo date('Y'); ?> Frontline Strategies</p>
+                <div class="login-footer">
+                    <p>&copy; <?php echo date('Y'); ?> Frontline Strategies</p>
+                </div>
             </div>
         </div>
-    </div>
-</body>
+    </body>
 
 </html>
