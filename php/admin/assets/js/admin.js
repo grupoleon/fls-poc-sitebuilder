@@ -1917,6 +1917,51 @@ class AdminInterface {
         }
     }
 
+    /**
+     * Disable/enable deployment UI elements during task prefilling
+     * @param {boolean} disable - true to disable, false to enable
+     */
+    disableDeploymentUI(disable) {
+        // Deployment inputs
+        const siteTitleInput=document.getElementById('deployment-site-title');
+        const themeSelect=document.getElementById('deployment-theme-select');
+        const deployBtn=document.querySelector('.deploy-btn');
+
+        // ClickUp task section inputs
+        const taskSelect=document.getElementById('clickup-task-select');
+        const manualTaskInput=document.getElementById('manual-task-id-input');
+        const fetchTaskBtn=document.getElementById('fetch-manual-task-btn');
+
+        const elementsToDisable=[
+            siteTitleInput,
+            themeSelect,
+            deployBtn,
+            taskSelect,
+            manualTaskInput,
+            fetchTaskBtn
+        ];
+
+        elementsToDisable.forEach(el => {
+            if(el) {
+                el.disabled=disable;
+                if(disable) {
+                    el.style.opacity='0.5';
+                    el.style.cursor='not-allowed';
+                } else {
+                    el.style.opacity='';
+                    el.style.cursor='';
+                }
+            }
+        });
+
+        // Show/hide loading indicator
+        if(disable) {
+            showNotification('Loading task data, please wait...','info');
+        }
+
+        debugLog(`Deployment UI ${disable? 'disabled':'enabled'}`);
+    }
+
     async loadTaskDataAndPrefill(taskId) {
         try {
             debugLog(`Loading task data for: ${taskId}`);
@@ -1935,6 +1980,9 @@ class AdminInterface {
                 // Set flag BEFORE loading configuration to prevent any overwrites
                 this.isTaskPrefilling=true;
                 debugLog('Task prefilling flag set - config loading will be blocked');
+
+                // Disable deployment UI during task prefilling
+                this.disableDeploymentUI(true);
 
                 // CRITICAL: Load/reload configuration to ensure all form fields exist
                 debugLog('Loading configuration before prefilling task data...');
@@ -1980,6 +2028,9 @@ class AdminInterface {
                     this.isTaskPrefilling=false;
                     debugLog('Task prefilling completed - flag cleared');
 
+                    // Re-enable deployment UI after task prefilling
+                    this.disableDeploymentUI(false);
+
                     // Capture values AFTER prefilling
                     const afterValues=this.captureCurrentConfigValues();
 
@@ -1999,9 +2050,15 @@ class AdminInterface {
                 });
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
+                // Clear flag and re-enable UI on error
+                this.isTaskPrefilling=false;
+                this.disableDeploymentUI(false);
             }
         } catch(error) {
             debugLog('Failed to load task data:',error,'error');
+            // Clear flag and re-enable UI on error
+            this.isTaskPrefilling=false;
+            this.disableDeploymentUI(false);
         }
     }
 
@@ -2232,10 +2289,48 @@ class AdminInterface {
                 console.error('Failed to save configuration:',result.message);
             }
 
-            // Save active theme if changed
+            // Save active theme if changed - now includes full theme config
             const themeSelect=document.getElementById('deployment-theme-select');
             if(themeSelect&&themeSelect.value) {
                 await this.saveActiveTheme(themeSelect.value);
+            }
+
+            // Save theme-config.json including overrides
+            const themeConfigData={};
+            if(themeSelect&&themeSelect.value) {
+                themeConfigData.active_theme=themeSelect.value;
+            }
+
+            // Collect theme override checkboxes if they exist
+            const slidesOverride=document.getElementById('slides-override');
+            const pagesOverride=document.getElementById('pages-override');
+            const cptOverride=document.getElementById('cpt-override');
+
+            if(slidesOverride||pagesOverride||cptOverride) {
+                themeConfigData.overrides={};
+                if(slidesOverride) themeConfigData.overrides.slides_override=slidesOverride.checked;
+                if(pagesOverride) themeConfigData.overrides.pages_override=pagesOverride.checked;
+                if(cptOverride) themeConfigData.overrides.cpt_override=cptOverride.checked;
+            }
+
+            if(Object.keys(themeConfigData).length>0) {
+                console.log('Saving to theme-config.json:',themeConfigData);
+
+                const themeResponse=await fetch('?action=save_config',{
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'theme',
+                        data: themeConfigData
+                    })
+                });
+                const themeResult=await themeResponse.json();
+
+                if(themeResult.success) {
+                    console.log('✅ theme-config.json updated successfully');
+                } else {
+                    console.error('Failed to update theme-config.json:',themeResult.message);
+                }
             }
 
             // Save ALL site.json fields from form inputs
@@ -2286,6 +2381,35 @@ class AdminInterface {
                     console.log('✅ site.json updated successfully');
                 } else {
                     console.error('Failed to update site.json:',siteResult.message);
+                }
+            }
+
+            // Save git.json fields if they exist
+            const gitData={};
+            gitJsonPaths.forEach(path => {
+                const input=document.querySelector(`[data-path="${path}"]`);
+                if(input&&input.value) {
+                    gitData[path]=input.value;
+                }
+            });
+
+            if(Object.keys(gitData).length>0) {
+                console.log('Saving to git.json:',gitData);
+
+                const gitResponse=await fetch('?action=save_config',{
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'git',
+                        data: gitData
+                    })
+                });
+                const gitResult=await gitResponse.json();
+
+                if(gitResult.success) {
+                    console.log('✅ git.json updated successfully');
+                } else {
+                    console.error('Failed to update git.json:',gitResult.message);
                 }
             }
 
@@ -3080,6 +3204,13 @@ class AdminInterface {
                 // Select the task in dropdown
                 taskSelect.value=taskId;
 
+                // Set flag BEFORE loading configuration to prevent any overwrites
+                this.isTaskPrefilling=true;
+                debugLog('Manual task prefilling flag set - config loading will be blocked');
+
+                // Disable deployment UI during task prefilling
+                this.disableDeploymentUI(true);
+
                 // Prefill form with task data but guard against prefill errors so they don't surface as network errors
                 try {
                     // CRITICAL: Load/reload configuration to ensure all form fields exist
@@ -3115,6 +3246,13 @@ class AdminInterface {
                     };
 
                     waitForOps().then(async () => {
+                        // Clear the prefilling flag
+                        this.isTaskPrefilling=false;
+                        debugLog('Manual task prefilling completed - flag cleared');
+
+                        // Re-enable deployment UI after task prefilling
+                        this.disableDeploymentUI(false);
+
                         const afterValues=this.captureCurrentConfigValues();
                         const changes=this.calculateChanges(beforeValues,afterValues,data.task);
                         if(Object.keys(changes).length>0) {

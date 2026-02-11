@@ -325,6 +325,17 @@ function handleRequest()
                             $configManager->updateConfig($type, $mergedSiteConfig);
                             break;
 
+                        case 'theme':
+                            // Filter to only allow valid theme-config.json keys
+                            $data = filterConfigBySchema($data, 'theme');
+
+                            // Deep merge with existing theme config to preserve other fields
+                            $existingThemeConfig = $configManager->getConfig('theme');
+                            $mergedThemeConfig   = deepMergeConfig($existingThemeConfig, $data);
+
+                            $configManager->updateConfig($type, $mergedThemeConfig);
+                            break;
+
                         case 'main':
                         case 'security':
                         case 'integrations':
