@@ -75,7 +75,8 @@
     /* Background Applications */
     --bg-primary: var(--bg-white);
     --bg-secondary: var(--bg-light-gray);
-    --bg-card: var(--bg-white);
+    /* --bg-card: var(--bg-white); */
+    --bg-card: #ffffffd0;
     --bg-sidebar: var(--bg-light-gray);
     --bg-brand: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
 
@@ -423,7 +424,7 @@ h6 {
     min-width: 0;
     height: 100vh;
     /* background: var(--gray-50); */
-    background: linear-gradient(45deg, #202e30, #323d3f);
+    background: linear-gradient(60deg, #625656, #2483bd, #6b6a6a, #d42f2f);
 }
 
 .main-header {
@@ -454,7 +455,7 @@ h6 {
 
 #pages-content {
     /* background: var(--gray-50); */
-    background: linear-gradient(45deg, #202e30, #323d3f);
+    background: transparent;
 }
 
 /* Sidebar Footer */
@@ -523,7 +524,7 @@ h6 {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    border: 1px solid var(--gray-200);
+    border: 1px solid #000;
     overflow: hidden;
     transition: all var(--transition-normal);
 }
@@ -536,7 +537,7 @@ h6 {
 .card-header {
     padding: var(--space-5) var(--space-6);
     border-bottom: 1px solid var(--gray-200);
-    background: var(--white);
+    background: #000;
 }
 
 .card-title {

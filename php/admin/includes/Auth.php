@@ -2,6 +2,10 @@
 
 require_once __DIR__ . '/DatabaseLogger.php';
 
+// Environment constant: 'development' or 'production'
+$isLocal = $_SERVER['SERVER_NAME'] === 'web.fw';
+define('APP_ENV', $isLocal ? 'development' : 'production');
+
 /**
  * Google Workspace OAuth Authentication Handler
  *
@@ -63,6 +67,11 @@ class Auth
      */
     public static function isLoggedIn()
     {
+        // Bypass authentication in development mode
+        if (defined('APP_ENV') && APP_ENV === 'development') {
+            return true;
+        }
+
         self::init();
 
         // Check if we have a valid session

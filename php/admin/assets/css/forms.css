@@ -1404,7 +1404,7 @@ textarea {
 .text-muted,
 small,
 .small {
-    color: var(--text-gray) !important;
+    color: #dae3e6 !important;
 }
 
 /* Descriptions and help text - Dark gray for readability */
@@ -1412,7 +1412,7 @@ small,
 .help-text,
 .description,
 p {
-    color: #495057 !important;
+    color: #dae3e6 !important;
     font-weight: 400;
 }
 
@@ -1423,12 +1423,12 @@ h3,
 h4,
 h5,
 h6 {
-    color: var(--color-green);
+    color: #fff;
 }
 
 /* Card titles should use blue for distinction */
 .card-title {
-    color: var(--color-blue) !important;
+    color: #fff !important;
     font-weight: 700;
 }
 
