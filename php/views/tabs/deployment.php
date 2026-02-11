@@ -80,30 +80,6 @@
                                             placeholder="Enter site title">
                                         <div class="form-help">Enter your website's name (e.g., "My Campaign Site")
                                         </div>
-                                        <div id="site-title-warning" class="form-warning"
-                                            style="display: none; margin-top: 8px; padding: 8px 12px; background-color: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 0.875rem; color: #92400e;">
-                                            <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>
-                                            <span id="site-title-warning-text"></span>
-                                        </div>
-                                        <div id="delete-existing-site-option"
-                                            style="display: none; margin-top: 12px; padding: 12px; background-color: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px;">
-                                            <label
-                                                style="display: flex; align-items: center; cursor: pointer; font-size: 0.875rem; color: #991b1b;">
-                                                <input type="checkbox" id="delete-existing-site-checkbox"
-                                                    style="margin-right: 8px; cursor: pointer;">
-                                                <span style="font-weight: 600;">
-                                                    <i class="fas fa-trash-alt" style="margin-right: 4px;"></i>
-                                                    Delete existing site before deploying
-                                                </span>
-                                            </label>
-                                            <div
-                                                style="margin-top: 8px; font-size: 0.8125rem; color: #7f1d1d; line-height: 1.4;">
-                                                <i class="fas fa-exclamation-circle" style="margin-right: 4px;"></i>
-                                                <strong>Warning:</strong> This will permanently delete the existing site
-                                                and all its data from Kinsta before creating a new one. This action
-                                                cannot be undone.
-                                            </div>
-                                        </div>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Theme</label>

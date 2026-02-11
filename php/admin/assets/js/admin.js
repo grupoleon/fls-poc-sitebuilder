@@ -174,6 +174,16 @@ class AdminInterface {
         }
     }
 
+    getStepDuration(stepId) {
+        if(this.stepDurations.has(stepId)) {
+            return this.stepDurations.get(stepId);
+        }
+        if(this.stepStartTimes.has(stepId)) {
+            return this.formatDuration(this.stepStartTimes.get(stepId));
+        }
+        return null;
+    }
+
     updateStepDurationDisplay(stepId) {
         if(!this.stepStartTimes.has(stepId)) return;
 
@@ -257,12 +267,18 @@ class AdminInterface {
     updateStepTimingFromBackend(status) {
         if(!status.step_timings) return;
 
-        // Update step start times from backend data for accuracy
+        // Update step start times and durations from backend data for accuracy
         Object.keys(status.step_timings).forEach(stepId => {
             const stepTiming=status.step_timings[stepId];
             if(stepTiming.start_time&&!this.stepStartTimes.has(stepId)) {
                 const backendStartTime=new Date(stepTiming.start_time*1000);
                 this.stepStartTimes.set(stepId,backendStartTime);
+            }
+            // Calculate and store duration from backend when both start and end are available
+            if(stepTiming.start_time&&stepTiming.end_time&&!this.stepDurations.has(stepId)) {
+                const start=new Date(stepTiming.start_time*1000);
+                const end=new Date(stepTiming.end_time*1000);
+                this.stepDurations.set(stepId,this.formatDuration(start,end));
             }
         });
     }
@@ -431,20 +447,11 @@ class AdminInterface {
             // Site title in deployment tab
             if(e.target.id==='deployment-site-title') {
                 this.handleSiteTitleChange(e);
-                // Also debounce the existence check on input
-                this.debouncedCheckSiteExistence(e.target.value.trim());
             }
         });
 
-        // Change event for site title - check immediately when value changes
+        // Change event for form inputs
         document.addEventListener('change',(e) => {
-            if(e.target.id==='deployment-site-title') {
-                const siteTitle=e.target.value.trim();
-                if(siteTitle) {
-                    this.checkSiteExistence(siteTitle);
-                }
-            }
-
             // Company ID input changed - clear any previous validation state (validation removed)
             if(e.target.id==='company-id-input') {
                 this.clearCompanyValidation();
@@ -452,16 +459,6 @@ class AdminInterface {
                 this.loadKinstaRegions(e.target.value||'');
             }
         });
-
-        // Blur event for site title - check for conflicts when user leaves the field
-        document.addEventListener('blur',(e) => {
-            if(e.target.id==='deployment-site-title') {
-                const siteTitle=e.target.value.trim();
-                if(siteTitle) {
-                    this.checkSiteExistence(siteTitle);
-                }
-            }
-        },true);
 
         // Click handlers (toggle switches now handled by initializeToggleSwitches())
         document.addEventListener('click',(e) => {
@@ -763,14 +760,13 @@ class AdminInterface {
         // Update status text
         const statusElement=compactStep.querySelector('.step-status');
         if(statusElement) {
-            if(status==='completed'&&this.stepDurations.has(stepId)) {
-                // Show actual duration instead of "done"
-                statusElement.textContent=this.stepDurations.get(stepId);
+            if(status==='completed') {
+                const dur=this.getStepDuration(stepId);
+                statusElement.textContent=dur||'done';
             } else {
                 const statusText={
                     'pending': 'pending',
                     'in-progress': 'running',
-                    'completed': 'done',
                     'error': 'error'
                 };
                 statusElement.textContent=statusText[status]||status;
@@ -798,11 +794,8 @@ class AdminInterface {
                 }
             } else if(status==='completed') {
                 // Show duration for completed steps
-                if(this.stepDurations.has(stepId)) {
-                    timeElement.textContent=this.stepDurations.get(stepId);
-                } else {
-                    timeElement.textContent='Done';
-                }
+                const dur=this.getStepDuration(stepId);
+                timeElement.textContent=dur||'Completed';
             } else if(status==='error') {
                 timeElement.textContent='Failed';
             } else {
@@ -922,7 +915,7 @@ class AdminInterface {
 
         // Update status indicator
         if(statusIndicator) {
-            const completedLabel=this.stepDurations.has(stepId)? this.stepDurations.get(stepId):'DONE';
+            const completedLabel=this.getStepDuration(stepId)||'DONE';
             const indicators={
                 'pending': '<div class="status-pending-icon text-gray-400 text-xl">WAIT</div>',
                 'in-progress': '<div class="status-spinner"><div class="animate-pulse bg-blue-500 w-4 h-4 rounded-full"></div></div>',
@@ -2491,9 +2484,6 @@ class AdminInterface {
                     console.warn('⚠️ Site title was cleared/changed after 200ms. Original:',originalValue,'Current:',siteTitleInput.value);
                 }
             },200);
-
-            // Trigger site existence check
-            this.checkSiteExistence(taskData.task_name);
         } else {
             console.error('❌ Could not set site title:',{
                 hasInput: !!siteTitleInput,
@@ -3586,10 +3576,6 @@ class AdminInterface {
                         const siteTitleInput=document.getElementById('deployment-site-title');
                         if(siteTitleInput) {
                             siteTitleInput.value=configData.data.site.site_title||'';
-                            // Check if this site already exists in Kinsta on page load
-                            if(configData.data.site.site_title) {
-                                this.checkSiteExistence(configData.data.site.site_title);
-                            }
                         }
                     }
                 }
@@ -5867,127 +5853,6 @@ class AdminInterface {
         sessionStorage.setItem('clickup_integration_enabled','true');
         sessionStorage.removeItem('clickup_integration_skipped');
 
-        // Check if user wants to delete existing site first
-        const deleteCheckbox=document.getElementById('delete-existing-site-checkbox');
-        const shouldDeleteExisting=deleteCheckbox&&deleteCheckbox.checked;
-
-        if(shouldDeleteExisting&&this.existingSiteIds&&this.existingSiteIds.length>0) {
-            // Ensure a company ID is configured (presence check only) before allowing deletion
-            const companyInput=document.getElementById('company-id-input');
-            const configuredCompanyId=(companyInput&&companyInput.value&&companyInput.value.trim())? companyInput.value.trim():(this.siteConfig?.company||'');
-            if(!configuredCompanyId) {
-                this.showAlert('Company ID is not set. Please configure the Kinsta Company ID in site settings before deleting existing sites.','error');
-                return;
-            }
-            // Show confirmation dialog
-            const siteTitleInput=document.getElementById('deployment-site-title');
-            const siteTitle=siteTitleInput? siteTitleInput.value:'the existing site';
-
-            const confirmed=confirm(
-                `⚠️ CRITICAL WARNING ⚠️\n\n`+
-                `You are about to PERMANENTLY DELETE the existing site "${siteTitle}" from Kinsta.\n\n`+
-                `This will:\n`+
-                `• Delete all website data\n`+
-                `• Remove all files and databases\n`+
-                `• Cannot be undone\n\n`+
-                `Are you absolutely sure you want to proceed?`
-            );
-
-            if(!confirmed) {
-                this.showAlert('Deployment cancelled','info');
-                return;
-            }
-
-            // Second confirmation with detailed site preview
-            let confirmationMessage=`╔═══════════════════════════════════════════════════════════╗\n`;
-            confirmationMessage+=`║   FINAL CONFIRMATION - PERMANENT SITE DELETION           ║\n`;
-            confirmationMessage+=`╚═══════════════════════════════════════════════════════════╝\n\n`;
-
-            // Get company ID and name from config and current validation display
-            const companyId=this.siteConfig?.company||'Unknown';
-            const companyNameElement=document.getElementById('company-name-text');
-            const companyName=companyNameElement?.textContent||null;
-
-            if(companyName&&companyName!=='Unable to validate Company ID'&&companyName!=='Invalid Company ID') {
-                confirmationMessage+=`Company: ${companyName}\n`;
-                confirmationMessage+=`Company ID: ${companyId}\n\n`;
-            } else {
-                confirmationMessage+=`Company ID: ${companyId}\n\n`;
-            }
-
-            confirmationMessage+=`You are about to PERMANENTLY DELETE:\n\n`;
-
-            // Add details for each site that will be deleted
-            if(this.existingSiteDetails&&this.existingSiteDetails.length>0) {
-                this.existingSiteDetails.forEach((site,index) => {
-                    confirmationMessage+=`┌─────────────────────────────────────────────────────────┐\n`;
-                    confirmationMessage+=`│ Site #${index+1}\n`;
-                    confirmationMessage+=`├─────────────────────────────────────────────────────────┤\n`;
-                    confirmationMessage+=`│ Site ID:       ${site.id||'N/A'}\n`;
-                    confirmationMessage+=`│ Name:          ${site.name||'N/A'}\n`;
-                    confirmationMessage+=`│ Display Name:  ${site.display_name||'N/A'}\n`;
-                    confirmationMessage+=`└─────────────────────────────────────────────────────────┘\n\n`;
-                });
-            } else {
-                confirmationMessage+=`┌─────────────────────────────────────────────────────────┐\n`;
-                confirmationMessage+=`│ Site: "${siteTitle}"\n`;
-                confirmationMessage+=`└─────────────────────────────────────────────────────────┘\n\n`;
-            }
-
-            confirmationMessage+=`⚠️  THIS ACTION CANNOT BE UNDONE!\n`;
-            confirmationMessage+=`⚠️  ALL DATA WILL BE PERMANENTLY LOST!\n\n`;
-            confirmationMessage+=`─────────────────────────────────────────────────────────────\n`;
-            confirmationMessage+=`Click OK to proceed with PERMANENT DELETION\n`;
-            confirmationMessage+=`Click Cancel to abort deployment\n`;
-            confirmationMessage+=`─────────────────────────────────────────────────────────────`;
-
-            const doubleConfirmed=confirm(confirmationMessage);
-
-            if(!doubleConfirmed) {
-                this.showAlert('Deployment cancelled','info');
-                return;
-            }
-
-            // Proceed with deletion
-            try {
-                this.showAlert('Deleting existing site from Kinsta...','warning');
-
-                for(const siteId of this.existingSiteIds) {
-                    const deleteResponse=await fetch('?action=delete_kinsta_site',{
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            site_id: siteId
-                        })
-                    });
-
-                    const deleteResult=await deleteResponse.json();
-
-                    if(!deleteResult.success) {
-                        throw new Error(deleteResult.message||'Failed to delete existing site');
-                    }
-
-                    this.showAlert(`Site ${siteId} deleted successfully. Now starting deployment...`,'success');
-                }
-
-                // Clear the checkbox and hide the option after successful deletion
-                if(deleteCheckbox) deleteCheckbox.checked=false;
-                const deleteOption=document.getElementById('delete-existing-site-option');
-                if(deleteOption) deleteOption.style.display='none';
-
-                // Wait a bit for Kinsta to process the deletion, then show deployment starting
-                this.showAlert('Site deleted. Starting deployment in 2 seconds...','info');
-                await new Promise(resolve => setTimeout(resolve,2000));
-                this.showAlert('Starting deployment now...','info');
-
-            } catch(error) {
-                this.showAlert(`Failed to delete existing site: ${error.message}`,'error');
-                return;
-            }
-        }
-
         // Enable deployment overlay immediately
         this.setDeploymentInProgress(true);
 
@@ -7152,110 +7017,6 @@ class AdminInterface {
         }
     }
 
-    /**
-     * Check if site exists in Kinsta without saving (debounced version)
-     */
-    debouncedCheckSiteExistence(siteTitle) {
-        // Clear existing timer
-        if(this.siteCheckDebounceTimer) {
-            clearTimeout(this.siteCheckDebounceTimer);
-        }
-
-        // Debounce the check (wait 800ms after user stops typing)
-        this.siteCheckDebounceTimer=setTimeout(async () => {
-            await this.checkSiteExistence(siteTitle);
-        },800);
-    }
-
-    /**
-     * Check if site exists in Kinsta without saving
-     */
-    async checkSiteExistence(siteTitle) {
-        if(!siteTitle||!siteTitle.trim()) {
-            return;
-        }
-
-        try {
-            const existsResponse=await fetch('?action=check_site_exists',{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    site_title: siteTitle
-                })
-            });
-
-            const existsData=await existsResponse.json();
-
-            // Get warning elements
-            const siteTitleInput=document.getElementById('deployment-site-title');
-            const warningDiv=document.getElementById('site-title-warning');
-            const warningText=document.getElementById('site-title-warning-text');
-            const deleteOption=document.getElementById('delete-existing-site-option');
-            const deleteCheckbox=document.getElementById('delete-existing-site-checkbox');
-
-            if(existsData.success&&existsData.data.exists) {
-                // Site exists - show warning
-                const matchingSites=existsData.data.matching_sites||[];
-                const siteNames=matchingSites.map(s => s.display_name||s.name).join(', ');
-
-                // Store the site IDs and full details for potential deletion
-                this.existingSiteIds=matchingSites.map(s => s.id);
-                this.existingSiteDetails=matchingSites; // Store full site details for confirmation
-
-                // Add visual indicator to the input field
-                if(siteTitleInput) {
-                    siteTitleInput.classList.add('input-warning');
-                    siteTitleInput.style.borderColor='#f59e0b';
-                    siteTitleInput.style.backgroundColor='#fffbeb';
-                }
-
-                // Show warning div below input
-                if(warningDiv&&warningText) {
-                    warningText.textContent=`A site named "${siteNames}" already exists in Kinsta. Using this name will overwrite the existing site.`;
-                    warningDiv.style.display='block';
-                }
-
-                // Show delete option
-                if(deleteOption) {
-                    deleteOption.style.display='block';
-                    // Reset checkbox state
-                    if(deleteCheckbox) {
-                        deleteCheckbox.checked=false;
-                    }
-                }
-                else {
-                    debugLog('Delete option element not found in DOM','warn');
-                }
-
-                debugLog('Site title conflicts with existing Kinsta site:',siteNames,'warn');
-            } else {
-                // No conflict - clear any previous warnings
-                this.existingSiteIds=[];
-                this.existingSiteDetails=[];
-
-                if(siteTitleInput) {
-                    siteTitleInput.classList.remove('input-warning');
-                    siteTitleInput.style.borderColor='';
-                    siteTitleInput.style.backgroundColor='';
-                }
-
-                // Hide warning div
-                if(warningDiv) {
-                    warningDiv.style.display='none';
-                }
-
-                // Hide delete option
-                if(deleteOption) {
-                    deleteOption.style.display='none';
-                }
-            }
-        } catch(error) {
-            debugLog('Failed to check site existence:',error.message,'error');
-        }
-    }
-
     // Company ID validation removed: client-side validation endpoint has been removed from the server.
 
     /**
@@ -7322,9 +7083,6 @@ class AdminInterface {
         const displayName=this.slugify(siteTitle);
 
         try {
-            // Check if site exists (this will show/hide warnings)
-            await this.checkSiteExistence(siteTitle);
-
             // First, get the existing site configuration
             const configResponse=await fetch('?action=get_configs');
             const configData=await configResponse.json();
@@ -11056,86 +10814,7 @@ function saveAllContents() {
     }
 }
 
-// Dynamic List Functions
-function addCountryToList() {
-    const select=document.getElementById('countries-select');
-    const itemsContainer=document.getElementById('countries-items');
-    const selectedValue=select.value;
-    const selectedText=select.options[select.selectedIndex].text;
-
-    if(!selectedValue) return;
-
-    // Check if already exists
-    const existing=itemsContainer.querySelector(`[data-value="${selectedValue}"]`);
-    if(existing) {
-        select.value='';
-        return;
-    }
-
-    // Remove empty state
-    const emptyState=itemsContainer.querySelector('.dynamic-list-empty');
-    if(emptyState) emptyState.remove();
-
-    // Create new item
-    const item=document.createElement('div');
-    item.className='dynamic-list-item';
-    item.setAttribute('data-value',selectedValue);
-    item.innerHTML=`
-        <span class="dynamic-list-item-text">${selectedText}</span>
-        <button type="button" class="dynamic-list-remove-btn" onclick="removeFromList(this)">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-    itemsContainer.appendChild(item);
-    select.value='';
-
-    // Update hidden input for config
-    updateDynamicListConfig('countries-list');
-}
-
-function addIPToList() {
-    const input=document.getElementById('ip-input');
-    const itemsContainer=document.getElementById('ip-items');
-    const ipValue=input.value.trim();
-
-    if(!ipValue) return;
-
-    // Basic IP validation
-    const ipPattern=/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/;
-    if(!ipPattern.test(ipValue)) {
-        alert('Please enter a valid IP address or CIDR block (e.g., 192.168.1.1 or 10.0.0.0/24)');
-        return;
-    }
-
-    // Check if already exists
-    const existing=itemsContainer.querySelector(`[data-value="${ipValue}"]`);
-    if(existing) {
-        input.value='';
-        return;
-    }
-
-    // Remove empty state
-    const emptyState=itemsContainer.querySelector('.dynamic-list-empty');
-    if(emptyState) emptyState.remove();
-
-    // Create new item
-    const item=document.createElement('div');
-    item.className='dynamic-list-item';
-    item.setAttribute('data-value',ipValue);
-    item.innerHTML=`
-        <span class="dynamic-list-item-text">${ipValue}</span>
-        <button type="button" class="dynamic-list-remove-btn" onclick="removeFromList(this)">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-    itemsContainer.appendChild(item);
-    input.value='';
-
-    // Update hidden input for config
-    updateDynamicListConfig('ip-list');
-}
+// Dynamic List Functions (addCountryToList and addIPToList defined below with enhanced UI)
 
 function removeFromList(button) {
     const item=button.closest('.dynamic-list-item');
@@ -11190,11 +10869,21 @@ function loadDynamicListFromConfig(listId,values) {
     const container=document.getElementById(listId);
     const itemsContainer=container.querySelector('.dynamic-list-items');
 
-    if(!values||values.length===0) return;
+    // Clear all existing items to prevent duplicates on re-population
+    itemsContainer.innerHTML='';
 
-    // Remove empty state
-    const emptyState=itemsContainer.querySelector('.dynamic-list-empty');
-    if(emptyState) emptyState.remove();
+    if(!values||values.length===0) {
+        // Show empty state when no values
+        const emptyIcon=listId==='countries-list'? '<div class="dynamic-list-empty-icon">🌍</div>':'<div class="dynamic-list-empty-icon"><i class="fas fa-shield-alt"></i></div>';
+        const emptyText=listId==='countries-list'
+            ? 'No countries selected. Click "Add Country" to begin.'
+            : listId==='ip-list'
+                ? 'No IP addresses added. Click "Add IP" to begin.'
+                : 'No items added.';
+        itemsContainer.innerHTML=`<div class="dynamic-list-empty">${emptyIcon}<div>${emptyText}</div></div>`;
+        updateDynamicListConfig(listId);
+        return;
+    }
 
     values.forEach(value => {
         let text=value;

@@ -733,19 +733,24 @@ function handleRequest()
                 $force = $input['force'] ?? false;
 
                 try {
-                    // Update site config if site_title or theme provided
-                    if (isset($input['site_title']) || isset($input['theme'])) {
+                    // Update site config if site_title provided
+                    if (isset($input['site_title'])) {
                         $siteConfig = $configManager->getConfig('site');
 
-                        if (isset($input['site_title'])) {
-                            $siteConfig['site_title'] = $input['site_title'];
-                        }
+                        $siteConfig['site_title'] = $input['site_title'];
 
                         if (isset($input['display_name'])) {
                             $siteConfig['display_name'] = $input['display_name'];
                         }
 
                         $configManager->updateConfig('site', $siteConfig);
+                    }
+
+                    // Update theme config if theme provided (ensures deploy uses the selected theme)
+                    if (isset($input['theme']) && ! empty($input['theme'])) {
+                        $themeConfig = $configManager->getConfig('theme') ?: [];
+                        $themeConfig['active_theme'] = $input['theme'];
+                        $configManager->updateConfig('theme', $themeConfig);
                     }
 
                     // Save ClickUp task ID if provided
