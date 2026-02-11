@@ -99,26 +99,23 @@ generate_strong_password() {
 
 # Generate and update admin password in config before deployment
 generate_and_update_admin_password() {
-    print_info "Generating new admin password for this deployment..."
+    log_step_start "Generate Admin Password"
     
     local new_password
     new_password=$(generate_strong_password)
     
     if [[ -z "$new_password" ]]; then
-        print_error "Failed to generate admin password"
+        log_step_failed "Generate Admin Password" "Failed to generate password"
         exit 1
     fi
     
-    print_success "Generated strong admin password (16 characters with mixed case, numbers, special chars)"
-    
     # Update config.json with new password
-    print_info "Updating config.json with generated password..."
     if jq --arg pass "$new_password" '.site.admin_password = $pass' "$CONFIG_JSON_FILE" > "${CONFIG_JSON_FILE}.tmp" 2>/dev/null; then
         mv "${CONFIG_JSON_FILE}.tmp" "$CONFIG_JSON_FILE"
-        print_success "Config file updated with new password"
+        log_step_complete "Generate Admin Password"
         print_info "Password will be uploaded to server and appear in ClickUp comments after deployment"
     else
-        print_error "Failed to update config.json with new password"
+        log_step_failed "Generate Admin Password" "Failed to update config.json"
         rm -f "${CONFIG_JSON_FILE}.tmp"
         exit 1
     fi
@@ -134,30 +131,30 @@ check_github_token() {
 }
 
 validate_github_token() {
-    print_info "Validating GitHub token..."
+    log_step_start "Validate GitHub Token"
     local response
     response=$(api_request "github" "user" "GET" "" false)
     if local username=$(echo "$response" | jq -r '.login // empty'); [[ -n "$username" ]]; then
         log_api "token_validation" "200" "Token valid for user: $username"
-        print_success "GitHub token is valid (User: $username)"
+        log_step_complete "Validate GitHub Token"
     else
         log_api "token_validation" "401" "Token validation failed"
-        print_error "GitHub token validation failed"
+        log_step_failed "Validate GitHub Token" "Validation failed"
         echo "Response: $response" >&2
         exit 1
     fi
 }
 
 check_repo_access() {
-    print_info "Checking repository access..."
+    log_step_start "Check Repository Access"
     local response
     response=$(api_request "github" "repos/$GITHUB_OWNER/$GITHUB_REPO" "GET" "" false)
     if local repo_name=$(echo "$response" | jq -r '.full_name // empty'); [[ -n "$repo_name" ]]; then
         log_api "repo_access" "200" "Repository access confirmed: $repo_name"
-        print_success "Repository access confirmed ($repo_name)"
+        log_step_complete "Check Repository Access"
     else
         log_api "repo_access" "403" "Cannot access repository"
-        print_error "Cannot access repository $GITHUB_OWNER/$GITHUB_REPO"
+        log_step_failed "Check Repository Access" "Access denied to $GITHUB_OWNER/$GITHUB_REPO"
         echo "Response: $response" >&2
         exit 1
     fi
@@ -237,7 +234,7 @@ upload_configs() {
     fi
     
     # Test SSH connectivity once at the start of uploads
-    print_info "Testing SSH connectivity to Kinsta server..."
+    log_step_start "Check SSH Connectivity"
     print_info "Using SSH key: $HOME/.ssh/id_rsa"
     print_info "HOME directory: $HOME"
     
@@ -252,11 +249,13 @@ upload_configs() {
     if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "echo 'Connected'" >/dev/null 2>&1; then
         print_warning "SSH pre-check failed, but continuing anyway (connection will be tested during upload)"
         print_info "If upload fails, verify SSH key is added to: https://my.kinsta.com/account/ssh-keys"
+        # We don't fail the step here because it might work on retry or during actual upload
+        log_info "SSH check warned" 
     else
-        print_success "SSH connectivity verified"
+        log_step_complete "Check SSH Connectivity"
     fi
     
-    print_info "Uploading configuration files..."
+    log_step_start "Upload Configuration Files"
     print_info "Config file path: $CONFIG_JSON_FILE"
     print_info "Theme config file path: $THEME_CONFIG_FILE"
     
@@ -304,6 +303,8 @@ upload_configs() {
     # We use the centralized theme-config.json which is uploaded as part of config files
     # However, create legacy theme config files to prevent errors from old code
     create_legacy_theme_configs
+    
+    log_step_complete "Upload Configuration Files"
 }
 
 create_legacy_theme_configs() {
@@ -383,7 +384,7 @@ upload_pages() {
         print_info "Override settings - Slides: $slides_override, Pages: $pages_override, CPT: $cpt_override"
     fi
     
-    print_info "Uploading page layout files..."
+    log_step_start "Upload Pages & Content"
     print_info "These custom layouts will replace theme defaults BEFORE activation"
     
     # Create pages directory on server
@@ -589,6 +590,8 @@ upload_pages() {
     else
         print_info "No common forms directory found at: $common_forms_dir"
     fi
+    
+    log_step_complete "Upload Pages & Content"
 }
 
 upload_images() {
@@ -600,7 +603,10 @@ upload_images() {
         return
     fi
     
-    print_info "Uploading images and logos (preserving directory structure)..."
+        return
+    fi
+    
+    log_step_start "Upload Media Files"
     
     # Get active theme from config for logo detection
     local active_theme="FLS-One"  # Default
@@ -712,12 +718,14 @@ upload_images() {
         print_info "Directory contents:"
         ls -la "$uploads_dir" 2>/dev/null || print_info "Directory not accessible"
     fi
+    
+    log_step_complete "Upload Media Files"
 }
 
 trigger_workflow() {
     local force_deploy="$1"
 
-    print_info "Preparing workflow dispatch..."
+    log_step_start "Trigger GitHub Workflow"
     
     # Build inputs object - only include force_deploy, GA ID is handled via config files
     local inputs="{}"
@@ -741,7 +749,7 @@ trigger_workflow() {
     # GitHub workflow dispatch returns empty response on success (204 No Content)
     if [[ -z "$response" || "$response" == "null" || "$response" == "" ]]; then
         log_api "workflow_dispatch" "204" "Workflow triggered successfully"
-        print_success "Workflow triggered successfully!"
+        log_step_complete "Trigger GitHub Workflow"
         echo -e "\nView the workflow run at:\n  https://github.com/$GITHUB_OWNER/$GITHUB_REPO/actions\n"
         
         # Wait a moment and try to fetch the newly created run
@@ -754,7 +762,7 @@ trigger_workflow() {
         get_latest_run_status
     else
         log_api "workflow_dispatch" "400" "Failed to trigger workflow: $response"
-        print_error "Failed to trigger workflow"
+        log_step_failed "Trigger GitHub Workflow" "API Error"
         echo "Response: $response" >&2
         
         # Try to parse the error response
