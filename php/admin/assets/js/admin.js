@@ -471,10 +471,9 @@ class AdminInterface {
                 this.refreshThemeList();
             }
 
-            // Save overrides button
-            if(e.target.id==='save-overrides-btn'||e.target.closest('#save-overrides-btn')) {
-                e.preventDefault();
-                this.saveOverrideSettings();
+            // Auto-save override toggles when changed
+            if(e.target.classList.contains('override-toggle')) {
+                this.saveOverrideSettings(true); // silent auto-save
             }
         });
 
@@ -4424,7 +4423,7 @@ class AdminInterface {
         }
     }
 
-    async saveOverrideSettings() {
+    async saveOverrideSettings(silent=false) {
         try {
             const slidesToggle=document.getElementById('slides-override-toggle');
             const pagesToggle=document.getElementById('pages-override-toggle');
@@ -4449,7 +4448,9 @@ class AdminInterface {
             const data=await response.json();
 
             if(data.success) {
-                this.showAlert('Override settings saved successfully','success');
+                if(!silent) {
+                    this.showAlert('Override settings saved successfully','success');
+                }
                 debugLog('Override settings saved successfully');
             } else {
                 this.showAlert(data.message||'Failed to save override settings','error');
