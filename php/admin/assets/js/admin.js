@@ -2360,35 +2360,6 @@ class AdminInterface {
                 }
             }
 
-            // Save git.json fields if they exist
-            const gitData={};
-            gitJsonPaths.forEach(path => {
-                const input=document.querySelector(`[data-path="${path}"]`);
-                if(input&&input.value) {
-                    gitData[path]=input.value;
-                }
-            });
-
-            if(Object.keys(gitData).length>0) {
-                console.log('Saving to git.json:',gitData);
-
-                const gitResponse=await fetch('?action=save_config',{
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        type: 'git',
-                        data: gitData
-                    })
-                });
-                const gitResult=await gitResponse.json();
-
-                if(gitResult.success) {
-                    console.log('✅ git.json updated successfully');
-                } else {
-                    console.error('Failed to update git.json:',gitResult.message);
-                }
-            }
-
             return result.success;
         } catch(error) {
             console.error('Error saving ClickUp changes:',error);
@@ -9838,6 +9809,7 @@ class AdminInterface {
         try {
             let success=true;
             let errorMessage='';
+            let gitSaveSkipped=false;
 
             // Save git config if there's data
             if(Object.keys(gitConfig).length>0) {
@@ -9848,8 +9820,23 @@ class AdminInterface {
                 });
                 const gitResult=await gitResponse.json();
                 if(!gitResult.success) {
-                    success=false;
-                    errorMessage+=`Git config error: ${gitResult.message}. `;
+                    // Check if it's a permission error (common in CI/CD environments)
+                    const isPermissionError=gitResult.message&&(
+                        gitResult.message.includes('Failed to write')||
+                        gitResult.message.includes('permission')||
+                        gitResult.message.includes('read-only')
+                    );
+
+                    if(isPermissionError) {
+                        // In CI/CD environments (Nixpacks, Docker, Railway), git.json is often read-only
+                        // This is expected behavior - log warning but don't fail the operation
+                        console.warn('⚠️ Git config is read-only (CI/CD environment):',gitResult.message);
+                        gitSaveSkipped=true;
+                    } else {
+                        // Other errors should still be reported
+                        success=false;
+                        errorMessage+=`Git config error: ${gitResult.message}. `;
+                    }
                 }
             }
 
@@ -9868,7 +9855,11 @@ class AdminInterface {
             }
 
             if(success) {
-                this.showAlert('Git configuration saved successfully!','success');
+                let message='Git configuration saved successfully!';
+                if(gitSaveSkipped) {
+                    message='Configuration saved! (Git config is read-only in this environment)';
+                }
+                this.showAlert(message,'success');
                 this.markFormClean(form);
             } else {
                 this.showAlert(`Configuration save failed: ${errorMessage}`,'error');

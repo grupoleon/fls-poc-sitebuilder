@@ -107,6 +107,21 @@ class ConfigManager
             throw new Exception("Failed to encode JSON: " . json_last_error_msg());
         }
 
+        // Check if file is writable before attempting to write
+        // In CI/CD environments (Nixpacks, Docker, Railway), git.json is often read-only
+        if (file_exists($filePath) && ! is_writable($filePath)) {
+                                             // Check if this is a known infrastructure config file that may be read-only in production
+            $readOnlyConfigs = ['git.json']; // Infrastructure configs that shouldn't change at runtime
+            $fileName        = basename($filePath);
+
+            if (in_array($fileName, $readOnlyConfigs)) {
+                error_log("Warning: Skipping write to read-only infrastructure config: {$filePath}");
+                throw new Exception("Configuration file is read-only (CI/CD environment). Infrastructure settings cannot be modified at runtime: {$fileName}");
+            }
+
+            throw new Exception("Configuration file is not writable: {$filePath}");
+        }
+
         $result = file_put_contents($filePath, $jsonData);
         if ($result === false) {
             throw new Exception("Failed to write config file: {$filePath}");
