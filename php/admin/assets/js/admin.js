@@ -1993,61 +1993,37 @@ class AdminInterface {
 
                 // Capture current values BEFORE prefilling to track changes
                 const beforeValues=this.captureCurrentConfigValues();
-
                 debugLog('Task prefilling started - form values captured');
 
-                // Now prefill with task data after config is loaded
-                this._pendingPrefillOps=0; // Reset pending ops counter
-                this.prefillDeploymentForm(data.task);
+                // Now prefill with task data - this now properly awaits all operations
+                await this.prefillDeploymentForm(data.task);
 
-                // Wait for all retrySetElement operations to complete before saving
-                // Polls _pendingPrefillOps counter instead of using a fixed timeout
-                const waitForPrefillComplete=() => {
-                    return new Promise((resolve) => {
-                        let elapsed=0;
-                        const maxWait=6000; // Safety cap at 6 seconds
-                        const pollInterval=200;
-                        const check=() => {
-                            elapsed+=pollInterval;
-                            if((this._pendingPrefillOps||0)<=0||elapsed>=maxWait) {
-                                if(elapsed>=maxWait) {
-                                    debugLog(`Prefill wait timed out after ${maxWait}ms with ${this._pendingPrefillOps} pending ops`,'warn');
-                                }
-                                resolve();
-                            } else {
-                                setTimeout(check,pollInterval);
-                            }
-                        };
-                        // Start polling after initial 500ms to allow first attempts
-                        setTimeout(check,500);
-                    });
-                };
+                // Add small delay to ensure DOM updates have fully propagated
+                await new Promise(resolve => setTimeout(resolve,200));
 
-                waitForPrefillComplete().then(async () => {
-                    // Clear the prefilling flag
-                    this.isTaskPrefilling=false;
-                    debugLog('Task prefilling completed - flag cleared');
+                // Clear the prefilling flag
+                this.isTaskPrefilling=false;
+                debugLog('Task prefilling completed - flag cleared');
 
-                    // Re-enable deployment UI after task prefilling
-                    this.disableDeploymentUI(false);
+                // Re-enable deployment UI after task prefilling
+                this.disableDeploymentUI(false);
 
-                    // Capture values AFTER prefilling
-                    const afterValues=this.captureCurrentConfigValues();
+                // Capture values AFTER prefilling - now guaranteed to be complete
+                const afterValues=this.captureCurrentConfigValues();
 
-                    // Calculate what changed
-                    const changes=this.calculateChanges(beforeValues,afterValues,data.task);
+                // Calculate what changed
+                const changes=this.calculateChanges(beforeValues,afterValues,data.task);
 
-                    // Save changes to backend
-                    if(Object.keys(changes).length>0) {
-                        await this.saveClickUpChangesToBackend(changes,data.task);
-                    }
+                // Save changes to backend
+                if(Object.keys(changes).length>0) {
+                    await this.saveClickUpChangesToBackend(changes,data.task);
+                }
 
-                    // Show changes preview (will auto-close)
-                    this.showChangesPreview(changes,data.task);
+                // Show changes preview (will auto-close)
+                this.showChangesPreview(changes,data.task);
 
-                    // Update ClickUp section visibility to show selected task display
-                    if(this._updateClickUpVisibility) this._updateClickUpVisibility();
-                });
+                // Update ClickUp section visibility to show selected task display
+                if(this._updateClickUpVisibility) this._updateClickUpVisibility();
             } else {
                 debugLog('Failed to load task data - API returned:',JSON.stringify(data),'error');
                 // Clear flag and re-enable UI on error
@@ -2559,7 +2535,7 @@ class AdminInterface {
         // Prefill theme - use retry since theme options may load asynchronously
         console.log('=== PREFILLING THEME ===');
         console.log('Theme from task data:',taskData.theme);
-        if(taskData.theme) {
+        const themePromise=taskData.theme? (async () => {
             // Map theme names (handle variations)
             const themeMapping={
                 'Political WP': 'Political',
@@ -2569,8 +2545,8 @@ class AdminInterface {
             const themeName=themeMapping[taskData.theme]||taskData.theme;
             console.log('Mapped theme name:',themeName);
 
-            // Use retry since theme select options might not be loaded yet
-            this.retrySetElement(() => {
+            // Use retry since theme select options might not be loaded yet - now awaitable
+            const success=await this.retrySetElement(() => {
                 const themeSelect=document.getElementById('deployment-theme-select');
                 console.log('Theme select found:',!!themeSelect,'options count:',themeSelect?.options?.length);
                 if(!themeSelect||themeSelect.options.length<=1) {
@@ -2606,15 +2582,18 @@ class AdminInterface {
                 }
             },'deployment-theme-select',10,300); // More retries with longer delay for theme loading
 
-            // Ensure theme is saved to theme-config.json after selection
-            setTimeout(async () => {
+            if(success) {
+                // Ensure theme is saved to theme-config.json after selection
                 await this.saveActiveTheme(themeName);
                 console.log('✅ Theme saved to theme-config.json:',themeName);
-            },500);
-        }
+            }
+        })():Promise.resolve();
 
         // Enable services based on selected_services and prefill API keys
-        await this.prefillServicesAndConfigs(taskData);
+        const servicesPromise=this.prefillServicesAndConfigs(taskData);
+
+        // Wait for both theme and services to complete
+        await Promise.all([themePromise,servicesPromise]);
 
         // Ensure admin email is saved to site.json immediately
         if(taskData.email) {
@@ -2625,30 +2604,29 @@ class AdminInterface {
         // Note: Notification is now shown via showChangesPreview() in loadTaskDataAndPrefill()
     }
 
-    // Helper method to retry setting element values with delays
+    // Helper method to retry setting element values with delays - returns a Promise
     retrySetElement(setter,elementName,maxAttempts=5,delayMs=200) {
-        // Track pending prefill operations for race-condition-free saving
-        if(!this._pendingPrefillOps) this._pendingPrefillOps=0;
-        this._pendingPrefillOps++;
-
-        let attempts=0;
-        const trySet=() => {
-            attempts++;
-            const success=setter();
-            if(!success&&attempts<maxAttempts) {
-                debugLog(`${elementName} not found, retry ${attempts}/${maxAttempts} in ${delayMs}ms`,'warn');
-                setTimeout(trySet,delayMs);
-            } else {
-                if(!success) {
-                    debugLog(`${elementName} not found after ${maxAttempts} attempts`,'error');
+        // Return a promise that resolves when the operation completes (success or failure)
+        return new Promise((resolve) => {
+            let attempts=0;
+            const trySet=() => {
+                attempts++;
+                const success=setter();
+                if(!success&&attempts<maxAttempts) {
+                    debugLog(`${elementName} not found, retry ${attempts}/${maxAttempts} in ${delayMs}ms`,'warn');
+                    setTimeout(trySet,delayMs);
                 } else {
-                    debugLog(`${elementName} set successfully on attempt ${attempts}`);
+                    if(!success) {
+                        debugLog(`${elementName} not found after ${maxAttempts} attempts`,'error');
+                    } else {
+                        debugLog(`${elementName} set successfully on attempt ${attempts}`);
+                    }
+                    resolve(success);
                 }
-                this._pendingPrefillOps--;
-            }
-        };
-        // Start first attempt immediately
-        trySet();
+            };
+            // Start first attempt immediately
+            trySet();
+        });
     }
 
     async saveEmailToSiteConfig(email) {
@@ -2707,6 +2685,9 @@ class AdminInterface {
         debugLog('Prefilling services and configs with task data');
         debugLog('Current config before merge:',this.currentConfig);
 
+        // Collect all promises to await at the end
+        const promises=[];
+
         // Service name to config toggle mapping
         const serviceToggleMap={
             'Google Analytics': 'analytics-toggle',
@@ -2727,8 +2708,8 @@ class AdminInterface {
             taskData.selected_services.forEach(service => {
                 const toggleId=serviceToggleMap[service];
                 if(toggleId) {
-                    // Retry toggle enabling with a small delay
-                    this.retrySetElement(() => {
+                    // Retry toggle enabling with a small delay - now collect the promise
+                    promises.push(this.retrySetElement(() => {
                         const toggle=document.getElementById(toggleId);
                         if(toggle&&!toggle.checked) {
                             toggle.checked=true;
@@ -2738,7 +2719,7 @@ class AdminInterface {
                             return true;
                         }
                         return !!toggle;
-                    },`toggle ${toggleId}`);
+                    },`toggle ${toggleId}`));
                 }
             });
         }
@@ -2748,7 +2729,7 @@ class AdminInterface {
         if(taskData.google_analytics_token) {
             // Enable analytics toggle if not already enabled
             console.log('Analytics token detected - enabling analytics toggle');
-            this.retrySetElement(() => {
+            promises.push(this.retrySetElement(() => {
                 const analyticsToggle=document.getElementById('analytics-toggle');
                 console.log('Analytics toggle found:',!!analyticsToggle);
                 if(analyticsToggle&&!analyticsToggle.checked) {
@@ -2759,12 +2740,13 @@ class AdminInterface {
                     console.log('ℹ️ Analytics toggle already enabled');
                 }
                 return !!analyticsToggle;
-            },'analytics-toggle');
+            },'analytics-toggle'));
 
-            // Fill the analytics input (with small delay to allow toggle to reveal input)
-            setTimeout(() => {
+            // Fill the analytics input (schedule after toggle with proper delay)
+            promises.push((async () => {
+                await new Promise(resolve => setTimeout(resolve,200));
                 console.log('Attempting to fill Google Analytics input...');
-                this.retrySetElement(() => {
+                return await this.retrySetElement(() => {
                     const analyticsInput=document.querySelector('[data-path="authentication.api_keys.google_analytics"]');
                     console.log('Google Analytics input found:',!!analyticsInput);
                     if(analyticsInput) {
@@ -2780,7 +2762,7 @@ class AdminInterface {
                     }
                     return false;
                 },'Google Analytics input');
-            },200);
+            })());
         }
 
         // Prefill Google Maps API Key - Only if ClickUp has a value
@@ -2788,7 +2770,7 @@ class AdminInterface {
         if(taskData.google_map_key) {
             // Enable maps toggle if not already enabled
             console.log('Maps API key detected - enabling maps toggle');
-            this.retrySetElement(() => {
+            promises.push(this.retrySetElement(() => {
                 const mapsToggle=document.getElementById('maps-toggle');
                 console.log('Maps toggle found:',!!mapsToggle);
                 if(mapsToggle&&!mapsToggle.checked) {
@@ -2799,12 +2781,13 @@ class AdminInterface {
                     console.log('ℹ️ Maps toggle already enabled');
                 }
                 return !!mapsToggle;
-            },'maps-toggle');
+            },'maps-toggle'));
 
-            // Fill the maps input (with small delay to allow toggle to reveal input)
-            setTimeout(() => {
+            // Fill the maps input (schedule after toggle with proper delay)
+            promises.push((async () => {
+                await new Promise(resolve => setTimeout(resolve,200));
                 console.log('Attempting to fill Google Maps input...');
-                this.retrySetElement(() => {
+                return await this.retrySetElement(() => {
                     const mapsInput=document.querySelector('[data-path="authentication.api_keys.google_maps"]');
                     console.log('Google Maps input found:',!!mapsInput);
                     if(mapsInput) {
@@ -2820,7 +2803,7 @@ class AdminInterface {
                     }
                     return false;
                 },'Google Maps input');
-            },200);
+            })());
         }
 
         // Store reCAPTCHA keys for later form configuration - Only if ClickUp has values
@@ -2849,7 +2832,7 @@ class AdminInterface {
             // Also fill reCAPTCHA form inputs directly
             if(taskData.recaptcha_site_key) {
                 console.log('Attempting to fill reCAPTCHA site key input...');
-                this.retrySetElement(() => {
+                promises.push(this.retrySetElement(() => {
                     const input=document.querySelector('[data-path="authentication.api_keys.recaptcha.site_key"]');
                     console.log('reCAPTCHA site key input found:',!!input);
                     if(input) {
@@ -2862,12 +2845,12 @@ class AdminInterface {
                         return true;
                     }
                     return false;
-                },'reCAPTCHA site key input');
+                },'reCAPTCHA site key input'));
             }
 
             if(taskData.recaptcha_secret) {
                 console.log('Attempting to fill reCAPTCHA secret key input...');
-                this.retrySetElement(() => {
+                promises.push(this.retrySetElement(() => {
                     const input=document.querySelector('[data-path="authentication.api_keys.recaptcha.secret_key"]');
                     console.log('reCAPTCHA secret key input found:',!!input);
                     if(input) {
@@ -2880,7 +2863,7 @@ class AdminInterface {
                         return true;
                     }
                     return false;
-                },'reCAPTCHA secret key input');
+                },'reCAPTCHA secret key input'));
             }
         }
 
@@ -2897,7 +2880,7 @@ class AdminInterface {
 
             // Also fill admin email form input directly
             console.log('Attempting to fill admin email input...');
-            this.retrySetElement(() => {
+            promises.push(this.retrySetElement(() => {
                 // Try the site-config-form input (data-path="admin_email") first
                 const input=document.querySelector('[data-path="admin_email"]');
                 console.log('Admin email input found:',!!input);
@@ -2911,7 +2894,7 @@ class AdminInterface {
                     return true;
                 }
                 return false;
-            },'admin email input');
+            },'admin email input'));
         }
 
         // Store privacy policy info - Only if ClickUp has a value
@@ -2973,7 +2956,7 @@ class AdminInterface {
         const hasSocialLinks=taskData.facebook_link||taskData.instagram_link||taskData.twitter_link||taskData.youtube_link||taskData.winred_link;
         if(hasSocialLinks) {
             console.log('Social links detected - enabling social links toggle');
-            this.retrySetElement(() => {
+            promises.push(this.retrySetElement(() => {
                 const socialToggle=document.getElementById('social-links-toggle');
                 console.log('Social links toggle found:',!!socialToggle);
                 if(socialToggle&&!socialToggle.checked) {
@@ -2984,53 +2967,51 @@ class AdminInterface {
                     console.log('ℹ️ Social links toggle already enabled');
                 }
                 return !!socialToggle;
-            },'social-links-toggle');
-        }
+            },'social-links-toggle'));
 
-        // Fill social link inputs (with delay to allow toggle to reveal inputs)
-        const fillSocialLinks=() => {
-            Object.keys(socialFields).forEach(fieldKey => {
-                if(taskData[fieldKey]) {
-                    const config=socialFields[fieldKey];
-                    const storageKey=config.storageKey;
-                    const inputPath=config.inputPath;
+            // Fill social link inputs (schedule after toggle with proper delay)
+            promises.push((async () => {
+                await new Promise(resolve => setTimeout(resolve,300));
+                const socialPromises=[];
+                Object.keys(socialFields).forEach(fieldKey => {
+                    if(taskData[fieldKey]) {
+                        const config=socialFields[fieldKey];
+                        const storageKey=config.storageKey;
+                        const inputPath=config.inputPath;
 
-                    // Update sessionStorage
-                    const existingValue=sessionStorage.getItem(storageKey)||'';
-                    if(!existingValue||existingValue!==taskData[fieldKey]) {
-                        sessionStorage.setItem(storageKey,taskData[fieldKey]);
-                        console.log(`📝 Stored ${fieldKey} in sessionStorage:`,taskData[fieldKey]);
-                    } else {
-                        console.log(`ℹ️ Preserving existing ${fieldKey}:`,existingValue);
-                    }
-
-                    // Also fill the actual form input with retry (input may not exist yet)
-                    console.log(`Attempting to fill ${inputPath} input...`);
-                    this.retrySetElement(() => {
-                        const input=document.querySelector(`[data-path="${inputPath}"]`);
-                        console.log(`  ${inputPath} input found:`,!!input);
-                        if(input) {
-                            const currentValue=input.value||'';
-                            if(!currentValue||currentValue!==taskData[fieldKey]) {
-                                input.value=taskData[fieldKey];
-                                console.log(`  ✅ Filled ${inputPath} with:`,taskData[fieldKey]);
-                                input.dispatchEvent(new Event('input',{bubbles: true}));
-                            } else {
-                                console.log(`  ℹ️ Preserving existing value in ${inputPath}:`,currentValue);
-                            }
-                            return true;
+                        // Update sessionStorage
+                        const existingValue=sessionStorage.getItem(storageKey)||'';
+                        if(!existingValue||existingValue!==taskData[fieldKey]) {
+                            sessionStorage.setItem(storageKey,taskData[fieldKey]);
+                            console.log(`📝 Stored ${fieldKey} in sessionStorage:`,taskData[fieldKey]);
+                        } else {
+                            console.log(`ℹ️ Preserving existing ${fieldKey}:`,existingValue);
                         }
-                        return false;
-                    },`social link ${inputPath}`);
-                } else {
-                    console.log(`⏭️ Skipping ${fieldKey} (no value in task data)`);
-                }
-            });
-        };
 
-        // Delay filling social links to allow toggle animation and DOM update
-        if(hasSocialLinks) {
-            setTimeout(fillSocialLinks,300);
+                        // Also fill the actual form input with retry (input may not exist yet)
+                        console.log(`Attempting to fill ${inputPath} input...`);
+                        socialPromises.push(this.retrySetElement(() => {
+                            const input=document.querySelector(`[data-path="${inputPath}"]`);
+                            console.log(`  ${inputPath} input found:`,!!input);
+                            if(input) {
+                                const currentValue=input.value||'';
+                                if(!currentValue||currentValue!==taskData[fieldKey]) {
+                                    input.value=taskData[fieldKey];
+                                    console.log(`  ✅ Filled ${inputPath} with:`,taskData[fieldKey]);
+                                    input.dispatchEvent(new Event('input',{bubbles: true}));
+                                } else {
+                                    console.log(`  ℹ️ Preserving existing value in ${inputPath}:`,currentValue);
+                                }
+                                return true;
+                            }
+                            return false;
+                        },`social link ${inputPath}`));
+                    } else {
+                        console.log(`⏭️ Skipping ${fieldKey} (no value in task data)`);
+                    }
+                });
+                await Promise.all(socialPromises);
+            })());
         }
 
         // Apply security options from ClickUp task to toggle corresponding security checkboxes
@@ -3042,6 +3023,8 @@ class AdminInterface {
             console.log('No security options to apply (empty or not an array)');
         }
 
+        // Wait for all promises to complete before returning
+        await Promise.all(promises);
         console.log('✅ Config merge complete - existing values preserved, ClickUp values applied where available');
     }
 
@@ -3218,53 +3201,46 @@ class AdminInterface {
                     await this.loadConfiguration();
 
                     // Wait for form fields to be fully populated before capturing values
-                    await new Promise(resolve => setTimeout(resolve,300));
+                    await new Promise(resolve => setTimeout(resolve,500));
 
                     // Capture current values BEFORE prefilling to track changes
                     const beforeValues=this.captureCurrentConfigValues();
+                    debugLog('Manual task prefilling started - form values captured');
 
-                    // Now prefill with task data after config is loaded
-                    this._pendingPrefillOps=0;
-                    this.prefillDeploymentForm(data.task);
+                    // Now prefill with task data - this now properly awaits all operations
+                    await this.prefillDeploymentForm(data.task);
 
-                    // Wait for all retrySetElement operations to complete before saving
-                    const waitForOps=() => {
-                        return new Promise((resolve) => {
-                            let elapsed=0;
-                            const maxWait=6000;
-                            const pollInterval=200;
-                            const check=() => {
-                                elapsed+=pollInterval;
-                                if((this._pendingPrefillOps||0)<=0||elapsed>=maxWait) {
-                                    resolve();
-                                } else {
-                                    setTimeout(check,pollInterval);
-                                }
-                            };
-                            setTimeout(check,500);
-                        });
-                    };
+                    // Add small delay to ensure DOM updates have fully propagated
+                    await new Promise(resolve => setTimeout(resolve,200));
 
-                    waitForOps().then(async () => {
-                        // Clear the prefilling flag
-                        this.isTaskPrefilling=false;
-                        debugLog('Manual task prefilling completed - flag cleared');
+                    // Clear the prefilling flag
+                    this.isTaskPrefilling=false;
+                    debugLog('Manual task prefilling completed - flag cleared');
 
-                        // Re-enable deployment UI after task prefilling
-                        this.disableDeploymentUI(false);
+                    // Re-enable deployment UI after task prefilling
+                    this.disableDeploymentUI(false);
 
-                        const afterValues=this.captureCurrentConfigValues();
-                        const changes=this.calculateChanges(beforeValues,afterValues,data.task);
-                        if(Object.keys(changes).length>0) {
-                            await this.saveClickUpChangesToBackend(changes,data.task);
-                        }
-                        this.showChangesPreview(changes,data.task);
+                    // Capture values AFTER prefilling - now guaranteed to be complete
+                    const afterValues=this.captureCurrentConfigValues();
 
-                        // Update ClickUp section visibility to show selected task display
-                        if(this._updateClickUpVisibility) this._updateClickUpVisibility();
-                    });
+                    // Calculate what changed
+                    const changes=this.calculateChanges(beforeValues,afterValues,data.task);
+
+                    // Save changes to backend
+                    if(Object.keys(changes).length>0) {
+                        await this.saveClickUpChangesToBackend(changes,data.task);
+                    }
+
+                    // Show changes preview
+                    this.showChangesPreview(changes,data.task);
+
+                    // Update ClickUp section visibility to show selected task display
+                    if(this._updateClickUpVisibility) this._updateClickUpVisibility();
                 } catch(prefillError) {
                     debugLog('Error during prefillDeploymentForm:',prefillError,'error');
+                    // Clear flag and re-enable UI on error
+                    this.isTaskPrefilling=false;
+                    this.disableDeploymentUI(false);
                     // Inform user the fetch succeeded but prefill had issues
                     this.showManualTaskStatus('Task fetched, but failed to prefill some form fields. See console for details.','warning');
                 }
