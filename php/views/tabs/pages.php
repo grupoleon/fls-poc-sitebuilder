@@ -62,12 +62,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="alert alert-warning mt-3">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <strong>Note:</strong> Changes take effect on the next deployment and are saved
-                                    automatically.
-                                </div>
                             </div>
                         </div>
 

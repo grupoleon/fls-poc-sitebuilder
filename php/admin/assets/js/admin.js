@@ -186,44 +186,51 @@ class AdminInterface {
 
     updateStepDurationDisplay(stepId) {
         if(!this.stepStartTimes.has(stepId)) return;
+        if(!this.realTimeTimers.has(stepId)) return;
 
-        // Check if timer should still be running based on stored state
-        if(!this.realTimeTimers.has(stepId)) {
-            // Timer was stopped, don't continue updating
-            return;
+        // Calculate current duration
+        const stepStartTime=this.stepStartTimes.get(stepId);
+        const now=new Date();
+        const durationMs=now-stepStartTime;
+        const seconds=Math.floor(durationMs/1000)%60;
+        const minutes=Math.floor(durationMs/(1000*60))%60;
+        const hours=Math.floor(durationMs/(1000*60*60));
+
+        let currentDuration;
+        if(hours>0) {
+            currentDuration=`${hours}h ${minutes}m ${seconds}s`;
+        } else if(minutes>0) {
+            currentDuration=`${minutes}m ${seconds}s`;
+        } else {
+            currentDuration=`${seconds}s`;
         }
 
-        const stepCard=document.querySelector(`[data-step="${stepId}"]`);
-        if(stepCard) {
-            // Additional check - if step is marked as completed, stop the timer
-            const stepStatus=stepCard.getAttribute('data-status');
-            if(stepStatus==='completed'||stepStatus==='failed') {
-                debugLog(`Step ${stepId} detected as ${stepStatus}, stopping timer`);
+        // Update compact view (.step-time)
+        const compactStep=document.querySelector(`.compact-step[data-step="${stepId}"]`);
+        if(compactStep) {
+            if(compactStep.classList.contains('completed')||compactStep.classList.contains('error')) {
                 this.stopStepTimer(stepId);
                 return;
             }
+            const compactTime=compactStep.querySelector('.step-time');
+            if(compactTime) {
+                compactTime.style.display='';
+                compactTime.textContent=currentDuration;
+            }
+        }
 
-            const timeElement=stepCard.querySelector('.status-step-time');
-            if(timeElement&&timeElement.textContent!=='Waiting...'&&timeElement.textContent!=='Failed') {
-                const stepStartTime=this.stepStartTimes.get(stepId);
-                const now=new Date();
-                const durationMs=now-stepStartTime;
-                const seconds=Math.floor(durationMs/1000)%60;
-                const minutes=Math.floor(durationMs/(1000*60))%60;
-                const hours=Math.floor(durationMs/(1000*60*60));
-
-                let currentDuration;
-                if(hours>0) {
-                    currentDuration=`${hours}h ${minutes}m ${seconds}s`;
-                } else if(minutes>0) {
-                    currentDuration=`${minutes}m ${seconds}s`;
-                } else {
-                    currentDuration=`${seconds}s`;
-                }
-
-                // Show only the step duration (independent timing)
-                const baseText=timeElement.getAttribute('data-base-text')||'In Progress';
-                timeElement.innerHTML=`
+        // Update detailed view (.status-step-time)
+        const detailedStep=document.querySelector(`.status-step-card[data-step="${stepId}"]`);
+        if(detailedStep) {
+            const stepStatus=detailedStep.getAttribute('data-status');
+            if(stepStatus==='completed'||stepStatus==='failed') {
+                this.stopStepTimer(stepId);
+                return;
+            }
+            const detailedTime=detailedStep.querySelector('.status-step-time');
+            if(detailedTime&&detailedTime.textContent!=='Waiting...'&&detailedTime.textContent!=='Failed') {
+                const baseText=detailedTime.getAttribute('data-base-text')||'In Progress';
+                detailedTime.innerHTML=`
                     <div>${baseText}</div>
                     <div class="text-xs opacity-75">Step duration: ${currentDuration}</div>
                 `;
@@ -760,17 +767,13 @@ class AdminInterface {
         // Update status text
         const statusElement=compactStep.querySelector('.step-status');
         if(statusElement) {
-            if(status==='completed') {
-                const dur=this.getStepDuration(stepId);
-                statusElement.textContent=dur||'done';
-            } else {
-                const statusText={
-                    'pending': 'pending',
-                    'in-progress': 'running',
-                    'error': 'error'
-                };
-                statusElement.textContent=statusText[status]||status;
-            }
+            const statusText={
+                'pending': 'pending',
+                'in-progress': 'running',
+                'completed': 'done',
+                'error': 'failed'
+            };
+            statusElement.textContent=statusText[status]||status;
             debugLog(`Updated status text for ${stepId} to: ${statusElement.textContent}`);
         } else {
             debugLog(`No status element found in step ${stepId}`,'warn');
@@ -779,27 +782,33 @@ class AdminInterface {
         // Update time display
         const timeElement=compactStep.querySelector('.step-time');
         if(timeElement) {
-            if(timingInfo) {
-                timeElement.textContent=timingInfo;
-            } else if(status==='in-progress') {
-                // Show active timer for in-progress steps
-                if(this.stepStartTimes.has(stepId)) {
-                    const elapsed=Date.now()-this.stepStartTimes.get(stepId);
-                    const seconds=Math.floor(elapsed/1000);
-                    const minutes=Math.floor(seconds/60);
-                    const remainingSeconds=seconds%60;
-                    timeElement.textContent=`${minutes}m ${remainingSeconds}s`;
-                } else {
-                    timeElement.textContent='Running...';
-                }
-            } else if(status==='completed') {
-                // Show duration for completed steps
-                const dur=this.getStepDuration(stepId);
-                timeElement.textContent=dur||'Completed';
-            } else if(status==='error') {
-                timeElement.textContent='Failed';
+            if(status==='pending') {
+                // Hide time for steps not yet started
+                timeElement.style.display='none';
             } else {
-                timeElement.textContent='Waiting...';
+                timeElement.style.display='';
+                if(timingInfo) {
+                    timeElement.textContent=timingInfo;
+                } else if(status==='in-progress') {
+                    // Show active timer for in-progress steps
+                    if(this.stepStartTimes.has(stepId)) {
+                        const elapsed=Date.now()-this.stepStartTimes.get(stepId);
+                        const seconds=Math.floor(elapsed/1000);
+                        const minutes=Math.floor(seconds/60);
+                        const remainingSeconds=seconds%60;
+                        timeElement.textContent=`${minutes}m ${remainingSeconds}s`;
+                    } else {
+                        timeElement.textContent='0s';
+                    }
+                } else if(status==='completed') {
+                    // Show frozen duration for completed steps
+                    const dur=this.getStepDuration(stepId);
+                    timeElement.textContent=dur||'';
+                } else if(status==='error') {
+                    // Show duration at failure or empty
+                    const dur=this.getStepDuration(stepId);
+                    timeElement.textContent=dur||'';
+                }
             }
         }
 

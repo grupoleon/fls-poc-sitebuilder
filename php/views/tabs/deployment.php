@@ -118,28 +118,28 @@
                                             <div class="step-icon"><i class="fas fa-server"></i></div>
                                             <div class="step-label">Setup Kinsta</div>
                                             <div class="step-status">pending</div>
-                                            <div class="step-time">Waiting...</div>
+                                            <div class="step-time"></div>
                                         </div>
                                         <div class="step-connector"></div>
                                         <div class="compact-step pending" data-step="get-cred">
                                             <div class="step-icon"><i class="fas fa-key"></i></div>
                                             <div class="step-label">Credentials</div>
                                             <div class="step-status">pending</div>
-                                            <div class="step-time">Waiting...</div>
+                                            <div class="step-time"></div>
                                         </div>
                                         <div class="step-connector"></div>
                                         <div class="compact-step pending" data-step="trigger-deploy">
                                             <div class="step-icon"><i class="fas fa-computer"></i></div>
                                             <div class="step-label">Deploy</div>
                                             <div class="step-status">pending</div>
-                                            <div class="step-time">Waiting...</div>
+                                            <div class="step-time"></div>
                                         </div>
                                         <div class="step-connector"></div>
                                         <div class="compact-step pending" data-step="github-actions">
                                             <div class="step-icon"><i class="fab fa-github"></i></div>
                                             <div class="step-label">Actions</div>
                                             <div class="step-status">pending</div>
-                                            <div class="step-time">Waiting...</div>
+                                            <div class="step-time"></div>
                                         </div>
                                     </div>
                                 </div>

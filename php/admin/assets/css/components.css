@@ -1668,6 +1668,10 @@ input[type="file"].file-input {
     font-weight: 700;
 }
 
+.compact-step.pending .step-time {
+    display: none;
+}
+
 .compact-step.in-progress .step-icon {
     background: linear-gradient(135deg, #3b82f6, #1d4ed8);
     color: white;
