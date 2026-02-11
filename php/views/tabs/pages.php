@@ -25,13 +25,12 @@
                                             <i class="fas fa-trash-alt"></i> Clean Uploads
                                         </button>
                                     </div>
-                                    <small class="text-muted mt-1 d-block">Themes are loaded from pages/themes folder</small>
+                                    <small class="text-muted mt-1 d-block">Themes are loaded from pages/themes
+                                        folder</small>
                                 </div>
 
-                                <div class="alert alert-info mb-3">
-                                    <i class="fas fa-info-circle"></i>
-                                    <strong>Deploy with Theme Defaults:</strong> Toggle these options to control which custom content will override theme defaults during deployment. When disabled, the theme's original demo content will be used instead.
-                                </div>
+                                <h4 class="mb-3">Override Settings - <small>Select which custom content will override
+                                        theme defaults during deployment</small></h4>
 
                                 <div class="form-group">
                                     <div class="row g-3">
@@ -40,10 +39,8 @@
                                                 <input type="checkbox" id="slides-override-toggle"
                                                     class="form-check-input override-toggle"
                                                     data-override-type="slides_override" checked>
-                                                <label class="form-check-label" for="slides-override-toggle">
-                                                    <strong>Override Slides</strong>
-                                                    <small class="d-block text-muted">Use custom slider content instead of theme defaults</small>
-                                                </label>
+                                                <label class="form-check-label"
+                                                    for="slides-override-toggle">Slides</label>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -51,10 +48,8 @@
                                                 <input type="checkbox" id="pages-override-toggle"
                                                     class="form-check-input override-toggle"
                                                     data-override-type="pages_override" checked>
-                                                <label class="form-check-label" for="pages-override-toggle">
-                                                    <strong>Override Pages</strong>
-                                                    <small class="d-block text-muted">Use custom page layouts instead of theme defaults</small>
-                                                </label>
+                                                <label class="form-check-label"
+                                                    for="pages-override-toggle">Pages</label>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -62,10 +57,7 @@
                                                 <input type="checkbox" id="cpt-override-toggle"
                                                     class="form-check-input override-toggle"
                                                     data-override-type="cpt_override" checked>
-                                                <label class="form-check-label" for="cpt-override-toggle">
-                                                    <strong>Override Custom Post Types</strong>
-                                                    <small class="d-block text-muted">Use custom posts, issues, endorsements, etc. instead of theme defaults</small>
-                                                </label>
+                                                <label class="form-check-label" for="cpt-override-toggle">CPT</label>
                                             </div>
                                         </div>
                                     </div>
@@ -73,7 +65,8 @@
 
                                 <div class="alert alert-warning mt-3">
                                     <i class="fas fa-exclamation-triangle"></i>
-                                    <strong>Note:</strong> Changes take effect on the next deployment and are saved automatically.
+                                    <strong>Note:</strong> Changes take effect on the next deployment and are saved
+                                    automatically.
                                 </div>
                             </div>
                         </div>
