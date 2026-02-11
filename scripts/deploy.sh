@@ -603,9 +603,6 @@ upload_images() {
         return
     fi
     
-        return
-    fi
-    
     log_step_start "Upload Media Files"
     
     # Get active theme from config for logo detection

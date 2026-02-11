@@ -422,7 +422,8 @@ h6 {
     overflow-y: auto;
     min-width: 0;
     height: 100vh;
-    background: var(--gray-50);
+    /* background: var(--gray-50); */
+    background: linear-gradient(45deg, #202e30, #323d3f);
 }
 
 .main-header {
@@ -452,7 +453,8 @@ h6 {
 }
 
 #pages-content {
-    background: var(--gray-50);
+    /* background: var(--gray-50); */
+    background: linear-gradient(45deg, #202e30, #323d3f);
 }
 
 /* Sidebar Footer */
