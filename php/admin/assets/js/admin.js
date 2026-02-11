@@ -6513,9 +6513,6 @@ class AdminInterface {
                     <button onclick="window.open('${githubData.url||'#'}', '_blank')" class="modal-btn modal-btn-secondary">
                         <i class="fab fa-github"></i>View Deployment
                     </button>
-                    <button onclick="window.adminInterface.deployAgain()" class="modal-btn modal-btn-secondary">
-                        <i class="fas fa-redo"></i>Deploy Again
-                    </button>
                     <button onclick="window.adminInterface.deployNewSite()" class="modal-btn modal-btn-secondary">
                         <i class="fas fa-rocket"></i>Deploy New Site
                     </button>
@@ -6530,9 +6527,6 @@ class AdminInterface {
                 actionButtons=`
                     <button onclick="window.open('${githubData.url||'#'}', '_blank')" class="modal-btn modal-btn-primary">
                         <i class="fab fa-github"></i>View Error Details
-                    </button>
-                    <button onclick="window.adminInterface.deployAgain()" class="modal-btn modal-btn-secondary">
-                        <i class="fas fa-redo"></i>Deploy Again
                     </button>
                     <button onclick="document.querySelector('.nav-link[data-tab=\"deployment\"]').click(); document.getElementById('deployment-completion-modal').remove();" class="modal-btn modal-btn-secondary">
                         <i class="fas fa-edit"></i>Edit & Retry
@@ -6549,10 +6543,7 @@ class AdminInterface {
                 statusMessage='The deployment was cancelled and did not complete.';
                 statusBadge='CANCELLED';
                 actionButtons=`
-                    <button onclick="window.adminInterface.deployAgain()" class="modal-btn modal-btn-primary">
-                        <i class="fas fa-redo"></i>Deploy Again
-                    </button>
-                    <button onclick="window.adminInterface.deployNewSite()" class="modal-btn modal-btn-secondary">
+                    <button onclick="window.adminInterface.deployNewSite()" class="modal-btn modal-btn-primary">
                         <i class="fas fa-rocket"></i>Deploy New Site
                     </button>
                 `;
@@ -10886,9 +10877,9 @@ function loadDynamicListFromConfig(listId,values) {
         const emptyIcon=listId==='countries-list'? '<div class="dynamic-list-empty-icon">🌍</div>':'<div class="dynamic-list-empty-icon"><i class="fas fa-shield-alt"></i></div>';
         const emptyText=listId==='countries-list'
             ? 'No countries selected. Click "Add Country" to begin.'
-            : listId==='ip-list'
+            :listId==='ip-list'
                 ? 'No IP addresses added. Click "Add IP" to begin.'
-                : 'No items added.';
+                :'No items added.';
         itemsContainer.innerHTML=`<div class="dynamic-list-empty">${emptyIcon}<div>${emptyText}</div></div>`;
         updateDynamicListConfig(listId);
         return;
