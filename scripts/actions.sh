@@ -2,9 +2,13 @@
 
 set -euo pipefail
 
+# Get script directory (needed for status updates and config loading)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PHP_BIN="${PHP_BIN:-php}"
+
 # Load utilities
-source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
+source "$SCRIPT_DIR/logger.sh"
+source "$SCRIPT_DIR/api.sh"
 
 # Install required extensions if not already installed
 extensions=("jq" "curl" "openssl" "openssh-client" "git")
@@ -127,23 +131,55 @@ check_workflow_status() {
             case "$conclusion" in
                 "success")
                     log_success "GitHub Actions deployment completed successfully!" "git-monitor"
+
+                    # Update deployment status - GitHub Actions completed
+                    if [ -x "$SCRIPT_DIR/../php/update-status.php" ]; then
+                        $PHP_BIN "$SCRIPT_DIR/../php/update-status.php" completed github-actions "GitHub Actions completed successfully" 2>/dev/null || true
+                        log_info "Updated deployment status: github-actions = completed" "git-monitor"
+                    fi
+
                     return 0  # Success
                     ;;
                 "failure")
                     log_error "GitHub Actions deployment failed!" "git-monitor"
                     log_error "Check logs at: $html_url" "git-monitor"
+
+                    # Update deployment status - GitHub Actions failed
+                    if [ -x "$SCRIPT_DIR/../php/update-status.php" ]; then
+                        $PHP_BIN "$SCRIPT_DIR/../php/update-status.php" failed github-actions "GitHub Actions failed" 2>/dev/null || true
+                        log_info "Updated deployment status: github-actions = failed" "git-monitor"
+                    fi
+
                     return 2  # Failed
                     ;;
                 "cancelled")
                     log_warning "GitHub Actions deployment was cancelled" "git-monitor"
+
+                    # Update deployment status - GitHub Actions cancelled
+                    if [ -x "$SCRIPT_DIR/../php/update-status.php" ]; then
+                        $PHP_BIN "$SCRIPT_DIR/../php/update-status.php" failed github-actions "GitHub Actions cancelled" 2>/dev/null || true
+                    fi
+
                     return 3  # Cancelled
                     ;;
                 "timed_out")
                     log_error "GitHub Actions deployment timed out" "git-monitor"
+
+                    # Update deployment status - GitHub Actions timed out
+                    if [ -x "$SCRIPT_DIR/../php/update-status.php" ]; then
+                        $PHP_BIN "$SCRIPT_DIR/../php/update-status.php" failed github-actions "GitHub Actions timed out" 2>/dev/null || true
+                    fi
+
                     return 4  # Timed out
                     ;;
                 *)
                     log_error "GitHub Actions deployment completed with unknown conclusion: $conclusion" "git-monitor"
+
+                    # Update deployment status - GitHub Actions unknown result
+                    if [ -x "$SCRIPT_DIR/../php/update-status.php" ]; then
+                        $PHP_BIN "$SCRIPT_DIR/../php/update-status.php" failed github-actions "GitHub Actions unknown result" 2>/dev/null || true
+                    fi
+
                     return 2  # Treat as failed
                     ;;
             esac
@@ -189,11 +225,16 @@ get_workflow_run_by_id() {
 main() {
     local start_time elapsed_time run_data
     start_time=$(date +%s)
-    
+
     log_info "Monitoring GitHub Actions deployment (timeout: ${MAX_WAIT_TIME}s)" "git-monitor"
-    
+
+    # Update deployment status - GitHub Actions monitoring started
+    if [ -x "$SCRIPT_DIR/../php/update-status.php" ]; then
+        $PHP_BIN "$SCRIPT_DIR/../php/update-status.php" running github-actions "Monitoring GitHub Actions workflow" 2>/dev/null || true
+        log_info "Updated deployment status: github-actions = running" "git-monitor"
+    fi
+
     # Detect if a specific run ID was provided (env or file). If so monitor that run directly.
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     detected_run_id="${GITHUB_RUN_ID:-${RUN_ID:-}}"
     # Check common tmp locations (relative to repo and /tmp)
     if [ -z "$detected_run_id" ] && [ -f "$SCRIPT_DIR/../tmp/github_run_id.txt" ]; then

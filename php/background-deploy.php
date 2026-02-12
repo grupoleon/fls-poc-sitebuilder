@@ -54,8 +54,15 @@ function updateDeploymentStatus($status, $step = null)
     $statusFile    = SCRIPT_DIR . '/tmp/deployment_status.json';
     $currentStatus = [];
 
+    // Use file locking to prevent race conditions when reading
     if (file_exists($statusFile)) {
-        $currentStatus = json_decode(file_get_contents($statusFile), true) ?: [];
+        $content = @file_get_contents($statusFile);
+        if ($content !== false) {
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
+                $currentStatus = $decoded;
+            }
+        }
     }
 
     // IMPORTANT: Preserve clickup_task_id if it exists
@@ -69,6 +76,9 @@ function updateDeploymentStatus($status, $step = null)
     // Handle step-level updates (don't change overall deployment status)
     if ($step) {
         $currentStatus['current_step'] = $step;
+
+        // Log status update for debugging
+        writeDeploymentLog("Status update: step={$step}, status={$status}, current_step={$currentStatus['current_step']}", 'DEBUG');
 
         // Track step timing information
         if (! isset($currentStatus['step_timings'])) {
@@ -146,7 +156,17 @@ function updateDeploymentStatus($status, $step = null)
     $currentStatus['timestamp']   = time();
     $currentStatus['last_update'] = gmdate('Y-m-d H:i:s');
 
-    file_put_contents($statusFile, json_encode($currentStatus, JSON_PRETTY_PRINT));
+    // Use LOCK_EX to prevent race conditions when UI reads the file simultaneously
+    $result = file_put_contents($statusFile, json_encode($currentStatus, JSON_PRETTY_PRINT), LOCK_EX);
+
+    if ($result === false) {
+        error_log("Failed to write deployment status to: $statusFile");
+    } else {
+        // Log file write for debugging (only for step-level updates to reduce noise)
+        if ($step) {
+            writeDeploymentLog("Status file written successfully: $statusFile", 'DEBUG');
+        }
+    }
 }
 
 // Parse command line arguments for selective step execution
