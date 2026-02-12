@@ -1457,7 +1457,7 @@ h6 {
 /* Other buttons inherit their colors */
 .btn-outline-secondary,
 .btn-outline-secondary * {
-    color: inherit !important;
+    color: #fff !important;
 }
 
 /* TERMINAL-STYLE DEPLOYMENT LOGS */
@@ -1476,7 +1476,7 @@ h6 {
 }
 
 #deployment-logs * {
-    color: inherit !important;
+    color: #fff !important;
 }
 
 .log-entry {

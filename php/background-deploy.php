@@ -269,6 +269,9 @@ try {
                 }
             }
 
+            // Update deployment status with completed step timing
+            updateDeploymentStatus('completed', $stepKey);
+
             continue;
         }
 
@@ -458,6 +461,9 @@ try {
                         writeDeploymentLog('Failed to update step in database: ' . $e->getMessage(), 'WARNING', $stepKey);
                     }
                 }
+
+                // Update deployment status with completed step timing
+                updateDeploymentStatus('completed', $stepKey);
             }
         } else {
             writeDeploymentLog("Failed to execute: $command", 'ERROR', $stepKey);

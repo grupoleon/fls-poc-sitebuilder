@@ -371,17 +371,32 @@ upload_pages() {
         return
     fi
     
-    # Read override settings from theme config
+    # Read override settings from theme config with validation
     local slides_override="true"
     local pages_override="true"
     local cpt_override="true"
-    
+
     if [[ -f "$THEME_CONFIG_FILE" ]]; then
-        slides_override=$(jq -r '.overrides.slides_override // true' "$THEME_CONFIG_FILE")
-        pages_override=$(jq -r '.overrides.pages_override // true' "$THEME_CONFIG_FILE")
-        cpt_override=$(jq -r '.overrides.cpt_override // true' "$THEME_CONFIG_FILE")
-        
-        print_info "Override settings - Slides: $slides_override, Pages: $pages_override, CPT: $cpt_override"
+        # Validate JSON before processing
+        if ! jq empty "$THEME_CONFIG_FILE" 2>/dev/null; then
+            print_error "Invalid JSON in theme config file: $THEME_CONFIG_FILE"
+            print_warning "Using default override settings (all enabled)"
+        else
+            # Read and normalize override settings (lowercase, trim whitespace)
+            slides_override=$(jq -r '.overrides.slides_override // true' "$THEME_CONFIG_FILE" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+            pages_override=$(jq -r '.overrides.pages_override // true' "$THEME_CONFIG_FILE" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+            cpt_override=$(jq -r '.overrides.cpt_override // true' "$THEME_CONFIG_FILE" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+
+            # Validate boolean values
+            [[ "$slides_override" != "true" && "$slides_override" != "false" ]] && slides_override="true"
+            [[ "$pages_override" != "true" && "$pages_override" != "false" ]] && pages_override="true"
+            [[ "$cpt_override" != "true" && "$cpt_override" != "false" ]] && cpt_override="true"
+
+            print_info "Override settings loaded - Slides: $slides_override, Pages: $pages_override, CPT: $cpt_override"
+        fi
+    else
+        print_warning "Theme config file not found: $THEME_CONFIG_FILE"
+        print_info "Using default override settings (all enabled)"
     fi
     
     log_step_start "Upload Pages & Content"
