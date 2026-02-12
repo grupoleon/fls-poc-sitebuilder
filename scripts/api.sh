@@ -146,10 +146,8 @@ api_request() {
             if [[ $curl_exit_code -eq 6 ]]; then
                 # For DNS failures, try with modified curl settings first
                 if [[ "$service" == "kinsta" ]]; then
-                    {
-                        log_warning "DNS resolution failed for $url, retrying with enhanced options..." "API"
-                        log_debug "Retry with DNS resolve: $url" "API"
-                    } >&2
+                    log_warning "DNS resolution failed for $url, retrying with enhanced options..." "API" >&2
+                    log_debug "Retry with DNS resolve: $url" "API" >&2
                     
                     local curl_opts_retry=("${curl_opts[@]}")
                     curl_opts_retry+=(--resolve "api.kinsta.com:443:172.64.147.50")
@@ -174,25 +172,25 @@ api_request() {
                 # SSL connection error - retry with exponential backoff
                 if [[ $retry_count -lt $max_retries ]]; then
                     local delay=$((base_delay * (2 ** retry_count)))
-                    log_warning "SSL connection error for $url, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                    log_warning "SSL connection error for $url, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API" >&2
                     sleep "$delay"
                     ((retry_count++))
                     continue
                 else
-                    log_error "SSL connection failed after $max_retries retries: $url (Exit code: 35)" "API"
-                    log_error "This may be a temporary network issue. Please try again in a few minutes." "API"
+                    log_error "SSL connection failed after $max_retries retries: $url (Exit code: 35)" "API" >&2
+                    log_error "This may be a temporary network issue. Please try again in a few minutes." "API" >&2
                     exit 1
                 fi
             else
                 # Other curl errors - check if retryable
                 if [[ $retry_count -lt $max_retries ]]; then
                     local delay=$((base_delay * (2 ** retry_count)))
-                    log_warning "API request failed with exit code $curl_exit_code, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                    log_warning "API request failed with exit code $curl_exit_code, retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API" >&2
                     sleep "$delay"
                     ((retry_count++))
                     continue
                 else
-                    log_error "API request failed: $url (Exit code: $curl_exit_code)" "API"
+                    log_error "API request failed: $url (Exit code: $curl_exit_code)" "API" >&2
                     exit 1
                 fi
             fi
@@ -220,12 +218,12 @@ api_request() {
         if [[ "$http_code" =~ ^5[0-9]{2}$ ]]; then
             if [[ $retry_count -lt $max_retries ]]; then
                 local delay=$((base_delay * (2 ** retry_count)))
-                log_warning "Server error ($http_code), retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API"
+                log_warning "Server error ($http_code), retrying in ${delay}s (attempt $((retry_count + 1))/$max_retries)..." "API" >&2
                 sleep "$delay"
                 ((retry_count++))
                 continue
             else
-                log_error "Max retries reached for $url after receiving $http_code" "API"
+                log_error "Max retries reached for $url after receiving $http_code" "API" >&2
                 break
             fi
         fi
