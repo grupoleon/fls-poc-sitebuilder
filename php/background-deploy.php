@@ -58,11 +58,6 @@ function updateDeploymentStatus($status, $step = null)
         $currentStatus = json_decode(file_get_contents($statusFile), true) ?: [];
     }
 
-    $currentStatus['status']    = $status;
-    $currentStatus['timestamp'] = time();
-    // Use UTC timezone for consistent logging across all operations
-    $currentStatus['last_update'] = gmdate('Y-m-d H:i:s');
-
     // IMPORTANT: Preserve clickup_task_id if it exists
     // This is set by the web interface before deployment starts
     // and must persist throughout the entire deployment process
@@ -71,6 +66,7 @@ function updateDeploymentStatus($status, $step = null)
         writeDeploymentLog("Preserving ClickUp Task ID: {$currentStatus['clickup_task_id']}", 'INFO');
     }
 
+    // Handle step-level updates (don't change overall deployment status)
     if ($step) {
         $currentStatus['current_step'] = $step;
 
@@ -86,31 +82,69 @@ function updateDeploymentStatus($status, $step = null)
                 'start_time_formatted' => gmdate('Y-m-d H:i:s'),
                 'status'               => 'running',
             ];
+            // Only update overall status to 'running' when first step starts
+            if (! isset($currentStatus['status']) || $currentStatus['status'] === 'pending') {
+                $currentStatus['status'] = 'running';
+            }
         }
 
-        // Record step completion time
+        // Record step completion time (does NOT change overall deployment status)
         if ($status === 'completed' && isset($currentStatus['step_timings'][$step])) {
             $currentStatus['step_timings'][$step]['end_time']           = time();
             $currentStatus['step_timings'][$step]['end_time_formatted'] = gmdate('Y-m-d H:i:s');
             $currentStatus['step_timings'][$step]['duration']           = time() - $currentStatus['step_timings'][$step]['start_time'];
             $currentStatus['step_timings'][$step]['status']             = 'completed';
         }
-    }
 
-    // Track deployment start time
-    if ($status === 'running' && ! isset($currentStatus['deployment_start_time'])) {
-        $currentStatus['deployment_start_time']           = time();
-        $currentStatus['deployment_start_time_formatted'] = gmdate('Y-m-d H:i:s');
-    }
+        // Record step failure
+        if ($status === 'failed' && isset($currentStatus['step_timings'][$step])) {
+            $currentStatus['step_timings'][$step]['end_time']           = time();
+            $currentStatus['step_timings'][$step]['end_time_formatted'] = gmdate('Y-m-d H:i:s');
+            $currentStatus['step_timings'][$step]['duration']           = time() - $currentStatus['step_timings'][$step]['start_time'];
+            $currentStatus['step_timings'][$step]['status']             = 'failed';
+            // Update overall deployment status to failed
+            $currentStatus['status'] = 'failed';
+        }
+    } else {
+        // No step provided - this is a deployment-level status update
+        $currentStatus['status']      = $status;
+        $currentStatus['timestamp']   = time();
+        $currentStatus['last_update'] = gmdate('Y-m-d H:i:s');
 
-    // Track deployment completion time
-    if ($status === 'completed') {
-        $currentStatus['deployment_end_time']           = time();
-        $currentStatus['deployment_end_time_formatted'] = gmdate('Y-m-d H:i:s');
-        if (isset($currentStatus['deployment_start_time'])) {
-            $currentStatus['total_duration'] = time() - $currentStatus['deployment_start_time'];
+        // Track deployment start time
+        if ($status === 'running' && ! isset($currentStatus['deployment_start_time'])) {
+            $currentStatus['deployment_start_time']           = time();
+            $currentStatus['deployment_start_time_formatted'] = gmdate('Y-m-d H:i:s');
+        }
+
+        // Track deployment completion time and calculate total from step durations
+        if ($status === 'completed') {
+            $currentStatus['deployment_end_time']           = time();
+            $currentStatus['deployment_end_time_formatted'] = gmdate('Y-m-d H:i:s');
+
+            // Calculate total duration as sum of all step durations
+            $totalStepDuration = 0;
+            if (isset($currentStatus['step_timings'])) {
+                foreach ($currentStatus['step_timings'] as $stepTiming) {
+                    if (isset($stepTiming['duration'])) {
+                        $totalStepDuration += $stepTiming['duration'];
+                    }
+                }
+            }
+
+            // Use sum of step durations as total deployment time
+            $currentStatus['total_duration'] = $totalStepDuration;
+
+            // Also keep wall-clock time for reference
+            if (isset($currentStatus['deployment_start_time'])) {
+                $currentStatus['wall_clock_duration'] = time() - $currentStatus['deployment_start_time'];
+            }
         }
     }
+
+    // Update timestamp on every call
+    $currentStatus['timestamp']   = time();
+    $currentStatus['last_update'] = gmdate('Y-m-d H:i:s');
 
     file_put_contents($statusFile, json_encode($currentStatus, JSON_PRETTY_PRINT));
 }

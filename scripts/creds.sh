@@ -47,11 +47,11 @@ get_target_site_id() {
         operation_id=$(cat "$ROOT_DIR/tmp/operation_id.txt" | tr -d '[:space:]')
         if [[ -n "$operation_id" ]]; then
             log_info_silent "Found operation ID: $operation_id"
-            log_info_silent "Waiting 30 seconds for operation to start..."
-            sleep 30
-            
+            log_info_silent "Waiting 60 seconds for site creation to initialize (minimum creation time)..."
+            sleep 60
+
             log_info_silent "Checking operation status to get site ID..."
-            
+
             # Query the operation status with polling for in-progress operations
             local operation_response
             local max_attempts=30  # 30 attempts after initial wait = ~5 minutes total
