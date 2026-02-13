@@ -6393,6 +6393,21 @@ class AdminInterface {
             if(data.success) {
                 this.updateDeploymentStatusDisplay(data.data);
 
+                // Track polling count for safety timeout
+                if(!this.deploymentPollCount) {
+                    this.deploymentPollCount=0;
+                }
+                this.deploymentPollCount++;
+
+                // Safety timeout: Stop polling after 20 minutes (400 polls at 3 seconds each)
+                if(this.deploymentPollCount>400) {
+                    debugLog('⚠️ Deployment polling safety timeout reached (20 minutes)','warn');
+                    debugLog('Current status:',data.data,'warn');
+                    this.showNotification('Deployment monitoring timed out. Check logs for status.','warning');
+                    this.stopAllPolling();
+                    return;
+                }
+
                 // If we're on the github-actions step, also check GitHub Actions status
                 if(data.data.current_step==='github-actions'||data.data.current_step==='trigger-deploy') {
                     this.startGitHubActionsPolling();
@@ -6411,16 +6426,24 @@ class AdminInterface {
                 }
 
                 // Continue polling if deployment is running OR if GitHub Actions is still being monitored
-                if((data.data.status==='running'&&!this.githubActionsCompleted)||
-                    (data.data.current_step==='github-actions'&&!this.githubActionsCompleted)) {
+                const shouldContinuePolling=(data.data.status==='running'&&!this.githubActionsCompleted)||
+                    (data.data.current_step==='github-actions'&&data.data.status!=='completed'&&!this.githubActionsCompleted)||
+                    data.data.status==='pending';
+
+                if(shouldContinuePolling) {
+                    debugLog(`📡 Continuing polling... (count: ${this.deploymentPollCount}, status: ${data.data.status}, step: ${data.data.current_step})`);
                     this.deploymentPollInterval=setTimeout(() => this.pollDeploymentStatus(),3000);
                 } else {
                     // Deployment finished AND GitHub Actions completed (or not applicable), stop polling
+                    debugLog('✅ Stopping deployment polling - deployment complete');
+                    this.deploymentPollCount=0;
                     this.stopAllPolling();
                 }
             }
         } catch(error) {
             debugLog('Failed to poll deployment status:',error,'error');
+            // Continue polling even on error (network issues might be temporary)
+            this.deploymentPollInterval=setTimeout(() => this.pollDeploymentStatus(),5000);
         }
     }
 
