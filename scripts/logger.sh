@@ -228,23 +228,23 @@ end_deployment_session() {
     local status_file="$ROOT_DIR/tmp/deployment_status.json"
     mkdir -p "$(dirname "$status_file")"
     
-    # Preserve existing clickup_task_id if present
-    local clickup_task_id=""
+    # Read existing status file to preserve step_timings and other data
+    local existing_data=""
     if [[ -f "$status_file" ]]; then
-        clickup_task_id=$(jq -r '.clickup_task_id // empty' "$status_file" 2>/dev/null)
+        existing_data=$(cat "$status_file" 2>/dev/null)
     fi
     
-    # Build JSON with optional clickup_task_id
-    if [[ -n "$clickup_task_id" && "$clickup_task_id" != "null" ]]; then
-        cat > "$status_file" << EOF
-{
-    "status": "$(echo "$status" | tr '[:upper:]' '[:lower:]')",
-    "timestamp": $timestamp,
-    "last_update": "$last_update",
-    "clickup_task_id": "$clickup_task_id"
-}
-EOF
+    # Use jq to update only the status field while preserving all other data
+    if [[ -n "$existing_data" ]] && command -v jq &>/dev/null; then
+        # Update existing data preserving step_timings, current_step, clickup_task_id, etc.
+        echo "$existing_data" | jq \
+            --arg status "$(echo "$status" | tr '[:upper:]' '[:lower:]')" \
+            --arg timestamp "$timestamp" \
+            --arg last_update "$last_update" \
+            '.status = $status | .timestamp = ($timestamp | tonumber) | .last_update = $last_update' \
+            > "$status_file"
     else
+        # Fallback: Create minimal status file if no existing data or jq not available
         cat > "$status_file" << EOF
 {
     "status": "$(echo "$status" | tr '[:upper:]' '[:lower:]')",

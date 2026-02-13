@@ -92,8 +92,10 @@ class DeploymentManager
             'status'       => 'starting',
             'step'         => 'initializing',
             'current_step' => 'create-site',
+            'step_timings' => [],
             'message'      => 'Deployment initialization...',
             'timestamp'    => time(),
+            'last_update'  => gmdate('Y-m-d H:i:s'),
             'logs'         => ['Deployment requested from web interface'],
         ];
 
@@ -712,11 +714,14 @@ class DeploymentManager
         }
 
         $resetStatus = [
-            'status'    => 'idle',
-            'step'      => '',
-            'message'   => 'Ready for deployment',
-            'timestamp' => time(),
-            'logs'      => [],
+            'status'       => 'idle',
+            'step'         => '',
+            'current_step' => '',
+            'step_timings' => [],
+            'message'      => 'Ready for deployment',
+            'timestamp'    => time(),
+            'last_update'  => gmdate('Y-m-d H:i:s'),
+            'logs'         => [],
         ];
 
         // Add clickup_task_id back if it was present
@@ -802,9 +807,9 @@ class DeploymentManager
                         $jobId = $this->getGitHubActionsJobId($monitoringRunId, $token, $owner, $repo);
 
                         // Include repository owner/repo info so the UI can build fallback links if needed
-                        $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $monitoringRunId, true);
-                        $result['owner'] = $owner;
-                        $result['repo']  = $repo;
+                        $result           = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $monitoringRunId, true);
+                        $result['owner']  = $owner;
+                        $result['repo']   = $repo;
                         $result['job_id'] = $jobId;
 
                         return $result;
@@ -863,9 +868,9 @@ class DeploymentManager
                     // Fetch job ID for direct link to deployment logs
                     $jobId = $this->getGitHubActionsJobId($monitoringRunId, $token, $owner, $repo);
 
-                    $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], true);
-                    $result['owner'] = $owner;
-                    $result['repo']  = $repo;
+                    $result           = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], true);
+                    $result['owner']  = $owner;
+                    $result['repo']   = $repo;
                     $result['job_id'] = $jobId;
 
                     return $result;
@@ -884,9 +889,9 @@ class DeploymentManager
                     // Fetch job ID for direct link to deployment logs
                     $jobId = $this->getGitHubActionsJobId($run['id'], $token, $owner, $repo);
 
-                    $result          = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], false);
-                    $result['owner'] = $owner;
-                    $result['repo']  = $repo;
+                    $result           = $this->mapGitHubStatusToDeployment($status, $conclusion, $htmlUrl, $createdAt, $run['id'], false);
+                    $result['owner']  = $owner;
+                    $result['repo']   = $repo;
                     $result['job_id'] = $jobId;
 
                     return $result;
@@ -1052,11 +1057,11 @@ class DeploymentManager
     private function getGitHubActionsJobId($runId, $token, $owner, $repo)
     {
         try {
-            if (!$runId) {
+            if (! $runId) {
                 return null;
             }
 
-            $url = "https://api.github.com/repos/{$owner}/{$repo}/actions/runs/{$runId}/jobs";
+            $url     = "https://api.github.com/repos/{$owner}/{$repo}/actions/runs/{$runId}/jobs";
             $headers = [
                 "Authorization: token {$token}",
                 "Accept: application/vnd.github.v3+json",
@@ -1080,7 +1085,7 @@ class DeploymentManager
             }
 
             $data = json_decode($response, true);
-            if ($data && isset($data['jobs']) && !empty($data['jobs'])) {
+            if ($data && isset($data['jobs']) && ! empty($data['jobs'])) {
                 // Get the first job (usually "deploy" job)
                 $firstJob = $data['jobs'][0];
                 return $firstJob['id'] ?? null;
