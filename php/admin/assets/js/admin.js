@@ -6436,9 +6436,9 @@ class AdminInterface {
                 const shouldContinuePolling=
                     (data.data.status==='running'&&!this.githubActionsCompleted)||
                     (data.data.current_step==='github-actions'&&
-                     data.data.status!=='completed'&&
-                     data.data.status!=='success'&&
-                     !this.githubActionsCompleted)||
+                        data.data.status!=='completed'&&
+                        data.data.status!=='success'&&
+                        !this.githubActionsCompleted)||
                     data.data.status==='pending';
 
                 if(shouldContinuePolling) {
