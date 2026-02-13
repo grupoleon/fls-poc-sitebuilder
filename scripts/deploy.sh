@@ -516,7 +516,8 @@ upload_pages() {
                     fi
                 done
         else
-            print_warning "Active theme directory not found: $active_theme_dir"
+            print_warning "Pages override is ENABLED but active theme directory not found: $active_theme_dir"
+            print_info "Theme defaults will be used instead during deployment"
             print_info "Available theme directories:"
             for theme_dir in "$pages_dir/themes"/*; do
                 if [[ -d "$theme_dir" ]]; then
@@ -564,7 +565,8 @@ upload_pages() {
                 print_info "No slide files found in common slides directory"
             fi
         else
-            print_info "No common slides directory found at: $common_slides_dir"
+            print_warning "Slides override is ENABLED but no slides directory found: $slides_dir"
+            print_info "Theme default slides will be used instead during deployment"
         fi
     else
         print_warning "Slides override is disabled - skipping slides upload (theme defaults will be used)"

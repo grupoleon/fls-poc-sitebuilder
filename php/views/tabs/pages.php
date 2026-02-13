@@ -38,27 +38,36 @@
                                             <div class="form-check">
                                                 <input type="checkbox" id="slides-override-toggle"
                                                     class="form-check-input override-toggle"
-                                                    data-override-type="slides_override" checked>
+                                                    data-override-type="slides_override">
                                                 <label class="form-check-label"
                                                     for="slides-override-toggle">Slides</label>
                                             </div>
+                                            <small id="slides-override-status" class="text-muted d-block mt-1">
+                                                <i class="fas fa-circle-notch fa-spin"></i> Loading...
+                                            </small>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-check">
                                                 <input type="checkbox" id="pages-override-toggle"
                                                     class="form-check-input override-toggle"
-                                                    data-override-type="pages_override" checked>
+                                                    data-override-type="pages_override">
                                                 <label class="form-check-label"
                                                     for="pages-override-toggle">Pages</label>
                                             </div>
+                                            <small id="pages-override-status" class="text-muted d-block mt-1">
+                                                <i class="fas fa-circle-notch fa-spin"></i> Loading...
+                                            </small>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-check">
                                                 <input type="checkbox" id="cpt-override-toggle"
                                                     class="form-check-input override-toggle"
-                                                    data-override-type="cpt_override" checked>
+                                                    data-override-type="cpt_override">
                                                 <label class="form-check-label" for="cpt-override-toggle">CPT</label>
                                             </div>
+                                            <small id="cpt-override-status" class="text-muted d-block mt-1">
+                                                <i class="fas fa-circle-notch fa-spin"></i> Loading...
+                                            </small>
                                         </div>
                                     </div>
                                 </div>

@@ -478,6 +478,7 @@ class AdminInterface {
             // Auto-save override toggles when changed
             if(e.target.classList.contains('override-toggle')) {
                 this.saveOverrideSettings(true); // silent auto-save
+                this.updateOverrideStatusIndicators(); // Update status immediately
             }
         });
 
@@ -4411,6 +4412,9 @@ class AdminInterface {
                 if(cptToggle) cptToggle.checked=overrides.cpt_override!==false;
 
                 debugLog('Override settings loaded:',overrides);
+
+                // Update status indicators
+                this.updateOverrideStatusIndicators();
             }
         } catch(error) {
             debugLog('Failed to load override settings:',error,'error');
@@ -4447,6 +4451,8 @@ class AdminInterface {
                     this.showAlert('Override settings saved successfully','success');
                 }
                 debugLog('Override settings saved successfully');
+                // Update status indicators
+                this.updateOverrideStatusIndicators();
             } else {
                 this.showAlert(data.message||'Failed to save override settings','error');
                 debugLog('Failed to save override settings:',data.message,'error');
@@ -4454,6 +4460,41 @@ class AdminInterface {
         } catch(error) {
             debugLog('Failed to save override settings:',error,'error');
             this.showAlert('Error saving override settings: '+error.message,'error');
+        }
+    }
+
+    updateOverrideStatusIndicators() {
+        // Update status for slides
+        const slidesToggle=document.getElementById('slides-override-toggle');
+        const slidesStatus=document.getElementById('slides-override-status');
+        if(slidesToggle&&slidesStatus) {
+            if(slidesToggle.checked) {
+                slidesStatus.innerHTML='<i class="fas fa-check-circle text-success"></i> Using custom slides';
+            } else {
+                slidesStatus.innerHTML='<i class="fas fa-palette text-info"></i> Using theme defaults';
+            }
+        }
+
+        // Update status for pages
+        const pagesToggle=document.getElementById('pages-override-toggle');
+        const pagesStatus=document.getElementById('pages-override-status');
+        if(pagesToggle&&pagesStatus) {
+            if(pagesToggle.checked) {
+                pagesStatus.innerHTML='<i class="fas fa-check-circle text-success"></i> Using custom layouts';
+            } else {
+                pagesStatus.innerHTML='<i class="fas fa-palette text-info"></i> Using theme defaults';
+            }
+        }
+
+        // Update status for CPT
+        const cptToggle=document.getElementById('cpt-override-toggle');
+        const cptStatus=document.getElementById('cpt-override-status');
+        if(cptToggle&&cptStatus) {
+            if(cptToggle.checked) {
+                cptStatus.innerHTML='<i class="fas fa-check-circle text-success"></i> Using custom posts';
+            } else {
+                cptStatus.innerHTML='<i class="fas fa-palette text-info"></i> Using theme defaults';
+            }
         }
     }
 
@@ -5232,6 +5273,12 @@ class AdminInterface {
             return this.renderImageWidget(widget,index);
         } else if(widgetClass.includes('Features_Widget')) {
             return this.renderFeaturesWidget(widget,index);
+        } else if(widgetClass.includes('Hero_Widget')||widgetClass.includes('Slider_Widget')) {
+            return this.renderHeroWidget(widget,index);
+        } else if(widgetClass.includes('Button_Widget')) {
+            return this.renderButtonWidget(widget,index);
+        } else if(widgetClass.includes('Headline_Widget')||widgetClass.includes('Heading_Widget')) {
+            return this.renderHeadlineWidget(widget,index);
         } else {
             return this.renderGenericWidget(widget,index);
         }
@@ -5380,19 +5427,267 @@ class AdminInterface {
         `;
     }
 
-    renderGenericWidget(widget,index) {
+    renderHeroWidget(widget,index) {
+        const frames=widget.frames||[];
         return `
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                <strong>Widget Type:</strong> ${widget.panels_info?.class||'Unknown'}
-                <br>
-                <small class="text-muted">This widget type is not yet supported in the visual editor. You can edit it directly in the JSON file if needed.</small>
+            <div class="hero-widget">
+                <h5 class="mb-3">Hero Frames</h5>
+                ${frames.map((frame,frameIndex) => `
+                    <div class="hero-frame-item card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Frame ${frameIndex+1}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Background Image</label>
+                                    <div class="image-upload ${frame.background_image_fallback? 'has-image':''}" 
+                                         data-section="widget" data-field="widgets.${index}.frames.${frameIndex}.background_image_fallback">
+                                        <input type="file" class="file-input image-input" accept="image/*"
+                                               data-section="widget" data-field="widgets.${index}.frames.${frameIndex}.background_image_fallback">
+                                        ${frame.background_image_fallback?
+                `<img src="${frame.background_image_fallback}" class="image-preview" alt="Hero Background">`:
+                `<div class="image-upload-text">
+                                                <i class="fas fa-cloud-upload-alt mb-2"></i>
+                                                <div>Click to upload</div>
+                                            </div>`
+            }
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" class="form-control" 
+                                               data-section="widget" data-field="widgets.${index}.frames.${frameIndex}.title" 
+                                               value="${frame.title||''}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Content</label>
+                                        <textarea class="form-textarea ckeditor" rows="3" 
+                                                  id="editor-hero-${index}-${frameIndex}"
+                                                  data-section="widget" data-field="widgets.${index}.frames.${frameIndex}.content">${frame.content||''}</textarea>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label">Button Text</label>
+                                            <input type="text" class="form-control" 
+                                                   data-section="widget" data-field="widgets.${index}.frames.${frameIndex}.button_text" 
+                                                   value="${frame.button_text||''}">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Button URL</label>
+                                            <input type="text" class="form-control" 
+                                                   data-section="widget" data-field="widgets.${index}.frames.${frameIndex}.button_url" 
+                                                   value="${frame.button_url||''}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
+        `;
+    }
+
+    renderButtonWidget(widget,index) {
+        return `
+            <div class="button-widget">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Button Text</label>
+                            <input type="text" class="form-control" 
+                                   data-section="widget" data-field="widgets.${index}.text" 
+                                   value="${widget.text||''}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Button URL</label>
+                            <input type="text" class="form-control" 
+                                   data-section="widget" data-field="widgets.${index}.url" 
+                                   value="${widget.url||''}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Button Style</label>
+                            <select class="form-select" 
+                                    data-section="widget" data-field="widgets.${index}.design.style">
+                                <option value="default" ${widget.design?.style==='default'? 'selected':''}>Default</option>
+                                <option value="primary" ${widget.design?.style==='primary'? 'selected':''}>Primary</option>
+                                <option value="secondary" ${widget.design?.style==='secondary'? 'selected':''}>Secondary</option>
+                                <option value="outline" ${widget.design?.style==='outline'? 'selected':''}>Outline</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Alignment</label>
+                            <select class="form-select" 
+                                    data-section="widget" data-field="widgets.${index}.design.align">
+                                <option value="left" ${widget.design?.align==='left'? 'selected':''}>Left</option>
+                                <option value="center" ${widget.design?.align==='center'? 'selected':''}>Center</option>
+                                <option value="right" ${widget.design?.align==='right'? 'selected':''}>Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Open in New Tab</label>
+                            <select class="form-select" 
+                                    data-section="widget" data-field="widgets.${index}.new_window">
+                                <option value="false" ${widget.new_window===false||widget.new_window==='false'? 'selected':''}>No</option>
+                                <option value="true" ${widget.new_window===true||widget.new_window==='true'? 'selected':''}>Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderHeadlineWidget(widget,index) {
+        return `
+            <div class="headline-widget">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-heading me-1"></i>
+                        Headline Text
+                    </label>
+                    <textarea class="form-textarea ckeditor" rows="3" 
+                              id="editor-headline-${index}"
+                              data-section="widget" data-field="widgets.${index}.text">${widget.text||''}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Heading Tag</label>
+                            <select class="form-select" 
+                                    data-section="widget" data-field="widgets.${index}.tag">
+                                <option value="h1" ${widget.tag==='h1'? 'selected':''}>H1</option>
+                                <option value="h2" ${widget.tag==='h2'? 'selected':''}>H2</option>
+                                <option value="h3" ${widget.tag==='h3'? 'selected':''}>H3</option>
+                                <option value="h4" ${widget.tag==='h4'? 'selected':''}>H4</option>
+                                <option value="h5" ${widget.tag==='h5'? 'selected':''}>H5</option>
+                                <option value="h6" ${widget.tag==='h6'? 'selected':''}>H6</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Alignment</label>
+                            <select class="form-select" 
+                                    data-section="widget" data-field="widgets.${index}.align">
+                                <option value="left" ${widget.align==='left'? 'selected':''}>Left</option>
+                                <option value="center" ${widget.align==='center'? 'selected':''}>Center</option>
+                                <option value="right" ${widget.align==='right'? 'selected':''}>Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Font Size</label>
+                            <input type="text" class="form-control" 
+                                   placeholder="e.g., 32px or 2em"
+                                   data-section="widget" data-field="widgets.${index}.font_size" 
+                                   value="${widget.font_size||''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderGenericWidget(widget,index) {
+        const widgetClass=widget.panels_info?.class||'Unknown';
+
+        // Try to auto-extract editable fields
+        const editableFields=this.extractEditableFields(widget,index);
+
+        return `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Unsupported Widget Type:</strong> ${widgetClass}
+                <br>
+                <small class="text-muted">This widget type doesn't have a dedicated editor yet. You can edit common fields below or use the raw data editor.</small>
+            </div>
+            ${editableFields.length>0? `
+                <div class="generic-widget-fields mt-3">
+                    <h6>Editable Fields:</h6>
+                    ${editableFields.join('')}
+                </div>
+            `:`<p class="text-muted">No standard editable fields found.</p>`}
             <details class="mt-3">
                 <summary class="btn btn-sm btn-outline-secondary">View Raw Data</summary>
-                <pre class="mt-2 p-3 bg-light border rounded" style="max-height: 200px; overflow-y: auto;">${JSON.stringify(widget,null,2)}</pre>
+                <pre class="mt-2 p-3 bg-light border rounded" style="max-height: 300px; overflow-y: auto;">${JSON.stringify(widget,null,2)}</pre>
             </details>
         `;
+    }
+
+    extractEditableFields(widget,index) {
+        const fields=[];
+
+        // Common text fields
+        if(widget.text) {
+            fields.push(`
+                <div class="form-group mb-3">
+                    <label class="form-label">Text Content</label>
+                    <textarea class="form-textarea" rows="3" 
+                              data-section="widget" data-field="widgets.${index}.text">${widget.text}</textarea>
+                </div>
+            `);
+        }
+
+        if(widget.title) {
+            fields.push(`
+                <div class="form-group mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-control" 
+                           data-section="widget" data-field="widgets.${index}.title" 
+                           value="${widget.title}">
+                </div>
+            `);
+        }
+
+        if(widget.url) {
+            fields.push(`
+                <div class="form-group mb-3">
+                    <label class="form-label">URL</label>
+                    <input type="text" class="form-control" 
+                           data-section="widget" data-field="widgets.${index}.url" 
+                           value="${widget.url}">
+                </div>
+            `);
+        }
+
+        // Image fields
+        if(widget.image||widget.image_fallback||widget.icon_image_fallback) {
+            const imageField=widget.image? 'image':(widget.image_fallback? 'image_fallback':'icon_image_fallback');
+            const imageValue=widget[imageField]||'';
+            fields.push(`
+                <div class="form-group mb-3">
+                    <label class="form-label">Image</label>
+                    <div class="image-upload ${imageValue? 'has-image':''}" 
+                         data-section="widget" data-field="widgets.${index}.${imageField}">
+                        <input type="file" class="file-input image-input" accept="image/*"
+                               data-section="widget" data-field="widgets.${index}.${imageField}">
+                        ${imageValue?
+                    `<img src="${imageValue}" class="image-preview" alt="Widget Image">`:
+                    `<div class="image-upload-text">
+                                <i class="fas fa-cloud-upload-alt mb-2"></i>
+                                <div>Click to upload image</div>
+                            </div>`
+                }
+                    </div>
+                </div>
+            `);
+        }
+
+        return fields;
     }
 
     getGridDisplayName(index) {
@@ -5413,7 +5708,14 @@ class AdminInterface {
         if(className.includes('Editor_Widget')) return 'Text Editor';
         if(className.includes('Image_Widget')) return 'Image';
         if(className.includes('Features_Widget')) return 'Features';
-        return 'Unknown';
+        if(className.includes('Hero_Widget')||className.includes('Slider_Widget')) return 'Hero/Slider';
+        if(className.includes('Button_Widget')) return 'Button';
+        if(className.includes('Headline_Widget')||className.includes('Heading_Widget')) return 'Headline';
+        if(className.includes('Contact_Widget')) return 'Contact Form';
+        if(className.includes('Gallery_Widget')) return 'Gallery';
+        if(className.includes('Video_Widget')) return 'Video';
+        if(className.includes('Map_Widget')) return 'Map';
+        return 'Custom Widget';
     }
 
     getWidgetDisplayName(widget,index) {
@@ -5688,6 +5990,17 @@ class AdminInterface {
         const theme=themeSelect.value;
         const page=activeTab.dataset.page;
 
+        // Show loading state
+        const saveBtn=document.querySelector('.save-page-btn');
+        const originalBtnText=saveBtn? saveBtn.innerHTML:'';
+        if(saveBtn) {
+            saveBtn.disabled=true;
+            saveBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+
+        // Sync CKEditor content before collection
+        this.syncCKEditorContent();
+
         // Start with the current page data structure
         let pageData=JSON.parse(JSON.stringify(this.currentPageData||{}));
 
@@ -5716,14 +6029,40 @@ class AdminInterface {
             const result=await response.json();
 
             if(result.success) {
-                this.showAlert('Page content saved successfully!','success');
+                // Count what was saved
+                const widgetCount=pageData.widgets? pageData.widgets.length:0;
+                const gridCount=pageData.grids? pageData.grids.length:0;
+                let message='Page content saved successfully!';
+                if(widgetCount>0||gridCount>0) {
+                    message+=` (${widgetCount} widgets, ${gridCount} grids)`;
+                }
+                this.showAlert(message,'success');
             } else {
                 this.showAlert(result.message||'Failed to save page content','error');
             }
         } catch(error) {
             debugLog('Failed to save page content:',error,'error');
             this.showAlert('Failed to save page content','error');
+        } finally {
+            // Restore button state
+            if(saveBtn) {
+                saveBtn.disabled=false;
+                saveBtn.innerHTML=originalBtnText||'Save All Changes';
+            }
         }
+    }
+
+    syncCKEditorContent() {
+        // Ensure all CKEditor instances have synced their content
+        this.ckEditorInstances.forEach((editor,id) => {
+            if(editor) {
+                try {
+                    editor.updateSourceElement();
+                } catch(e) {
+                    debugLog('Failed to sync CKEditor:',id,e,'warn');
+                }
+            }
+        });
     }
 
     collectNewFormatData(pageData) {
