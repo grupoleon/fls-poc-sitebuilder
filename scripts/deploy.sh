@@ -966,8 +966,10 @@ main() {
     print_success "Deployment triggered successfully!"
     echo "=============================================================================="
     
-    # End deployment session with success status
-    end_deployment_session "SUCCESS"
+    # DO NOT end deployment session here - GitHub Actions is still running!
+    # The actions.sh monitoring script will mark deployment as completed when GitHub Actions finishes
+    log_info "Deployment trigger complete. GitHub Actions monitoring in progress..."
+    # Status remains 'running' with current_step='github-actions'
 }
 
 main "$@"

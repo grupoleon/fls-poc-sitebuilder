@@ -3641,8 +3641,8 @@ class AdminInterface {
         // Keep deployment form hidden after completion - only show it on manual reset/reload
         const isDeploymentRunning=status.status==='running'||status.status==='starting'||status.status==='started'||
             status.status==='pending'||status.current_step||
-            (status.status!=='idle'&&status.status!=='completed'&&status.status!=='failed'&&status.status!=='cancelled');
-        const hasDeploymentCompleted=status.status==='completed'||status.status==='failed'||status.status==='cancelled';
+            (status.status!=='idle'&&status.status!=='completed'&&status.status!=='success'&&status.status!=='failed'&&status.status!=='cancelled');
+        const hasDeploymentCompleted=status.status==='completed'||status.status==='success'||status.status==='failed'||status.status==='cancelled';
 
         debugLog(`Deployment state analysis: status="${status.status}", current_step="${status.current_step}", isRunning=${isDeploymentRunning}, hasCompleted=${hasDeploymentCompleted}`);
 
@@ -3728,9 +3728,9 @@ class AdminInterface {
                     statusIcon='<i class="fas fa-spinner fa-spin text-blue-500"></i>';
 
                     // Start timer for this step if not already started and step isn't completed
-                    const isStepCompleted=status.status==='completed'||
+                    const isStepCompleted=status.status==='completed'||status.status==='success'||
                         stepIndex<currentStepIndex||
-                        (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].end_time);
+                        (status.step_timings&&status.step_timings[step.id]&&(status.step_timings[step.id].end_time||status.step_timings[step.id].status==='completed'));
 
                     if(!this.stepStartTimes.has(step.id)&&!isStepCompleted) {
                         debugLog(`Starting timer for GitHub Actions step: ${step.id}`);
@@ -3752,7 +3752,14 @@ class AdminInterface {
                     }
                 }
                 // If we haven't reached github-actions step yet, leave it as pending
-            } else if(status.status==='completed'||(status.status==='running'&&stepIndex<currentStepIndex)) {
+            } else if(
+                // Check if step is individually marked as completed in step_timings
+                (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].status==='completed')||
+                // OR overall deployment is completed/success
+                status.status==='completed'||status.status==='success'||
+                // OR we're past this step (current step is ahead)
+                (status.status==='running'&&stepIndex<currentStepIndex)
+            ) {
                 stepStatus='completed';
                 icon='<i class="fas fa-check"></i>';
 
@@ -3825,9 +3832,9 @@ class AdminInterface {
                 `;
 
                 // Start timer for this step if not already started and step isn't completed
-                const isStepCompleted=status.status==='completed'||
+                const isStepCompleted=status.status==='completed'||status.status==='success'||
                     stepIndex<currentStepIndex||
-                    (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].end_time);
+                    (status.step_timings&&status.step_timings[step.id]&&(status.step_timings[step.id].end_time||status.step_timings[step.id].status==='completed'));
 
                 if(!this.stepStartTimes.has(step.id)&&!isStepCompleted) {
                     debugLog(`Starting timer for step: ${step.id}`);
@@ -6426,8 +6433,12 @@ class AdminInterface {
                 }
 
                 // Continue polling if deployment is running OR if GitHub Actions is still being monitored
-                const shouldContinuePolling=(data.data.status==='running'&&!this.githubActionsCompleted)||
-                    (data.data.current_step==='github-actions'&&data.data.status!=='completed'&&!this.githubActionsCompleted)||
+                const shouldContinuePolling=
+                    (data.data.status==='running'&&!this.githubActionsCompleted)||
+                    (data.data.current_step==='github-actions'&&
+                     data.data.status!=='completed'&&
+                     data.data.status!=='success'&&
+                     !this.githubActionsCompleted)||
                     data.data.status==='pending';
 
                 if(shouldContinuePolling) {
