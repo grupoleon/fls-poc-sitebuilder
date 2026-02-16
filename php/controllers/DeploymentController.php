@@ -509,7 +509,14 @@ class DeploymentController
             }
 
             $result = $this->deploymentManager->triggerDeployment($step, $force);
-            Response::success(array_merge($result, ['step' => $step, 'force' => $force]));
+
+                            // Wait a moment for status file to be written
+            usleep(100000); // 100ms
+
+            // Get actual deployment status from file
+            $actualStatus = $this->deploymentManager->getDeploymentStatus();
+
+            Response::success($actualStatus, 'Deployment initiated successfully');
         } catch (\Exception $e) {
             Logger::error("Deployment trigger error: " . $e->getMessage());
             Response::error('Failed to start deployment: ' . $e->getMessage());
@@ -525,7 +532,14 @@ class DeploymentController
 
         try {
             $result = $this->deploymentManager->triggerDeploymentAgain();
-            Response::success($result, 'Deployment started with existing credentials');
+
+                            // Wait a moment for status file to be written
+            usleep(100000); // 100ms
+
+            // Get actual deployment status from file
+            $actualStatus = $this->deploymentManager->getDeploymentStatus();
+
+            Response::success($actualStatus, 'Deployment started with existing credentials');
         } catch (\Exception $e) {
             Logger::error("Deploy Again error: " . $e->getMessage());
             Response::error('Failed to start deployment: ' . $e->getMessage());
