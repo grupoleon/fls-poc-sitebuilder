@@ -198,4 +198,155 @@ class PageController
 
         return $input ?: [];
     }
+
+    /**
+     * Get current logo information
+     */
+    public function getCurrentLogo(): void
+    {
+        try {
+            $logoInfo = $this->pageManager->getCurrentLogo();
+            Response::success($logoInfo);
+        } catch (\Exception $e) {
+            Logger::error("Get current logo error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Get other contents (issues, endorsements, news, posts, testimonials, sliders, forms)
+     */
+    public function getOtherContents(): void
+    {
+        try {
+            $type = $_GET['type'] ?? '';
+
+            $validTypes = ['issues', 'endorsements', 'news', 'posts', 'testimonials', 'sliders', 'forms'];
+            if (! in_array($type, $validTypes)) {
+                Response::error('Invalid content type. Must be one of: ' . implode(', ', $validTypes));
+            }
+
+            $contents = $this->pageManager->getOtherContents($type);
+            Response::success($contents);
+        } catch (\Exception $e) {
+            Logger::error("Get other contents error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Save other contents (issues, endorsements, news, posts, testimonials, sliders, forms)
+     */
+    public function saveOtherContents(): void
+    {
+        try {
+            $input    = $this->getJsonInput();
+            $type     = $input['type'] ?? '';
+            $contents = $input['contents'] ?? [];
+
+            $validTypes = ['issues', 'endorsements', 'news', 'posts', 'testimonials', 'sliders', 'forms'];
+            if (! in_array($type, $validTypes)) {
+                Response::error('Invalid content type. Must be one of: ' . implode(', ', $validTypes));
+            }
+
+            $this->pageManager->saveOtherContents($type, $contents);
+            Response::success(null, ucfirst($type) . ' saved successfully');
+        } catch (\Exception $e) {
+            Logger::error("Save other contents error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Upload image
+     */
+    public function uploadImage(): void
+    {
+        try {
+            if (! isset($_FILES['image'])) {
+                Response::error('No image file provided');
+            }
+
+            $folder   = $_POST['folder'] ?? 'general';
+            $filename = $this->pageManager->handleImageUpload($_FILES['image'], $folder);
+
+            Response::success([
+                'filename' => $filename,
+                'url'      => 'uploads/images/' . $filename,
+            ]);
+        } catch (\Exception $e) {
+            Logger::error("Upload image error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Upload logo
+     */
+    public function uploadLogo(): void
+    {
+        try {
+            if (! isset($_FILES['logo'])) {
+                Response::error('No logo file provided');
+            }
+
+            $file = $_FILES['logo'];
+
+            // Log upload attempt for debugging
+            Logger::debug('Logo upload attempt', [
+                'name'  => $file['name'] ?? 'N/A',
+                'size'  => $file['size'] ?? 'N/A',
+                'error' => $file['error'] ?? 'N/A',
+                'tmp'   => $file['tmp_name'] ?? 'N/A',
+            ]);
+
+            $filename = $this->pageManager->handleLogoUpload($file);
+
+            Response::success([
+                'filename' => $filename,
+                'url'      => 'uploads/images/' . $filename,
+            ]);
+        } catch (\Exception $e) {
+            Logger::error("Upload logo error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Delete other content (currently only forms)
+     */
+    public function deleteOtherContent(): void
+    {
+        try {
+            $type = $_GET['type'] ?? $_POST['type'] ?? '';
+            $id   = $_GET['id'] ?? $_POST['id'] ?? '';
+
+            if (! in_array($type, ['forms'])) {
+                Response::error('Invalid content type for deletion');
+            }
+
+            if (empty($id)) {
+                Response::error('Content ID is required for deletion');
+            }
+
+            require_once __DIR__ . '/../core/FileSystem.php';
+
+            $baseDir  = dirname(dirname(__DIR__));
+            $formsDir = $baseDir . '/pages/forms';
+            $formFile = $formsDir . '/' . $id . '.json';
+
+            if (file_exists($formFile)) {
+                if (unlink($formFile)) {
+                    Response::success(null, ucfirst($type) . ' deleted successfully');
+                } else {
+                    Response::error('Failed to delete ' . $type . ' file');
+                }
+            } else {
+                Response::error('Content file not found');
+            }
+        } catch (\Exception $e) {
+            Logger::error("Delete other content error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
 }

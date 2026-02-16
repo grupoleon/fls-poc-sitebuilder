@@ -265,4 +265,182 @@ class DeploymentController
 
         return $input ?: [];
     }
+
+    /**
+     * List all log files
+     */
+    public function listLogFiles(): void
+    {
+        try {
+            $baseDir  = dirname(dirname(__DIR__));
+            $logsDir  = $baseDir . '/logs';
+            $tmpDir   = $baseDir . '/tmp';
+            $logFiles = [];
+
+            // Recursive function to scan directories
+            $scanDirectory = function ($dir, $prefix = '', $category = 'Logs') use (&$scanDirectory, &$logFiles, $logsDir) {
+                if (! is_dir($dir)) {
+                    return;
+                }
+
+                $items = scandir($dir);
+                foreach ($items as $item) {
+                    if ($item === '.' || $item === '..') {
+                        continue;
+                    }
+
+                    $fullPath     = $dir . '/' . $item;
+                    $relativePath = $prefix . $item;
+
+                    if (is_dir($fullPath)) {
+                        // Determine category based on subdirectory name
+                        $subCategory = ucfirst($item);
+                        if (in_array($item, ['api', 'deployment', 'webhook'])) {
+                            $subCategory = ucfirst($item);
+                        } else {
+                            $subCategory = $category;
+                        }
+                        $scanDirectory($fullPath, $relativePath . '/', $subCategory);
+                    } elseif (is_file($fullPath)) {
+                        // Determine category based on file name
+                        $fileCategory = $category;
+                        if (strpos($item, 'webhook') === 0) {
+                            $fileCategory = 'Webhook';
+                        } elseif (strpos($item, 'deployment') === 0) {
+                            $fileCategory = 'Deployment';
+                        } elseif (strpos($item, 'api') === 0) {
+                            $fileCategory = 'API';
+                        } elseif (in_array($item, ['errors.log', 'system.log'])) {
+                            $fileCategory = 'System';
+                        }
+
+                        $logFiles[] = [
+                            'name'     => $item,
+                            'path'     => $relativePath,
+                            'fullPath' => $fullPath,
+                            'size'     => filesize($fullPath),
+                            'modified' => filemtime($fullPath),
+                            'category' => $fileCategory,
+                        ];
+                    }
+                }
+            };
+
+            // Scan logs directory
+            $scanDirectory($logsDir, '', 'Logs');
+
+            // Scan tmp directory for status JSON files
+            if (is_dir($tmpDir)) {
+                $tmpItems = scandir($tmpDir);
+                foreach ($tmpItems as $item) {
+                    if ($item === '.' || $item === '..') {
+                        continue;
+                    }
+
+                    $fullPath = $tmpDir . '/' . $item;
+                    if (is_file($fullPath) && (strpos($item, '.json') !== false || strpos($item, '.txt') !== false)) {
+                        $logFiles[] = [
+                            'name'     => $item,
+                            'path'     => 'tmp/' . $item,
+                            'fullPath' => $fullPath,
+                            'size'     => filesize($fullPath),
+                            'modified' => filemtime($fullPath),
+                            'category' => 'Status',
+                        ];
+                    }
+                }
+            }
+
+            // Sort by modified time (newest first)
+            usort($logFiles, function ($a, $b) {
+                return $b['modified'] - $a['modified'];
+            });
+
+            Response::success(['files' => $logFiles]);
+        } catch (\Exception $e) {
+            Logger::error("List log files error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Read log file content
+     */
+    public function readLogFile(): void
+    {
+        try {
+            $filePath = $_GET['file'] ?? '';
+
+            if (empty($filePath)) {
+                Response::error('File path is required');
+            }
+
+            $baseDir = dirname(dirname(__DIR__));
+            $logsDir = realpath($baseDir . '/logs');
+            $tmpDir  = realpath($baseDir . '/tmp');
+
+            // Determine which directory to use based on path
+            if (strpos($filePath, 'tmp/') === 0) {
+                $allowedDir    = $tmpDir;
+                $relativePath  = substr($filePath, 4); // Remove 'tmp/' prefix
+                $requestedFile = realpath($tmpDir . '/' . $relativePath);
+            } else {
+                $allowedDir    = $logsDir;
+                $requestedFile = realpath($logsDir . '/' . $filePath);
+            }
+
+            // Security: ensure the path is within allowed directories
+            if ($requestedFile === false || strpos($requestedFile, $allowedDir) !== 0) {
+                Response::error('Invalid file path');
+            }
+
+            if (! file_exists($requestedFile)) {
+                Response::error('File not found');
+            }
+
+            // Read file content
+            $content = file_get_contents($requestedFile);
+
+            // If it's a JSON file, pretty format it
+            if (pathinfo($requestedFile, PATHINFO_EXTENSION) === 'json') {
+                $jsonData = json_decode($content, true);
+                if ($jsonData !== null) {
+                    $content = json_encode($jsonData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                }
+            }
+
+            Response::success([
+                'content'  => $content,
+                'size'     => filesize($requestedFile),
+                'modified' => filemtime($requestedFile),
+            ]);
+        } catch (\Exception $e) {
+            Logger::error("Read log file error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Clear deployment status
+     */
+    public function clearDeploymentStatus(): void
+    {
+        try {
+            $statusFile = dirname(dirname(__DIR__)) . '/tmp/deployment_status.json';
+
+            if (file_exists($statusFile)) {
+                if (unlink($statusFile)) {
+                    Logger::info('Deployment status cleared');
+                    Response::success(null, 'Deployment status cleared successfully');
+                } else {
+                    Response::error('Failed to clear deployment status');
+                }
+            } else {
+                Response::success(null, 'No deployment status to clear');
+            }
+        } catch (\Exception $e) {
+            Logger::error("Clear deployment status error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
 }

@@ -131,15 +131,29 @@ class Router
         $this->register('get_page_content', 'PageController', 'getPageContent');
         $this->register('save_page_content', 'PageController', 'savePageContent');
         $this->register('upload_page_image', 'PageController', 'uploadPageImage');
+        $this->register('upload_image', 'PageController', 'uploadImage');
+        $this->register('upload_logo', 'PageController', 'uploadLogo');
+        $this->register('get_current_logo', 'PageController', 'getCurrentLogo');
+        $this->register('get_other_contents', 'PageController', 'getOtherContents');
+        $this->register('save_other_contents', 'PageController', 'saveOtherContents');
+        $this->register('delete_other_content', 'PageController', 'deleteOtherContent');
+
+        $this->register('list_config_files', 'ConfigController', 'listConfigFiles');
+        $this->register('get_raw_config', 'ConfigController', 'getRawConfig');
 
         $this->register('trigger_deployment', 'DeploymentController', 'trigger');
         $this->register('get_deployment_status', 'DeploymentController', 'getStatus');
+        $this->register('deployment_status', 'DeploymentController', 'getStatus'); // Alias
         $this->register('get_logs', 'DeploymentController', 'getLogs');
+        $this->register('deployment_logs', 'DeploymentController', 'getLogs'); // Alias
         $this->register('clear_logs', 'DeploymentController', 'clearLogs');
         $this->register('reset_system', 'DeploymentController', 'resetSystem');
         $this->register('get_kinsta_site_info', 'DeploymentController', 'getKinstaSiteInfo');
         $this->register('check_site_exists', 'DeploymentController', 'checkSiteExists');
         $this->register('get_available_regions', 'DeploymentController', 'getAvailableRegions');
         $this->register('delete_kinsta_site', 'DeploymentController', 'deleteKinstaSite');
+        $this->register('list_log_files', 'DeploymentController', 'listLogFiles');
+        $this->register('read_log_file', 'DeploymentController', 'readLogFile');
+        $this->register('clear_deployment_status', 'DeploymentController', 'clearDeploymentStatus');
     }
 }

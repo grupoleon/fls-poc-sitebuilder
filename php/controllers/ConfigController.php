@@ -267,4 +267,88 @@ class ConfigController
 
         return $input ?: [];
     }
+
+    /**
+     * List all config files
+     */
+    public function listConfigFiles(): void
+    {
+        try {
+            $configDir = dirname(dirname(__DIR__)) . '/config';
+            $files     = [];
+
+            if (is_dir($configDir)) {
+                $items = scandir($configDir);
+                foreach ($items as $item) {
+                    if (pathinfo($item, PATHINFO_EXTENSION) === 'json') {
+                        $filePath = $configDir . '/' . $item;
+                        $files[]  = [
+                            'name'     => $item,
+                            'size'     => filesize($filePath),
+                            'modified' => filemtime($filePath),
+                        ];
+                    }
+                }
+            }
+
+            Response::success(['files' => $files]);
+        } catch (\Exception $e) {
+            Logger::error("List config files error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Get raw config file content
+     */
+    public function getRawConfig(): void
+    {
+        try {
+            $filename = $_GET['file'] ?? '';
+
+            if (empty($filename)) {
+                Response::error('File name is required');
+            }
+
+            // Validate filename to prevent directory traversal
+            if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                Response::error('Invalid file name');
+            }
+
+            // Only allow .json files
+            if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                Response::error('Only JSON files are allowed');
+            }
+
+            $configDir = dirname(dirname(__DIR__)) . '/config';
+            $filePath  = $configDir . '/' . $filename;
+
+            if (! file_exists($filePath)) {
+                Response::error('File not found');
+            }
+
+            $content  = file_get_contents($filePath);
+            $metadata = [
+                'name'     => $filename,
+                'size'     => filesize($filePath),
+                'lines'    => substr_count($content, "\n") + 1,
+                'modified' => filemtime($filePath),
+            ];
+
+            // Check if a default exists for this config
+            global $configDefaultsManager;
+            $hasDefault  = $configDefaultsManager->hasDefault($filename);
+            $defaultInfo = $hasDefault ? $configDefaultsManager->getDefaultInfo($filename) : null;
+
+            Response::success([
+                'content'      => $content,
+                'metadata'     => $metadata,
+                'has_default'  => $hasDefault,
+                'default_info' => $defaultInfo,
+            ]);
+        } catch (\Exception $e) {
+            Logger::error("Get raw config error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
 }
