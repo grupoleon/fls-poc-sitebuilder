@@ -134,7 +134,7 @@ class LocalConfigManager {
             const result=await response.json();
 
             if(result.success) {
-                this.logFiles=result.data;
+                this.logFiles=result.data.files||result.data||[];
                 this.updateLogFilesList();
                 this.showNotification('Log files list refreshed','success');
             } else {
