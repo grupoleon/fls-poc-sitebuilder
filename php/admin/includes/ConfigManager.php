@@ -4,6 +4,8 @@
  * Handles reading, writing, and validating all configuration files
  */
 
+require_once __DIR__ . '/../../helpers/ConfigHelper.php';
+
 class ConfigManager
 {
     private $configDir;
@@ -40,8 +42,8 @@ class ConfigManager
                 }
 
                 // Normalize data types for main config
-                if ($key === 'main' && function_exists('normalizeConfigDataTypes')) {
-                    $this->configs[$key] = normalizeConfigDataTypes($this->configs[$key]);
+                if ($key === 'main') {
+                    $this->configs[$key] = ConfigHelper::normalizeDataTypes($this->configs[$key]);
                 }
             } else {
                 $this->configs[$key] = [];
@@ -293,7 +295,7 @@ class ConfigManager
             }
         }
 
-        // Fallback to legacy structure: pages/<ThemeName>/layouts
+        // Fallback to older structure: pages/<ThemeName>/layouts
         $pagesDir     = dirname(dirname(dirname(__DIR__))) . '/pages';
         $excludedDirs = ['cpt']; // Exclude non-theme directories
 

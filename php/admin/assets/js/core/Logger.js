@@ -86,6 +86,6 @@ class Logger {
 // Create global instance
 window.logger=new Logger();
 
-// Legacy compatibility
+// Backward compatibility helpers
 window.debugLog=(msg,type='info') => window.logger.log(msg,type);
 window.setDebugMode=(enabled) => window.logger.setDebugMode(enabled);
