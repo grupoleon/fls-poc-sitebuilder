@@ -351,4 +351,294 @@ class ConfigController
             Response::error($e->getMessage());
         }
     }
+
+    /**
+     * Get ClickUp configuration
+     */
+    public function getClickupConfig(): void
+    {
+        try {
+            $localConfig   = $this->configManager->getConfig('local');
+            $clickupConfig = $localConfig['integrations']['clickup'] ?? [
+                'api_token'       => '',
+                'team_id'         => '',
+                'webhook_enabled' => true,
+            ];
+
+            Response::success(['config' => $clickupConfig]);
+        } catch (\Exception $e) {
+            Logger::error("Get ClickUp config error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Save ClickUp configuration
+     */
+    public function saveClickupConfig(): void
+    {
+        try {
+            $input = $this->getJsonInput();
+
+            $apiToken       = trim($input['api_token'] ?? '');
+            $teamId         = trim($input['team_id'] ?? '');
+            $webhookEnabled = $input['webhook_enabled'] ?? true;
+
+            if (empty($apiToken)) {
+                Response::error('API Token is required');
+            }
+
+            // Load current local config
+            $localConfig = $this->configManager->getConfig('local');
+
+            // Update ClickUp configuration
+            if (! isset($localConfig['integrations'])) {
+                $localConfig['integrations'] = [];
+            }
+
+            $localConfig['integrations']['clickup'] = [
+                'api_token'       => $apiToken,
+                'team_id'         => $teamId,
+                'webhook_enabled' => $webhookEnabled,
+            ];
+
+            // Save to local config
+            $this->configManager->updateConfig('local', $localConfig);
+
+            Response::success(null, 'ClickUp configuration saved successfully');
+        } catch (\Exception $e) {
+            Logger::error("Save ClickUp config error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Test ClickUp connection
+     */
+    public function testClickupConnection(): void
+    {
+        try {
+            $input = $this->getJsonInput();
+
+            if (empty($input['api_token'])) {
+                Response::error('API Token is required');
+            }
+
+            $apiToken = trim($input['api_token']);
+
+            // Test connection by fetching authenticated user info
+            $ch = curl_init('https://api.clickup.com/api/v2/user');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => [
+                    "Authorization: {$apiToken}",
+                    "Content-Type: application/json",
+                ],
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error    = curl_error($ch);
+            curl_close($ch);
+
+            if ($error) {
+                Response::error("Connection error: {$error}");
+            }
+
+            if ($httpCode !== 200) {
+                $responseData = json_decode($response, true);
+                $errorMsg     = $responseData['err'] ?? 'Authentication failed';
+                Response::error($errorMsg);
+            }
+
+            $userData = json_decode($response, true);
+
+            Response::success([
+                'message' => 'Connection successful',
+                'user'    => [
+                    'username' => $userData['user']['username'] ?? 'Unknown',
+                    'email'    => $userData['user']['email'] ?? null,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Logger::error("Test ClickUp connection error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Save config as default
+     */
+    public function saveConfigDefault(): void
+    {
+        try {
+            $input    = $this->getJsonInput();
+            $filename = $input['filename'] ?? '';
+
+            if (empty($filename)) {
+                Response::error('Filename is required');
+            }
+
+            // Validate filename
+            if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                Response::error('Invalid file name');
+            }
+
+            if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                Response::error('Only JSON files are allowed');
+            }
+
+            // Get user email from session if available
+            require_once __DIR__ . '/../admin/includes/Auth.php';
+            $userEmail = Auth::getEmail();
+
+            global $configDefaultsManager;
+            $result = $configDefaultsManager->saveDefault($filename, $userEmail);
+
+            if ($result['success']) {
+                Response::success($result, $result['message']);
+            } else {
+                Response::error($result['message']);
+            }
+        } catch (\Exception $e) {
+            Logger::error("Save config default error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Load config from default
+     */
+    public function loadConfigDefault(): void
+    {
+        try {
+            $input    = $this->getJsonInput();
+            $filename = $input['filename'] ?? '';
+
+            if (empty($filename)) {
+                Response::error('Filename is required');
+            }
+
+            // Validate filename
+            if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+                Response::error('Invalid file name');
+            }
+
+            if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+                Response::error('Only JSON files are allowed');
+            }
+
+            global $configDefaultsManager;
+            $result = $configDefaultsManager->loadDefault($filename);
+
+            if ($result['success']) {
+                Response::success($result, $result['message']);
+            } else {
+                Response::error($result['message']);
+            }
+        } catch (\Exception $e) {
+            Logger::error("Load config default error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Check if config has default
+     */
+    public function checkConfigDefault(): void
+    {
+        try {
+            $filename = $_GET['filename'] ?? '';
+
+            if (empty($filename)) {
+                Response::error('Filename is required');
+            }
+
+            global $configDefaultsManager;
+            $hasDefault  = $configDefaultsManager->hasDefault($filename);
+            $defaultInfo = $hasDefault ? $configDefaultsManager->getDefaultInfo($filename) : null;
+
+            Response::success([
+                'has_default'  => $hasDefault,
+                'default_info' => $defaultInfo,
+            ]);
+        } catch (\Exception $e) {
+            Logger::error("Check config default error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Load all config defaults
+     */
+    public function loadAllConfigDefaults(): void
+    {
+        try {
+            global $configDefaultsManager;
+            $result = $configDefaultsManager->loadAllDefaults();
+
+            if ($result['success']) {
+                Response::success($result, $result['message']);
+            } else {
+                Response::error($result['message']);
+            }
+        } catch (\Exception $e) {
+            Logger::error("Load all config defaults error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Import config files
+     */
+    public function importConfig(): void
+    {
+        try {
+            require_once __DIR__ . '/../helpers/UploadHelper.php';
+
+            $uploads = [];
+
+            if (isset($_FILES['config_files'])) {
+                $uploads = UploadHelper::normalizeFiles($_FILES['config_files']);
+            } elseif (isset($_FILES['config_file'])) {
+                $uploads = UploadHelper::normalizeFiles($_FILES['config_file']);
+            } else {
+                Response::error('No files provided');
+            }
+
+            $configDir = dirname(dirname(__DIR__)) . '/config';
+            $results   = [];
+            $success   = true;
+
+            foreach ($uploads as $file) {
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    $results[$file['name']] = [
+                        'success' => false,
+                        'message' => 'Upload error code: ' . $file['error'],
+                    ];
+                    $success = false;
+                    continue;
+                }
+
+                $content = file_get_contents($file['tmp_name']);
+                $result  = UploadHelper::importConfigContent($file['name'], $content, $configDir, 'upload');
+
+                $results[$file['name']] = $result;
+                if (! $result['success']) {
+                    $success = false;
+                }
+            }
+
+            if ($success) {
+                Response::success(['results' => $results], 'All config files imported successfully');
+            } else {
+                Response::success(['results' => $results], 'Some config files failed to import');
+            }
+        } catch (\Exception $e) {
+            Logger::error("Import config error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
 }

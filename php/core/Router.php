@@ -116,6 +116,7 @@ class Router
      */
     public function registerDefaultRoutes(): void
     {
+        // Config routes
         $this->register('get_configs', 'ConfigController', 'getConfigs');
         $this->register('save_config', 'ConfigController', 'saveConfig');
         $this->register('save_forms_config', 'ConfigController', 'saveFormsConfig');
@@ -123,7 +124,22 @@ class Router
         $this->register('refresh_theme_list', 'ConfigController', 'refreshThemeList');
         $this->register('get_theme_config', 'ConfigController', 'getThemeConfig');
         $this->register('save_theme_overrides', 'ConfigController', 'saveThemeOverrides');
+        $this->register('list_config_files', 'ConfigController', 'listConfigFiles');
+        $this->register('get_raw_config', 'ConfigController', 'getRawConfig');
+        $this->register('import_config', 'ConfigController', 'importConfig');
 
+        // Config defaults routes
+        $this->register('save_config_default', 'ConfigController', 'saveConfigDefault');
+        $this->register('load_config_default', 'ConfigController', 'loadConfigDefault');
+        $this->register('check_config_default', 'ConfigController', 'checkConfigDefault');
+        $this->register('load_all_config_defaults', 'ConfigController', 'loadAllConfigDefaults');
+
+        // ClickUp routes
+        $this->register('get_clickup_config', 'ConfigController', 'getClickupConfig');
+        $this->register('save_clickup_config', 'ConfigController', 'saveClickupConfig');
+        $this->register('test_clickup_connection', 'ConfigController', 'testClickupConnection');
+
+        // Page routes
         $this->register('get_themes', 'PageController', 'getThemes');
         $this->register('get_pages', 'PageController', 'getPages');
         $this->register('get_theme_pages', 'PageController', 'getThemePages');
@@ -137,23 +153,33 @@ class Router
         $this->register('get_other_contents', 'PageController', 'getOtherContents');
         $this->register('save_other_contents', 'PageController', 'saveOtherContents');
         $this->register('delete_other_content', 'PageController', 'deleteOtherContent');
+        $this->register('clean_uploads', 'PageController', 'cleanUploads');
 
-        $this->register('list_config_files', 'ConfigController', 'listConfigFiles');
-        $this->register('get_raw_config', 'ConfigController', 'getRawConfig');
-
+        // Deployment routes
+        $this->register('deploy', 'DeploymentController', 'deploy');
         $this->register('trigger_deployment', 'DeploymentController', 'trigger');
+        $this->register('deploy_again', 'DeploymentController', 'deployAgain');
         $this->register('get_deployment_status', 'DeploymentController', 'getStatus');
         $this->register('deployment_status', 'DeploymentController', 'getStatus'); // Alias
         $this->register('get_logs', 'DeploymentController', 'getLogs');
         $this->register('deployment_logs', 'DeploymentController', 'getLogs'); // Alias
         $this->register('clear_logs', 'DeploymentController', 'clearLogs');
         $this->register('reset_system', 'DeploymentController', 'resetSystem');
-        $this->register('get_kinsta_site_info', 'DeploymentController', 'getKinstaSiteInfo');
-        $this->register('check_site_exists', 'DeploymentController', 'checkSiteExists');
-        $this->register('get_available_regions', 'DeploymentController', 'getAvailableRegions');
-        $this->register('delete_kinsta_site', 'DeploymentController', 'deleteKinstaSite');
+        $this->register('deployment_history', 'DeploymentController', 'getDeploymentHistory');
         $this->register('list_log_files', 'DeploymentController', 'listLogFiles');
         $this->register('read_log_file', 'DeploymentController', 'readLogFile');
         $this->register('clear_deployment_status', 'DeploymentController', 'clearDeploymentStatus');
+
+        // GitHub Actions routes
+        $this->register('github_actions_status', 'DeploymentController', 'getGithubActionsStatus');
+        $this->register('github_actions_logs', 'DeploymentController', 'getGithubActionsLogs');
+        $this->register('clear_github_run_id', 'DeploymentController', 'clearGithubRunId');
+
+        // Kinsta routes
+        $this->register('get_kinsta_site_info', 'DeploymentController', 'getKinstaSiteInfo');
+        $this->register('get_site_info', 'DeploymentController', 'getSiteInfo');
+        $this->register('check_site_exists', 'DeploymentController', 'checkSiteExists');
+        $this->register('get_available_regions', 'DeploymentController', 'getAvailableRegions');
+        $this->register('delete_kinsta_site', 'DeploymentController', 'deleteKinstaSite');
     }
 }

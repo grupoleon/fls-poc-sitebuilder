@@ -224,20 +224,44 @@ class KinstaService
      */
     public function getAvailableRegions(string $companyId): array
     {
-        $data = $this->request("/companies/{$companyId}");
+        if (empty($companyId)) {
+            throw new \Exception('Company ID not configured. Please set it in site configuration.');
+        }
 
-        if (! isset($data['company']['regions']) || ! is_array($data['company']['regions'])) {
+        // Correct endpoint: /company/{id}/available-regions (singular "company")
+        $data = $this->request("/company/{$companyId}/available-regions");
+
+        // Support multiple possible response formats from Kinsta API
+        $regionsRaw = null;
+
+        if (isset($data['available_regions']) && is_array($data['available_regions'])) {
+            $regionsRaw = $data['available_regions'];
+        } elseif (isset($data['company']['available_regions']) && is_array($data['company']['available_regions'])) {
+            $regionsRaw = $data['company']['available_regions'];
+        } elseif (isset($data['regions']) && is_array($data['regions'])) {
+            $regionsRaw = $data['regions'];
+        } else {
+            Logger::error('Kinsta API response missing regions data', ['response' => $data]);
             throw new \Exception('Invalid response: regions data not found');
         }
 
         $regions = [];
-        foreach ($data['company']['regions'] as $region) {
-            $regions[] = [
-                'id'   => $region['id'] ?? '',
-                'name' => $region['name'] ?? '',
-            ];
+        foreach ($regionsRaw as $region) {
+            // Handle both array and object formats
+            if (is_array($region)) {
+                $regions[] = [
+                    'id'   => $region['id'] ?? '',
+                    'name' => $region['name'] ?? '',
+                ];
+            } else {
+                $regions[] = [
+                    'id'   => $region->id ?? '',
+                    'name' => $region->name ?? '',
+                ];
+            }
         }
 
+        Logger::info("Retrieved {count} regions from Kinsta", ['count' => count($regions)]);
         return $regions;
     }
 

@@ -185,8 +185,14 @@ class DeploymentController
     {
         try {
             $kinstaService = KinstaService::fromConfig($this->configManager);
-            $siteConfig    = $this->configManager->getConfig('site');
-            $companyId     = $siteConfig['company'] ?? null;
+
+            // Get company ID from query param or config
+            $companyId = $_GET['company_id'] ?? $_POST['company_id'] ?? null;
+
+            if (empty($companyId)) {
+                $siteConfig = $this->configManager->getConfig('site');
+                $companyId  = $siteConfig['company'] ?? null;
+            }
 
             if (empty($companyId)) {
                 Response::error('Company ID not configured');
@@ -440,6 +446,177 @@ class DeploymentController
             }
         } catch (\Exception $e) {
             Logger::error("Clear deployment status error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Deploy (alias for trigger with additional params)
+     */
+    public function deploy(): void
+    {
+        set_time_limit(10);
+
+        try {
+            $input = $this->getJsonInput();
+            $step  = $input['step'] ?? null;
+            $force = $input['force'] ?? false;
+
+            // Update site config if site_title provided
+            if (isset($input['site_title'])) {
+                $siteConfig               = $this->configManager->getConfig('site');
+                $siteConfig['site_title'] = $input['site_title'];
+
+                if (isset($input['display_name'])) {
+                    $siteConfig['display_name'] = $input['display_name'];
+                }
+
+                $this->configManager->updateConfig('site', $siteConfig);
+            }
+
+            // Update theme config if theme provided
+            if (isset($input['theme']) && ! empty($input['theme'])) {
+                $themeConfig                 = $this->configManager->getConfig('theme') ?: [];
+                $themeConfig['active_theme'] = $input['theme'];
+                $this->configManager->updateConfig('theme', $themeConfig);
+            }
+
+            // Save ClickUp task ID if provided
+            if (isset($input['clickup_task_id'])) {
+                $statusFile = dirname(dirname(__DIR__)) . '/tmp/deployment_status.json';
+                $status     = [];
+
+                if (file_exists($statusFile)) {
+                    $status = json_decode(file_get_contents($statusFile), true) ?: [];
+                }
+
+                $status['clickup_task_id']             = $input['clickup_task_id'];
+                $status['clickup_integration_enabled'] = isset($input['clickup_integration_enabled'])
+                    ? (bool) $input['clickup_integration_enabled']
+                    : true;
+
+                file_put_contents($statusFile, json_encode($status, JSON_PRETTY_PRINT));
+            } elseif (isset($input['clickup_integration_enabled'])) {
+                $statusFile = dirname(dirname(__DIR__)) . '/tmp/deployment_status.json';
+                $status     = [];
+
+                if (file_exists($statusFile)) {
+                    $status = json_decode(file_get_contents($statusFile), true) ?: [];
+                }
+
+                $status['clickup_integration_enabled'] = (bool) $input['clickup_integration_enabled'];
+                file_put_contents($statusFile, json_encode($status, JSON_PRETTY_PRINT));
+            }
+
+            $result = $this->deploymentManager->triggerDeployment($step, $force);
+            Response::success(array_merge($result, ['step' => $step, 'force' => $force]));
+        } catch (\Exception $e) {
+            Logger::error("Deployment trigger error: " . $e->getMessage());
+            Response::error('Failed to start deployment: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Deploy again (with existing credentials)
+     */
+    public function deployAgain(): void
+    {
+        set_time_limit(10);
+
+        try {
+            $result = $this->deploymentManager->triggerDeploymentAgain();
+            Response::success($result, 'Deployment started with existing credentials');
+        } catch (\Exception $e) {
+            Logger::error("Deploy Again error: " . $e->getMessage());
+            Response::error('Failed to start deployment: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get deployment history
+     */
+    public function getDeploymentHistory(): void
+    {
+        try {
+            $history = $this->deploymentManager->getDeploymentHistory();
+            Response::success($history);
+        } catch (\Exception $e) {
+            Logger::error("Get deployment history error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Get GitHub Actions status
+     */
+    public function getGithubActionsStatus(): void
+    {
+        try {
+            $githubStatus = $this->deploymentManager->checkGitHubActionsStatus();
+            Response::success($githubStatus);
+        } catch (\Exception $e) {
+            Logger::error("Get GitHub Actions status error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Get GitHub Actions logs
+     */
+    public function getGithubActionsLogs(): void
+    {
+        try {
+            $runId      = $_GET['run_id'] ?? null;
+            $githubLogs = $this->deploymentManager->getGitHubActionsLogs($runId);
+            Response::success($githubLogs);
+        } catch (\Exception $e) {
+            Logger::error("Get GitHub Actions logs error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Clear GitHub run ID
+     */
+    public function clearGithubRunId(): void
+    {
+        try {
+            $runIdFile = dirname(dirname(__DIR__)) . '/tmp/github_run_id.txt';
+
+            if (file_exists($runIdFile)) {
+                if (unlink($runIdFile)) {
+                    Response::success(null, 'GitHub run ID cleared successfully');
+                } else {
+                    Response::error('Failed to clear GitHub run ID');
+                }
+            } else {
+                Response::success(null, 'No GitHub run ID file found');
+            }
+        } catch (\Exception $e) {
+            Logger::error("Clear GitHub run ID error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Get site info from Kinsta
+     */
+    public function getSiteInfo(): void
+    {
+        try {
+            $kinstaService = KinstaService::fromConfig($this->configManager);
+
+            $siteIdFile = dirname(dirname(__DIR__)) . '/tmp/site_id.txt';
+            if (! file_exists($siteIdFile)) {
+                Response::error('Site ID not found. Please complete deployment first.');
+            }
+
+            $siteId   = trim(file_get_contents($siteIdFile));
+            $siteInfo = $kinstaService->getSiteInfo($siteId);
+
+            Response::success($siteInfo);
+        } catch (\Exception $e) {
+            Logger::error("Get site info error: " . $e->getMessage());
             Response::error($e->getMessage());
         }
     }

@@ -349,4 +349,22 @@ class PageController
             Response::error($e->getMessage());
         }
     }
+
+    /**
+     * Clean unused uploads
+     */
+    public function cleanUploads(): void
+    {
+        try {
+            $confirmed = $_GET['confirmed'] ?? $_POST['confirmed'] ?? 'false';
+            $execute   = ($confirmed === '1' || strtolower($confirmed) === 'true');
+
+            $cleanResult = $this->pageManager->cleanUnusedUploads($execute);
+
+            Response::success($cleanResult);
+        } catch (\Exception $e) {
+            Logger::error("Clean uploads error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
 }
