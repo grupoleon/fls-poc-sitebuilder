@@ -38,6 +38,12 @@
         <!-- Help Modal -->
         <?php include 'admin/includes/help.php'; ?>
 
+        <!-- Core JS Modules (New Architecture) -->
+        <script src="/php/admin/assets/js/core/Logger.js"></script>
+        <script src="/php/admin/assets/js/core/ApiClient.js"></script>
+        <script src="/php/admin/assets/js/core/Utils.js"></script>
+
+        <!-- Legacy JS Files -->
         <script src="/php/admin/assets/js/tools.js"></script>
         <script src="/php/admin/assets/js/forms.js"></script>
         <script src="/php/admin/assets/js/raw-config.js"></script>
