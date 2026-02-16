@@ -3641,8 +3641,8 @@ class AdminInterface {
         // Keep deployment form hidden after completion - only show it on manual reset/reload
         const isDeploymentRunning=status.status==='running'||status.status==='starting'||status.status==='started'||
             status.status==='pending'||status.current_step||
-            (status.status!=='idle'&&status.status!=='completed'&&status.status!=='success'&&status.status!=='failed'&&status.status!=='cancelled');
-        const hasDeploymentCompleted=status.status==='completed'||status.status==='success'||status.status==='failed'||status.status==='cancelled';
+            (status.status!=='idle'&&status.status!=='completed'&&status.status!=='failed'&&status.status!=='cancelled');
+        const hasDeploymentCompleted=status.status==='completed'||status.status==='failed'||status.status==='cancelled';
 
         debugLog(`Deployment state analysis: status="${status.status}", current_step="${status.current_step}", isRunning=${isDeploymentRunning}, hasCompleted=${hasDeploymentCompleted}`);
 
@@ -3728,7 +3728,7 @@ class AdminInterface {
                     statusIcon='<i class="fas fa-spinner fa-spin text-blue-500"></i>';
 
                     // Start timer for this step if not already started and step isn't completed
-                    const isStepCompleted=status.status==='completed'||status.status==='success'||
+                    const isStepCompleted=status.status==='completed'||
                         stepIndex<currentStepIndex||
                         (status.step_timings&&status.step_timings[step.id]&&(status.step_timings[step.id].end_time||status.step_timings[step.id].status==='completed'));
 
@@ -3756,7 +3756,7 @@ class AdminInterface {
                 // Check if step is individually marked as completed in step_timings
                 (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].status==='completed')||
                 // OR overall deployment is completed/success
-                status.status==='completed'||status.status==='success'||
+                status.status==='completed'||
                 // OR we're past this step (current step is ahead)
                 (status.status==='running'&&stepIndex<currentStepIndex)
             ) {
@@ -6437,7 +6437,7 @@ class AdminInterface {
                     (data.data.status==='running'&&!this.githubActionsCompleted)||
                     (data.data.current_step==='github-actions'&&
                         data.data.status!=='completed'&&
-                        data.data.status!=='success'&&
+                        data.data.status!=='completed'&&
                         !this.githubActionsCompleted)||
                     data.data.status==='pending';
 
@@ -6511,7 +6511,7 @@ class AdminInterface {
 
                 // Check if GitHub Actions has completed (successfully, failed, or cancelled)
                 const isCompleted=data.data.status==='completed'||
-                    data.data.status==='success'||
+                    data.data.status==='completed'||
                     data.data.status==='failed'||
                     data.data.status==='failure'||
                     data.data.status==='cancelled'||
@@ -6623,7 +6623,7 @@ class AdminInterface {
 
                 // Manually trigger completion check with more comprehensive criteria
                 const isCompleted=data.data.status==='completed'||
-                    data.data.status==='success'||
+                    data.data.status==='completed'||
                     data.data.status==='failed'||
                     data.data.status==='failure'||
                     data.data.status==='cancelled'||
@@ -6639,7 +6639,7 @@ class AdminInterface {
                 debugLog('🐛 COMPLETION CHECK RESULT:',isCompleted);
                 debugLog('🐛 INDIVIDUAL CHECKS:',{
                     'status===completed': data.data.status==='completed',
-                    'status===success': data.data.status==='success',
+                    'status===completed': data.data.status==='completed',
                     'github_status===completed': data.data.github_status==='completed',
                     'github_conclusion===success': data.data.github_conclusion==='success',
                     'conclusion===success': data.data.conclusion==='success'
@@ -6787,7 +6787,7 @@ class AdminInterface {
 
                     // Check if this fresh data shows completion
                     const isCompleted=data.data.status==='completed'||
-                        data.data.status==='success'||
+                        data.data.status==='completed'||
                         data.data.github_conclusion==='success';
 
                     if(isCompleted) {
