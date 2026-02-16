@@ -98,12 +98,27 @@ function updateDeploymentStatus($status, $step = null)
             }
         }
 
-        // Record step completion time (does NOT change overall deployment status)
+        // Record step completion time and advance to next step
         if ($status === 'completed' && isset($currentStatus['step_timings'][$step])) {
             $currentStatus['step_timings'][$step]['end_time']           = time();
             $currentStatus['step_timings'][$step]['end_time_formatted'] = gmdate('Y-m-d H:i:s');
             $currentStatus['step_timings'][$step]['duration']           = time() - $currentStatus['step_timings'][$step]['start_time'];
             $currentStatus['step_timings'][$step]['status']             = 'completed';
+
+            // CRITICAL FIX: Advance to next step or mark deployment complete
+            $deploymentSteps  = ['create-site', 'get-cred', 'trigger-deploy', 'github-actions'];
+            $currentStepIndex = array_search($step, $deploymentSteps);
+
+            if ($currentStepIndex !== false) {
+                if ($currentStepIndex < count($deploymentSteps) - 1) {
+                    // Move to next step
+                    $nextStep                      = $deploymentSteps[$currentStepIndex + 1];
+                    $currentStatus['current_step'] = $nextStep;
+                    writeDeploymentLog("Advanced to next step: $nextStep", 'INFO');
+                } else {
+                    writeDeploymentLog("Last step completed - waiting for final status update", 'INFO');
+                }
+            }
         }
 
         // Record step failure
