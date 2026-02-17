@@ -574,38 +574,45 @@ try {
     // Extract site details from deployment status/config for database logging
     $siteUrl       = null;
     $adminUrl      = null;
-    $adminUsername = null;
-    $adminPassword = null;
+    $adminUsername  = null;
+    $adminPassword  = null;
 
     try {
-        // Try to read site details from config
+        // Primary: Read from credentials.json (created by creds.sh with actual Kinsta domain)
+        $credsJsonFile = SCRIPT_DIR . '/tmp/credentials.json';
+        if (file_exists($credsJsonFile)) {
+            $credsData = json_decode(file_get_contents($credsJsonFile), true);
+            if (! empty($credsData['site_url'])) {
+                $domain  = $credsData['site_url'];
+                // Ensure it has https:// prefix
+                $siteUrl = (strpos($domain, 'http') === 0) ? $domain : 'https://' . $domain;
+                writeDeploymentLog("Site URL from credentials.json: $siteUrl", 'INFO');
+            }
+        }
+
+        // Fallback: derive from site_title in site.json
+        if (! $siteUrl) {
+            $siteConfigFile = SCRIPT_DIR . '/config/site.json';
+            if (file_exists($siteConfigFile)) {
+                $siteConfig = json_decode(file_get_contents($siteConfigFile), true);
+                $siteTitle  = $siteConfig['site_title'] ?? null;
+                if ($siteTitle) {
+                    $siteUrl = 'https://' . $siteTitle . '.kinsta.cloud';
+                    writeDeploymentLog("Site URL derived from site_title: $siteUrl", 'INFO');
+                }
+            }
+        }
+
+        if ($siteUrl) {
+            $adminUrl = rtrim($siteUrl, '/') . '/wp-admin';
+        }
+
+        // Read admin credentials from site.json
         $siteConfigFile = SCRIPT_DIR . '/config/site.json';
         if (file_exists($siteConfigFile)) {
-            $siteConfig = json_decode(file_get_contents($siteConfigFile), true);
-            $siteUrl    = $siteConfig['url'] ?? null;
-        }
-
-        // Try to read credentials from tmp files
-        $siteIdFile = SCRIPT_DIR . '/tmp/site_id.txt';
-        if (file_exists($siteIdFile)) {
-            $siteId = trim(file_get_contents($siteIdFile));
-            // Admin URL pattern
-            if ($siteUrl) {
-                $adminUrl = rtrim($siteUrl, '/') . '/wp-admin';
-            }
-        }
-
-        // Try to extract credentials if available
-        $credsLog = $scriptPath . '/logs/deployment/deployment.log';
-        if (file_exists($credsLog)) {
-            $logContent = file_get_contents($credsLog);
-            // Look for username and password in logs
-            if (preg_match('/Username:\s*([^\s]+)/i', $logContent, $matches)) {
-                $adminUsername = $matches[1];
-            }
-            if (preg_match('/Password:\s*([^\s]+)/i', $logContent, $matches)) {
-                $adminPassword = $matches[1];
-            }
+            $siteConfig    = json_decode(file_get_contents($siteConfigFile), true);
+            $adminUsername = $siteConfig['admin_user'] ?? null;
+            $adminPassword = $siteConfig['admin_password'] ?? null;
         }
     } catch (Exception $e) {
         writeDeploymentLog('Failed to extract site details: ' . $e->getMessage(), 'WARNING');

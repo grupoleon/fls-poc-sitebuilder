@@ -539,6 +539,79 @@ class DatabaseLogger
         }
     }
 
+    /**
+     * Get all deployments grouped by site domain
+     *
+     * @param int $limit Max deployments per domain
+     * @return array Deployments grouped by domain
+     */
+    public function getDeploymentsByDomain($limit = 50)
+    {
+        if (! $this->isAvailable) {
+            return [];
+        }
+
+        try {
+            $sql = "SELECT d.*,
+                        GROUP_CONCAT(
+                            CONCAT(ds.step_key, ':', ds.step_status, ':', COALESCE(ds.duration, 0))
+                            ORDER BY ds.start_time ASC
+                            SEPARATOR '|'
+                        ) as steps_summary
+                    FROM deployments d
+                    LEFT JOIN deployment_steps ds ON d.deployment_id = ds.deployment_id
+                    GROUP BY d.id
+                    ORDER BY d.start_time DESC
+                    LIMIT ?";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$limit]);
+            $deployments = $stmt->fetchAll();
+
+            // Group by domain (extracted from site_url)
+            $grouped = [];
+            foreach ($deployments as $deploy) {
+                $domain = 'Unknown';
+                if (! empty($deploy['site_url'])) {
+                    $parsed = parse_url($deploy['site_url']);
+                    $domain = $parsed['host'] ?? $deploy['site_url'];
+                }
+
+                if (! isset($grouped[$domain])) {
+                    $grouped[$domain] = [];
+                }
+
+                // Parse steps summary
+                $steps = [];
+                if (! empty($deploy['steps_summary'])) {
+                    foreach (explode('|', $deploy['steps_summary']) as $stepStr) {
+                        $parts  = explode(':', $stepStr);
+                        $steps[] = [
+                            'key'      => $parts[0] ?? '',
+                            'status'   => $parts[1] ?? '',
+                            'duration' => (int) ($parts[2] ?? 0),
+                        ];
+                    }
+                }
+                $deploy['steps'] = $steps;
+                unset($deploy['steps_summary']);
+
+                // Decrypt password
+                if (! empty($deploy['admin_password'])) {
+                    $deploy['admin_password'] = base64_decode($deploy['admin_password']);
+                }
+
+                $grouped[$domain][] = $deploy;
+            }
+
+            return $grouped;
+
+        } catch (PDOException $e) {
+            error_log('DatabaseLogger: Failed to fetch deployments by domain - ' . $e->getMessage());
+            return [];
+        }
+    }
+
     // ============================================
     // CLICKUP TASK MANAGEMENT
     // ============================================

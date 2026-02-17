@@ -1291,6 +1291,9 @@ class AdminInterface {
                     this.pollGitHubActionsStatus();
                 },2000);
                 break;
+            case 'deployment-history':
+                this.loadAllDeployments();
+                break;
         }
     }
 
@@ -7695,6 +7698,108 @@ class AdminInterface {
                 </div>
             </div>
         `).join('');
+    }
+
+    async loadAllDeployments() {
+        const container=document.getElementById('deployments-list');
+        if(!container) return;
+
+        container.innerHTML='<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i> Loading deployment history...</div>';
+
+        try {
+            const response=await fetch('?action=get_all_deployments');
+            const data=await response.json();
+
+            if(data.success) {
+                this.renderAllDeployments(data.data?.deployments||{});
+            } else {
+                container.innerHTML=`<div class="text-center text-muted py-4">Failed to load: ${data.error||'Unknown error'}</div>`;
+            }
+        } catch(error) {
+            debugLog('Failed to load all deployments:',error,'error');
+            container.innerHTML='<div class="text-center text-muted py-4">Failed to load deployment history.</div>';
+        }
+    }
+
+    renderAllDeployments(deploymentsByDomain) {
+        const container=document.getElementById('deployments-list');
+        if(!container) return;
+
+        const domains=Object.keys(deploymentsByDomain);
+        if(domains.length===0) {
+            container.innerHTML='<div class="text-center text-muted py-4">No deployments found. Deploy a site to see history here.</div>';
+            return;
+        }
+
+        const stepLabels={'create-site':'Setup','get-cred':'Creds','trigger-deploy':'Deploy','github-actions':'Actions'};
+        const statusBadge=(status) => {
+            const colors={'completed':'background:#059669;color:#fff','failed':'background:#dc2626;color:#fff','running':'background:#2563eb;color:#fff'};
+            return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${colors[status]||'background:#6b7280;color:#fff'}">${status}</span>`;
+        };
+
+        let html='';
+        for(const domain of domains) {
+            const deploys=deploymentsByDomain[domain];
+            const latestDeploy=deploys[0];
+
+            html+=`
+                <div class="mb-4" style="border:1px solid var(--border-color,#e5e7eb);border-radius:8px;overflow:hidden;">
+                    <div style="padding:12px 16px;background:var(--bg-secondary,#f9fafb);border-bottom:1px solid var(--border-color,#e5e7eb);display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.parentElement.querySelector('.domain-deploys').classList.toggle('collapsed')">
+                        <div>
+                            <strong style="font-size:14px;">${this.escapeHtml(domain)}</strong>
+                            <span style="margin-left:8px;font-size:12px;color:var(--text-muted,#6b7280);">${deploys.length} deployment${deploys.length!==1?'s':''}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            ${latestDeploy.site_url?`<a href="${this.escapeHtml(latestDeploy.site_url)}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> Visit</a>`:''}
+                            ${latestDeploy.admin_url?`<a href="${this.escapeHtml(latestDeploy.admin_url)}" target="_blank" style="font-size:12px;color:#059669;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-lock"></i> Admin</a>`:''}
+                            <i class="fas fa-chevron-down" style="font-size:12px;color:var(--text-muted,#6b7280);"></i>
+                        </div>
+                    </div>
+                    <div class="domain-deploys" style="max-height:600px;overflow-y:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:var(--bg-tertiary,#f3f4f6);">
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Date</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">User</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Status</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Duration</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Steps</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">ClickUp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${deploys.map(d => {
+                                    const duration=d.total_duration?this.formatSeconds(d.total_duration):'-';
+                                    const stepsHtml=(d.steps||[]).map(s => {
+                                        const label=stepLabels[s.key]||s.key;
+                                        const color=s.status==='completed'?'#059669':s.status==='failed'?'#dc2626':'#6b7280';
+                                        return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin:1px;border:1px solid ${color};color:${color};" title="${s.key}: ${s.status} (${s.duration}s)">${label}</span>`;
+                                    }).join('');
+                                    const clickup=d.clickup_task_id?`<a href="https://app.clickup.com/t/${d.clickup_task_id}" target="_blank" style="color:#7c3aed;text-decoration:none;font-size:11px;" onclick="event.stopPropagation()">${d.clickup_task_id.substring(0,8)}...</a>`:'-';
+
+                                    return `<tr style="border-top:1px solid var(--border-color,#e5e7eb);">
+                                        <td style="padding:8px 12px;white-space:nowrap;">${d.start_time||'-'}</td>
+                                        <td style="padding:8px 12px;">${this.escapeHtml(d.user_email||'-')}</td>
+                                        <td style="padding:8px 12px;">${statusBadge(d.status)}</td>
+                                        <td style="padding:8px 12px;">${duration}</td>
+                                        <td style="padding:8px 12px;">${stepsHtml||'-'}</td>
+                                        <td style="padding:8px 12px;">${clickup}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+        }
+
+        container.innerHTML=html;
+    }
+
+    formatSeconds(seconds) {
+        if(!seconds||seconds<=0) return '-';
+        const mins=Math.floor(seconds/60);
+        const secs=seconds%60;
+        return mins>0?`${mins}m ${secs}s`:`${secs}s`;
     }
 
     async loadDeploymentLogs(realtime=false) {

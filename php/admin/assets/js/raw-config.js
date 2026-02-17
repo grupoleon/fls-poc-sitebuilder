@@ -49,10 +49,10 @@ class RawConfigManager {
 
             if(result.success) {
                 this.currentFile=filename;
-                this.displayConfig(result.content,result.metadata);
-                this.updateDefaultButtons(result.has_default||false,result.default_info||null);
+                this.displayConfig(result.data?.content,result.data?.metadata);
+                this.updateDefaultButtons(result.data?.has_default||false,result.data?.default_info||null);
             } else {
-                throw new Error(result.message||'Failed to load config file');
+                throw new Error(result.error||result.message||'Failed to load config file');
             }
         } catch(error) {
             console.error('Error loading config file:',error);
@@ -165,16 +165,17 @@ class RawConfigManager {
                 this.showError(result.message||'Failed to import configuration files');
             }
 
-            if(Array.isArray(result.failed)&&result.failed.length) {
-                const failedList=result.failed.map(item => item.file||item.name||'Unknown').join(', ');
+            const importData=result.data||{};
+            if(Array.isArray(importData.failed)&&importData.failed.length) {
+                const failedList=importData.failed.map(item => item.file||item.name||'Unknown').join(', ');
                 this.showError(`Some files failed to import: ${failedList}`);
             }
 
-            this.renderImportSummary(result);
+            this.renderImportSummary(importData);
 
             await this.refreshFileList();
 
-            const importedFiles=(result.imported||[]).map(item => item.file||item.name||item);
+            const importedFiles=(importData.imported||[]).map(item => item.file||item.name||item);
             if(this.currentFile&&importedFiles.includes(this.currentFile)) {
                 this.loadConfigFile(this.currentFile);
             }
@@ -327,9 +328,9 @@ class RawConfigManager {
             const result=await response.json();
 
             if(result.success) {
-                this.updateFileList(result.files);
+                this.updateFileList(result.data?.files||[]);
             } else {
-                throw new Error(result.message||'Failed to load file list');
+                throw new Error(result.error||result.message||'Failed to load file list');
             }
         } catch(error) {
             console.error('Error refreshing file list:',error);
@@ -404,7 +405,7 @@ class RawConfigManager {
             .then(response => response.json())
             .then(result => {
                 if(result.success) {
-                    const blob=new Blob([result.content],{type: 'application/json'});
+                    const blob=new Blob([result.data?.content||''],{type: 'application/json'});
                     const downloadUrl=URL.createObjectURL(blob);
                     const a=document.createElement('a');
                     a.href=downloadUrl;
@@ -414,7 +415,7 @@ class RawConfigManager {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(downloadUrl);
                 } else {
-                    throw new Error(result.message||'Failed to download file');
+                    throw new Error(result.error||result.message||'Failed to download file');
                 }
             })
             .catch(error => {
@@ -436,10 +437,10 @@ class RawConfigManager {
 
             if(result.success) {
                 try {
-                    const jsonData=JSON.parse(result.content);
+                    const jsonData=JSON.parse(result.data?.content||'{}');
                     viewer.textContent=JSON.stringify(jsonData,null,2);
                 } catch(e) {
-                    viewer.textContent=result.content;
+                    viewer.textContent=result.data?.content||'';
                 }
             } else {
                 viewer.textContent='File not found or error loading';
@@ -608,27 +609,28 @@ class RawConfigManager {
             const result=await response.json();
 
             if(result.success) {
-                const loadedCount=result.loaded? result.loaded.length:0;
-                const failedCount=result.failed? result.failed.length:0;
+                const defaultsData=result.data||{};
+                const loadedCount=defaultsData.loaded? defaultsData.loaded.length:0;
+                const failedCount=defaultsData.failed? defaultsData.failed.length:0;
 
                 let message=result.message||`Loaded ${loadedCount} default configuration(s)`;
 
                 if(loadedCount>0) {
-                    message+=`\n\nLoaded files: ${result.loaded.join(', ')}`;
+                    message+=`\n\nLoaded files: ${defaultsData.loaded.join(', ')}`;
                 }
 
                 if(failedCount>0) {
-                    message+=`\n\nFailed files: ${result.failed.map(f => `${f.filename} (${f.error})`).join(', ')}`;
+                    message+=`\n\nFailed files: ${defaultsData.failed.map(f => `${f.filename} (${f.error})`).join(', ')}`;
                 }
 
                 this.showSuccess(message);
 
                 // Reload current file if it was loaded
-                if(this.currentFile&&result.loaded&&result.loaded.includes(this.currentFile)) {
+                if(this.currentFile&&defaultsData.loaded&&defaultsData.loaded.includes(this.currentFile)) {
                     await this.loadConfigFile(this.currentFile);
                 }
             } else {
-                throw new Error(result.message||'Failed to load default configurations');
+                throw new Error(result.error||result.message||'Failed to load default configurations');
             }
         } catch(error) {
             console.error('Error loading all defaults:',error);

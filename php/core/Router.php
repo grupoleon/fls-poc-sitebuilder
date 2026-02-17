@@ -169,6 +169,7 @@ class Router
         $this->register('list_log_files', 'DeploymentController', 'listLogFiles');
         $this->register('read_log_file', 'DeploymentController', 'readLogFile');
         $this->register('clear_deployment_status', 'DeploymentController', 'clearDeploymentStatus');
+        $this->register('get_all_deployments', 'DeploymentController', 'getAllDeployments');
 
         // GitHub Actions routes
         $this->register('github_actions_status', 'DeploymentController', 'getGithubActionsStatus');

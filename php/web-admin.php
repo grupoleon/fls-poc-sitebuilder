@@ -29,6 +29,7 @@
                     <?php require_once __DIR__ . '/views/tabs/contents.php'; ?>
                     <?php require_once __DIR__ . '/views/tabs/forms.php'; ?>
                     <?php require_once __DIR__ . '/views/tabs/local-config.php'; ?>
+                    <?php require_once __DIR__ . '/views/tabs/deployment-history.php'; ?>
                     <?php require_once __DIR__ . '/views/tabs/raw-configs.php'; ?>
                 </div> <!-- Close main-content -->
             </main>

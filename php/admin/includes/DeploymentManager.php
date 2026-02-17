@@ -396,9 +396,8 @@ class DeploymentManager
                 }
                 $logLines = $filteredLines;
             } else {
-                // Take last N lines and reverse to show newest first
+                // Take last N lines in chronological order
                 $logLines = array_slice($logLines, -$lines);
-                $logLines = array_reverse($logLines);
             }
 
             foreach ($logLines as $line) {

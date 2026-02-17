@@ -42,6 +42,12 @@
                         </a>
                     </div>
                     <div class="nav-item">
+                        <a href="#" class="nav-link" data-tab="deployment-history">
+                            <i class="fas fa-history nav-icon"></i>
+                            Deploy History
+                        </a>
+                    </div>
+                    <div class="nav-item">
                         <a href="#" class="nav-link" data-tab="raw-configs">
                             <i class="fas fa-code nav-icon"></i>
                             Raw Configs

@@ -1904,6 +1904,11 @@ input[type="file"].file-input {
     overflow: hidden;
 }
 
+/* Deployment history collapsible sections */
+.domain-deploys.collapsed {
+    display: none;
+}
+
 /* ===== CLICKUP CHANGES PREVIEW ===== */
 .clickup-changes-preview {
     position: fixed;

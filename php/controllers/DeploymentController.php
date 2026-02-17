@@ -52,17 +52,26 @@ class DeploymentController
     }
 
     /**
-     * Get logs
+     * Get deployment logs (parsed entries for real-time display)
      */
     public function getLogs(): void
     {
         try {
-            $category = $_GET['category'] ?? '';
-            $logFiles = Logger::getLogFiles($category);
+            $lastRead = isset($_GET['last_read']) ? (int) $_GET['last_read'] : null;
+            $lines    = isset($_GET['lines']) ? (int) $_GET['lines'] : 100;
 
-            Response::success(['logs' => $logFiles]);
+            $logs = $this->deploymentManager->getDeploymentLogs($lines, $lastRead);
+
+            // Return with timestamp at top level for incremental loading
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success'   => true,
+                'data'      => $logs,
+                'timestamp' => time(),
+            ], JSON_PRETTY_PRINT);
+            exit;
         } catch (\Exception $e) {
-            Logger::error("Get logs error: " . $e->getMessage());
+            Logger::error("Get deployment logs error: " . $e->getMessage());
             Response::error($e->getMessage());
         }
     }
@@ -547,7 +556,7 @@ class DeploymentController
     }
 
     /**
-     * Get deployment history
+     * Get deployment history (log-based)
      */
     public function getDeploymentHistory(): void
     {
@@ -556,6 +565,30 @@ class DeploymentController
             Response::success($history);
         } catch (\Exception $e) {
             Logger::error("Get deployment history error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Get all deployments from DB grouped by domain
+     */
+    public function getAllDeployments(): void
+    {
+        try {
+            require_once __DIR__ . '/../admin/includes/DatabaseLogger.php';
+            $dbLogger = \DatabaseLogger::getInstance();
+
+            if (! $dbLogger->isAvailable()) {
+                Response::success(['deployments' => [], 'message' => 'Database not available']);
+                return;
+            }
+
+            $limit       = isset($_GET['limit']) ? (int) $_GET['limit'] : 50;
+            $deployments = $dbLogger->getDeploymentsByDomain($limit);
+
+            Response::success(['deployments' => $deployments]);
+        } catch (\Exception $e) {
+            Logger::error("Get all deployments error: " . $e->getMessage());
             Response::error($e->getMessage());
         }
     }
