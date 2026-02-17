@@ -68,6 +68,9 @@ class DeploymentManager
             mkdir($this->scriptDir . '/tmp', 0755, true);
         }
 
+        // Clean up /tmp folder before deployment starts
+        $this->cleanupTmpFolder();
+
         // Prepare logo for deployment if one exists
         $this->prepareLogo();
 
@@ -693,6 +696,78 @@ class DeploymentManager
         } catch (Exception $e) {
             error_log("Logo preparation failed: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Clean up /tmp folder before deployment starts
+     * Removes old deployment artifacts while preserving important files
+     */
+    private function cleanupTmpFolder()
+    {
+        $tmpDir = $this->scriptDir . '/tmp';
+
+        if (! is_dir($tmpDir)) {
+            return;
+        }
+
+        // Files to preserve (don't delete these)
+        $preserveFiles = [
+            'deployment_status.json',
+            '.gitkeep'
+        ];
+
+        try {
+            $files = scandir($tmpDir);
+
+            foreach ($files as $file) {
+                // Skip . and .. and preserved files
+                if ($file === '.' || $file === '..' || in_array($file, $preserveFiles)) {
+                    continue;
+                }
+
+                $filePath = $tmpDir . '/' . $file;
+
+                // Delete files
+                if (is_file($filePath)) {
+                    unlink($filePath);
+                    error_log("DeploymentManager: Cleaned up tmp file: $file");
+                }
+                // Delete directories recursively
+                elseif (is_dir($filePath)) {
+                    $this->deleteDirectory($filePath);
+                    error_log("DeploymentManager: Cleaned up tmp directory: $file");
+                }
+            }
+
+            error_log("DeploymentManager: /tmp folder cleanup completed");
+        } catch (\Exception $e) {
+            error_log("DeploymentManager: Failed to cleanup /tmp folder: " . $e->getMessage());
+            // Don't throw - cleanup failure shouldn't block deployment
+        }
+    }
+
+    /**
+     * Recursively delete a directory
+     */
+    private function deleteDirectory($dir)
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+
+            if (is_dir($path)) {
+                $this->deleteDirectory($path);
+            } else {
+                unlink($path);
+            }
+        }
+
+        rmdir($dir);
     }
 
     /**
