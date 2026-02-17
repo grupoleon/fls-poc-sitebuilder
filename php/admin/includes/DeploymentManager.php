@@ -712,8 +712,7 @@ class DeploymentManager
 
         // Files to preserve (don't delete these)
         $preserveFiles = [
-            'deployment_status.json',
-            '.gitkeep'
+            '.gitkeep',
         ];
 
         try {
