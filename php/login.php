@@ -46,7 +46,9 @@
 
     // Check if already logged in
     if (Auth::isLoggedIn()) {
-    header('Location: /php/web-admin.php');
+    $redirect = $_SESSION['auth_redirect'] ?? '/php/web-admin.php';
+    unset($_SESSION['auth_redirect']);
+    header("Location: $redirect");
     exit;
     }
 
