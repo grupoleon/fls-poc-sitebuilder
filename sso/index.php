@@ -3,6 +3,8 @@
  * SSO Endpoint - Identity Provider
  *
  * Handles SSO requests from WordPress sites that have the fls-google-auth plugin.
+ * Each deployed site has its own unique secret stored in config/sso.json under "secrets".
+ * A domain without a registered secret is rejected (implicit allowlist).
  *
  * Flow:
  *   1. WP site redirects user here with domain, callback_url, state params
@@ -11,7 +13,16 @@
  *
  * Signature format (webhook-style):
  *   payload   = "{email}|{name}|{timestamp}|{state}"
- *   signature = HMAC-SHA256(payload, shared_secret)
+ *   signature = HMAC-SHA256(payload, per_site_secret)
+ *
+ * Config structure (config/sso.json):
+ *   {
+ *     "provider_url": "https://sitebuilder.example.com",
+ *     "secrets": {
+ *       "site1.kinsta.cloud": "unique-secret-for-site1",
+ *       "site2.kinsta.cloud": "unique-secret-for-site2"
+ *     }
+ *   }
  */
 
 require_once __DIR__ . '/../php/admin/includes/Auth.php';
@@ -30,10 +41,25 @@ function loadSsoConfig(): ?array
         return null;
     }
     $config = json_decode(file_get_contents($configPath), true);
-    if (! $config || empty($config['secret'])) {
+    if (! $config || ! isset($config['secrets']) || ! is_array($config['secrets'])) {
         return null;
     }
     return $config;
+}
+
+/**
+ * Get the secret for a specific domain.
+ * Returns null if domain is not registered (not deployed via this sitebuilder).
+ */
+function getSecretForDomain(array $config, string $domain): ?string
+{
+    $domain = strtolower($domain);
+    foreach ($config['secrets'] as $registeredDomain => $secret) {
+        if (strtolower($registeredDomain) === $domain && ! empty($secret)) {
+            return $secret;
+        }
+    }
+    return null;
 }
 
 /**
@@ -51,6 +77,12 @@ function validateRequest(string $domain, string $callbackUrl, string $state)
         return 'Invalid callback URL format';
     }
 
+    // Verify the callback URL hostname matches the claimed domain
+    $callbackHost = strtolower(parse_url($callbackUrl, PHP_URL_HOST) ?? '');
+    if ($callbackHost !== strtolower($domain)) {
+        return 'Callback URL host does not match the declared domain';
+    }
+
     // In production, enforce HTTPS for callbacks
     if (defined('APP_ENV') && APP_ENV !== 'development') {
         $scheme = parse_url($callbackUrl, PHP_URL_SCHEME);
@@ -60,22 +92,6 @@ function validateRequest(string $domain, string $callbackUrl, string $state)
     }
 
     return true;
-}
-
-/**
- * Check if the requesting domain is allowed
- */
-function isDomainAllowed(string $domain, array $allowedDomains): bool
-{
-    if (in_array('*', $allowedDomains, true)) {
-        return true;
-    }
-    foreach ($allowedDomains as $allowed) {
-        if (strcasecmp($domain, $allowed) === 0) {
-            return true;
-        }
-    }
-    return false;
 }
 
 /**
@@ -108,8 +124,8 @@ function redirectWithError(string $callbackUrl, string $state, string $errorCode
 $ssoConfig = loadSsoConfig();
 if (! $ssoConfig) {
     http_response_code(500);
-    error_log('SSO: Configuration missing or secret not set in config/sso.json');
-    die('SSO not configured. Please set the shared secret in config/sso.json');
+    error_log('SSO: Configuration missing or invalid in config/sso.json');
+    die('SSO not configured');
 }
 
 // 2. Determine request source: returning from login (session) or fresh SSO request (GET)
@@ -136,10 +152,12 @@ if ($validation !== true) {
     die($validation);
 }
 
-// 4. Check domain whitelist
-$allowedDomains = $ssoConfig['allowed_domains'] ?? ['*'];
-if (! isDomainAllowed($domain, $allowedDomains)) {
-    redirectWithError($callbackUrl, $state, 'domain_not_allowed');
+// 4. Look up per-site secret — rejects unknown domains (implicit allowlist)
+$siteSecret = getSecretForDomain($ssoConfig, $domain);
+if (! $siteSecret) {
+    error_log('SSO: Rejected request from unregistered domain: ' . $domain);
+    http_response_code(403);
+    die('Domain not registered for SSO');
 }
 
 // 5. Check if user is authenticated at this sitebuilder
@@ -168,9 +186,9 @@ if (empty($email)) {
     redirectWithError($callbackUrl, $state, 'no_email');
 }
 
-// 7. Generate signed response
+// 7. Generate signed response using this site's unique secret
 $timestamp = time();
-$signature = generateSignature($email, $name, $timestamp, $state, $ssoConfig['secret']);
+$signature = generateSignature($email, $name, $timestamp, $state, $siteSecret);
 
 // 8. Build callback URL with signed data and redirect back to WordPress
 $params = http_build_query([

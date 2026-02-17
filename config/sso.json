@@ -1,4 +1,4 @@
 {
-    "secret": "",
-    "allowed_domains": ["*"]
+    "provider_url": "",
+    "secrets": {}
 }
