@@ -68,7 +68,7 @@
         ];
 
         // Only update overall status to 'running' when first step starts
-        if (! isset($currentStatus['status']) || $currentStatus['status'] === 'pending') {
+        if (! isset($currentStatus['status']) || in_array($currentStatus['status'], ['pending', 'starting'])) {
             $currentStatus['status'] = 'running';
         }
     } elseif ($status === 'completed' && isset($currentStatus['step_timings'][$step])) {

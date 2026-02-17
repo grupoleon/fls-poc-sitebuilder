@@ -968,17 +968,18 @@ class AdminInterface {
             {id: 'github-actions',name: 'Actions'}
         ];
 
-        // Treat 'starting' as 'running' for UI purposes - the background process is initializing
-        const effectiveStatus=status.status==='starting'? 'running':status.status;
+        // Normalize status values - treat various "active" statuses as 'running'
+        const runningStatuses=['starting','started','success'];
+        const effectiveStatus=runningStatuses.includes(status.status)? 'running':status.status;
 
         const currentStep=status.current_step||((effectiveStatus==='running')? 'create-site':'config');
         const currentStepIndex=deploymentSteps.findIndex(s => s.id===currentStep);
 
-        debugLog('Current step:',currentStep,'Current step index:',currentStepIndex);
+        debugLog('Current step:',currentStep,'Current step index:',currentStepIndex,'Effective status:',effectiveStatus);
 
-        // If deployment is idle, completed, or failed, handle appropriately
-        if(effectiveStatus==='idle'||effectiveStatus==='completed') {
-            debugLog('Deployment is not running, resetting all steps to pending');
+        // If deployment is idle, reset all steps to pending
+        if(effectiveStatus==='idle') {
+            debugLog('Deployment is idle, resetting all steps to pending');
             deploymentSteps.forEach((step) => {
                 this.updateCompactStepStatus(step.id,'pending',step.name);
             });
@@ -999,22 +1000,62 @@ class AdminInterface {
             return;
         }
 
-        // Handle failed deployments - show which step failed
+        // Handle completed deployments - show all steps as completed with durations
+        if(effectiveStatus==='completed') {
+            debugLog('Deployment completed, showing all steps as completed');
+            deploymentSteps.forEach((step) => {
+                let timingInfo=null;
+                if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].duration) {
+                    const duration=status.step_timings[step.id].duration;
+                    const minutes=Math.floor(duration/60);
+                    const seconds=duration%60;
+                    timingInfo=`${minutes>0? minutes+'m ':''}${seconds}s`;
+                    this.stepDurations.set(step.id,timingInfo);
+                } else if(this.stepDurations.has(step.id)) {
+                    timingInfo=this.stepDurations.get(step.id);
+                }
+                this.updateCompactStepStatus(step.id,'completed',step.name,timingInfo);
+            });
+
+            // Update connectors after all steps are updated
+            this.updateCompactConnectors();
+            return;
+        }
+
+        // Handle failed deployments - use step_timings to show accurate per-step status
         if(effectiveStatus==='failed'||effectiveStatus==='error') {
             debugLog('Deployment failed, showing failed step');
             deploymentSteps.forEach((step,index) => {
                 let stepStatus='pending';
+                let timingInfo=null;
 
-                if(index<currentStepIndex) {
+                // Use step_timings as primary source for accurate status
+                if(status.step_timings&&status.step_timings[step.id]) {
+                    const timing=status.step_timings[step.id];
+                    if(timing.status==='completed'||timing.end_time) {
+                        stepStatus='completed';
+                        if(timing.duration) {
+                            const duration=timing.duration;
+                            const minutes=Math.floor(duration/60);
+                            const seconds=duration%60;
+                            timingInfo=`${minutes>0? minutes+'m ':''}${seconds}s`;
+                        }
+                    } else if(timing.status==='failed') {
+                        stepStatus='error';
+                        timingInfo='Failed';
+                    } else if(timing.status==='running') {
+                        stepStatus='error'; // Running step when deployment failed = this step failed
+                        timingInfo='Failed';
+                    }
+                } else if(index<currentStepIndex) {
                     stepStatus='completed';
                 } else if(index===currentStepIndex) {
                     stepStatus='error';
-                } else {
-                    stepStatus='pending';
+                    timingInfo='Failed';
                 }
 
                 debugLog(`Failed deployment - Step ${step.id} (index ${index}): status = ${stepStatus}`);
-                this.updateCompactStepStatus(step.id,stepStatus,step.name);
+                this.updateCompactStepStatus(step.id,stepStatus,step.name,timingInfo);
             });
 
             // Clear any GitHub Actions specific state and stop polling
@@ -1033,26 +1074,55 @@ class AdminInterface {
             return;
         }
 
+        // Handle running deployments - use step_timings as PRIMARY source, position-based as fallback
         deploymentSteps.forEach((step,index) => {
             let stepStatus='pending';
             let timingInfo=null;
 
-            if(effectiveStatus==='completed'||(effectiveStatus==='running'&&index<currentStepIndex)) {
+            // Primary: Use step_timings data for accurate per-step status
+            if(status.step_timings&&status.step_timings[step.id]) {
+                const timing=status.step_timings[step.id];
+
+                if(timing.status==='completed'||timing.end_time) {
+                    stepStatus='completed';
+                    if(timing.duration) {
+                        const duration=timing.duration;
+                        const minutes=Math.floor(duration/60);
+                        const seconds=duration%60;
+                        timingInfo=`${minutes>0? minutes+'m ':''}${seconds}s`;
+                        this.stepDurations.set(step.id,timingInfo);
+                    } else if(this.stepDurations.has(step.id)) {
+                        timingInfo=this.stepDurations.get(step.id);
+                    }
+                } else if(timing.status==='running') {
+                    stepStatus='in-progress';
+                    if(this.stepStartTimes.has(step.id)) {
+                        const elapsed=Date.now()-this.stepStartTimes.get(step.id);
+                        const seconds=Math.floor(elapsed/1000);
+                        const minutes=Math.floor(seconds/60);
+                        const remainingSeconds=seconds%60;
+                        timingInfo=`${minutes}m ${remainingSeconds}s`;
+                    } else {
+                        // Use backend start time if available for accuracy
+                        if(timing.start_time) {
+                            this.stepStartTimes.set(step.id,timing.start_time*1000);
+                        } else {
+                            this.stepStartTimes.set(step.id,Date.now());
+                        }
+                    }
+                } else if(timing.status==='failed') {
+                    stepStatus='error';
+                    timingInfo='Failed';
+                }
+            }
+            // Fallback: Position-based logic when step_timings not available
+            else if(effectiveStatus==='running'&&index<currentStepIndex) {
                 stepStatus='completed';
-                // Get duration from step_timings if available
-                if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].duration) {
-                    const duration=status.step_timings[step.id].duration;
-                    const minutes=Math.floor(duration/60);
-                    const seconds=duration%60;
-                    timingInfo=`${minutes>0? minutes+'m ':''}${seconds}s`;
-                    // Store the formatted duration in the Map for future reference
-                    this.stepDurations.set(step.id,timingInfo);
-                } else if(this.stepDurations.has(step.id)) {
+                if(this.stepDurations.has(step.id)) {
                     timingInfo=this.stepDurations.get(step.id);
                 }
             } else if(index===currentStepIndex&&effectiveStatus==='running') {
                 stepStatus='in-progress';
-                // For in-progress steps, calculate elapsed time if we have start time
                 if(this.stepStartTimes.has(step.id)) {
                     const elapsed=Date.now()-this.stepStartTimes.get(step.id);
                     const seconds=Math.floor(elapsed/1000);
@@ -1060,12 +1130,8 @@ class AdminInterface {
                     const remainingSeconds=seconds%60;
                     timingInfo=`${minutes}m ${remainingSeconds}s`;
                 } else {
-                    // Store start time if not already set
                     this.stepStartTimes.set(step.id,Date.now());
                 }
-            } else if(effectiveStatus==='error'&&index<=currentStepIndex) {
-                stepStatus='error';
-                timingInfo='Failed';
             }
 
             debugLog(`Step ${step.id} (index ${index}): status = ${stepStatus}, timing = ${timingInfo}`);
@@ -3757,8 +3823,8 @@ class AdminInterface {
                 (status.step_timings&&status.step_timings[step.id]&&(status.step_timings[step.id].status==='completed'||status.step_timings[step.id].end_time))||
                 // OR overall deployment is completed/success
                 status.status==='completed'||
-                // OR we're past this step (current step is ahead)
-                (status.status==='running'&&stepIndex<currentStepIndex)
+                // OR we're past this step (current step is ahead) - use non-terminal status check
+                (!['idle','completed','failed','cancelled'].includes(status.status)&&stepIndex<currentStepIndex)
             ) {
                 stepStatus='completed';
                 icon='<i class="fas fa-check"></i>';
@@ -3809,7 +3875,7 @@ class AdminInterface {
                 if(!timingInfo&&this.stepDurations.has(step.id)) {
                     timingInfo=`<div class="text-xs text-emerald-600 mt-1">Duration: ${this.stepDurations.get(step.id)}</div>`;
                 }
-            } else if(step.id===currentStep&&status.status==='running') {
+            } else if(step.id===currentStep&&!['idle','completed','failed','cancelled'].includes(status.status)) {
                 stepStatus='in-progress';
                 icon='<i class="fas fa-cog fa-spin"></i>';
 
@@ -6477,14 +6543,14 @@ class AdminInterface {
                     this.startGitHubActionsPolling();
                 }
 
-                // Continue polling if deployment is running OR if GitHub Actions is still being monitored
+                // Continue polling if deployment is active (not in a terminal state)
+                const terminalStatuses=['idle','completed','failed','cancelled'];
+                const isTerminal=terminalStatuses.includes(data.data.status);
                 const shouldContinuePolling=
-                    (data.data.status==='running'&&!this.githubActionsCompleted)||
+                    (!isTerminal&&!this.githubActionsCompleted)||
                     (data.data.current_step==='github-actions'&&
-                        data.data.status!=='completed'&&
-                        data.data.status!=='completed'&&
-                        !this.githubActionsCompleted)||
-                    data.data.status==='pending';
+                        !isTerminal&&
+                        !this.githubActionsCompleted);
 
                 if(shouldContinuePolling) {
                     debugLog(`📡 Continuing polling... (count: ${this.deploymentPollCount}, status: ${data.data.status}, step: ${data.data.current_step})`);
