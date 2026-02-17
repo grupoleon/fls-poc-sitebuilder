@@ -3754,7 +3754,7 @@ class AdminInterface {
                 // If we haven't reached github-actions step yet, leave it as pending
             } else if(
                 // Check if step is individually marked as completed in step_timings
-                (status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].status==='completed')||
+                (status.step_timings&&status.step_timings[step.id]&&(status.step_timings[step.id].status==='completed'||status.step_timings[step.id].end_time))||
                 // OR overall deployment is completed/success
                 status.status==='completed'||
                 // OR we're past this step (current step is ahead)
@@ -3763,20 +3763,29 @@ class AdminInterface {
                 stepStatus='completed';
                 icon='<i class="fas fa-check"></i>';
 
-                // Use backend timing data if available
-                if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].end_time_formatted) {
-                    // Convert UTC to IST and format
-                    const endTimeUTC=new Date(status.step_timings[step.id].end_time_formatted+'Z');
-                    const endTimeIST=new Date(endTimeUTC.getTime()+(5.5*60*60*1000));
-                    timestamp=`Completed: ${endTimeIST.toLocaleString('en-IN',{
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false
-                    })} IST`;
+                // Use backend timing data if available (prefer formatted time, fallback to timestamp)
+                if(status.step_timings&&status.step_timings[step.id]) {
+                    const stepTiming=status.step_timings[step.id];
 
-                    if(status.step_timings[step.id].duration) {
-                        const duration=status.step_timings[step.id].duration;
+                    // Display end time - try formatted time first, then timestamp
+                    if(stepTiming.end_time_formatted) {
+                        // Backend already provides time in GMT, just parse it
+                        timestamp=`Completed: ${stepTiming.end_time_formatted}`;
+                    } else if(stepTiming.end_time) {
+                        const endTime=new Date(stepTiming.end_time*1000);
+                        timestamp=`Completed: ${endTime.toLocaleString('en-IN',{
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        })}`;
+                    } else {
+                        timestamp=`Completed: ${currentTime}`;
+                    }
+
+                    // Display duration if available
+                    if(stepTiming.duration) {
+                        const duration=stepTiming.duration;
                         const minutes=Math.floor(duration/60);
                         const seconds=duration%60;
                         timingInfo=`<div class="text-xs text-emerald-600 mt-1">Duration: ${minutes>0? minutes+'m ':''}${seconds}s</div>`;
@@ -3804,17 +3813,25 @@ class AdminInterface {
                 stepStatus='in-progress';
                 icon='<i class="fas fa-cog fa-spin"></i>';
 
-                // Use backend timing data if available
-                if(status.step_timings&&status.step_timings[step.id]&&status.step_timings[step.id].start_time_formatted) {
-                    // Convert UTC to IST and format
-                    const startTimeUTC=new Date(status.step_timings[step.id].start_time_formatted+'Z');
-                    const startTimeIST=new Date(startTimeUTC.getTime()+(5.5*60*60*1000));
-                    timestamp=`Started: ${startTimeIST.toLocaleString('en-IN',{
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false
-                    })} IST`;
+                // Use backend timing data if available (prefer formatted time, fallback to timestamp)
+                if(status.step_timings&&status.step_timings[step.id]) {
+                    const stepTiming=status.step_timings[step.id];
+
+                    // Display start time - try formatted time first, then timestamp
+                    if(stepTiming.start_time_formatted) {
+                        // Backend already provides time in GMT, just parse it
+                        timestamp=`Started: ${stepTiming.start_time_formatted}`;
+                    } else if(stepTiming.start_time) {
+                        const startTime=new Date(stepTiming.start_time*1000);
+                        timestamp=`Started: ${startTime.toLocaleString('en-IN',{
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        })}`;
+                    } else {
+                        timestamp=`Started: ${currentTime}`;
+                    }
                 } else {
                     timestamp=`Started: ${currentTime}`;
                 }
@@ -4078,6 +4095,34 @@ class AdminInterface {
                     option.selected=true;
                 }
             }
+        }
+
+        // Load theme override settings if available
+        if(configs.theme&&configs.theme.overrides) {
+            const overrides=configs.theme.overrides;
+
+            // Set slides override toggle
+            const slidesToggle=document.getElementById('slides-override-toggle');
+            if(slidesToggle) {
+                slidesToggle.checked=overrides.slides_override!==false; // Default to true
+            }
+
+            // Set pages override toggle
+            const pagesToggle=document.getElementById('pages-override-toggle');
+            if(pagesToggle) {
+                pagesToggle.checked=overrides.pages_override!==false; // Default to true
+            }
+
+            // Set CPT override toggle
+            const cptToggle=document.getElementById('cpt-override-toggle');
+            if(cptToggle) {
+                cptToggle.checked=overrides.cpt_override!==false; // Default to true
+            }
+
+            // Update status indicators
+            this.updateOverrideStatusIndicators();
+
+            debugLog('Theme override settings loaded:',overrides);
         }
 
         // Load dynamic configuration data for new components
