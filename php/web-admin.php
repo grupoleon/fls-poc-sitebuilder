@@ -39,17 +39,18 @@
         <!-- Help Modal -->
         <?php include 'admin/includes/help.php'; ?>
 
+        <?php $v = time(); ?>
         <!-- Core JS Modules -->
-        <script src="/php/admin/assets/js/core/Logger.js"></script>
-        <script src="/php/admin/assets/js/core/ApiClient.js"></script>
-        <script src="/php/admin/assets/js/core/Utils.js"></script>
+        <script src="/php/admin/assets/js/core/Logger.js?v=<?php echo $v ?>"></script>
+        <script src="/php/admin/assets/js/core/ApiClient.js?v=<?php echo $v ?>"></script>
+        <script src="/php/admin/assets/js/core/Utils.js?v=<?php echo $v ?>"></script>
 
         <!-- Application JS Files -->
-        <script src="/php/admin/assets/js/tools.js"></script>
-        <script src="/php/admin/assets/js/forms.js"></script>
-        <script src="/php/admin/assets/js/raw-config.js"></script>
-        <script src="/php/admin/assets/js/admin.js"></script>
-        <script src="/php/admin/assets/js/local-config.js"></script>
+        <script src="/php/admin/assets/js/tools.js?v=<?php echo $v ?>"></script>
+        <script src="/php/admin/assets/js/forms.js?v=<?php echo $v ?>"></script>
+        <script src="/php/admin/assets/js/raw-config.js?v=<?php echo $v ?>"></script>
+        <script src="/php/admin/assets/js/admin.js?v=<?php echo $v ?>"></script>
+        <script src="/php/admin/assets/js/local-config.js?v=<?php echo $v ?>"></script>
     </body>
 
 </html>
