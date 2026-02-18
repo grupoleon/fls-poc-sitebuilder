@@ -38,6 +38,7 @@ require_once __DIR__ . '/admin/includes/ConfigManager.php';
 require_once __DIR__ . '/admin/includes/PageContentManager.php';
 require_once __DIR__ . '/admin/includes/DeploymentManager.php';
 require_once __DIR__ . '/admin/includes/ConfigDefaultsManager.php';
+require_once __DIR__ . '/admin/includes/SsoManager.php';
 
 // ====================
 // LOAD CONTROLLERS
@@ -45,6 +46,7 @@ require_once __DIR__ . '/admin/includes/ConfigDefaultsManager.php';
 require_once __DIR__ . '/controllers/ConfigController.php';
 require_once __DIR__ . '/controllers/PageController.php';
 require_once __DIR__ . '/controllers/DeploymentController.php';
+require_once __DIR__ . '/controllers/SsoController.php';
 
 // ====================
 // REGISTER ERROR HANDLER
@@ -65,6 +67,7 @@ $configDefaultsManager = new ConfigDefaultsManager();
 $configController     = new ConfigController($configManager);
 $pageController       = new PageController($configManager, $pageManager);
 $deploymentController = new DeploymentController($configManager, $deploymentManager);
+$ssoController        = new SsoController();
 
 // ====================
 // INITIALIZE ROUTER
@@ -73,6 +76,7 @@ $router = new Router();
 $router->setController('ConfigController', $configController);
 $router->setController('PageController', $pageController);
 $router->setController('DeploymentController', $deploymentController);
+$router->setController('SsoController', $ssoController);
 $router->registerDefaultRoutes();
 
 // ====================

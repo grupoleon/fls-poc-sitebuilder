@@ -173,6 +173,12 @@ class Router
         // Validate / refresh deployment list (remove records for missing Kinsta sites)
         $this->register('refresh_deployments_list', 'DeploymentController', 'refreshDeploymentList');
 
+        // SSO site management routes
+        $this->register('sso_list_sites', 'SsoController', 'listSites');
+        $this->register('sso_register_site', 'SsoController', 'registerSite');
+        $this->register('sso_deactivate_site', 'SsoController', 'deactivateSite');
+        $this->register('sso_cleanup_tokens', 'SsoController', 'cleanupTokens');
+
         // GitHub Actions routes
         $this->register('github_actions_status', 'DeploymentController', 'getGithubActionsStatus');
         $this->register('github_actions_logs', 'DeploymentController', 'getGithubActionsLogs');
