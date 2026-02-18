@@ -115,12 +115,29 @@ try {
                 $pdo->exec($statement . ';');
                 $executed++;
             } catch (PDOException $e) {
-                // Check if it's a "table already exists" error - that's okay
-                if (strpos($e->getMessage(), 'already exists') !== false) {
+                // Treat common "already present" errors as non-fatal so migrations are idempotent
+                $msg          = $e->getMessage();
+                $skipPatterns = [
+                    'already exists',         // table already exists
+                    'Duplicate column name',  // column already exists (MySQL)
+                    'Duplicate key name',     // index/key already exists (MySQL)
+                    'Duplicate index name',   // alternate error text
+                    'Cannot add foreign key', // foreign key already present or invalid (tolerate in some cases)
+                ];
+
+                $isSkip = false;
+                foreach ($skipPatterns as $pat) {
+                    if (stripos($msg, $pat) !== false) {
+                        $isSkip = true;
+                        break;
+                    }
+                }
+
+                if ($isSkip) {
                     $skipped++;
-                    logMigration("  - Statement skipped (already exists)", 'INFO');
+                    logMigration("  - Statement skipped (already present): {$msg}", 'INFO');
                 } else {
-                    logMigration("  - Failed to execute statement: " . $e->getMessage(), 'ERROR');
+                    logMigration("  - Failed to execute statement: " . $msg, 'ERROR');
                     throw $e;
                 }
             }

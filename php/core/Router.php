@@ -170,6 +170,8 @@ class Router
         $this->register('read_log_file', 'DeploymentController', 'readLogFile');
         $this->register('clear_deployment_status', 'DeploymentController', 'clearDeploymentStatus');
         $this->register('get_all_deployments', 'DeploymentController', 'getAllDeployments');
+        // Validate / refresh deployment list (remove records for missing Kinsta sites)
+        $this->register('refresh_deployments_list', 'DeploymentController', 'refreshDeploymentList');
 
         // GitHub Actions routes
         $this->register('github_actions_status', 'DeploymentController', 'getGithubActionsStatus');

@@ -574,8 +574,8 @@ try {
     // Extract site details from deployment status/config for database logging
     $siteUrl       = null;
     $adminUrl      = null;
-    $adminUsername  = null;
-    $adminPassword  = null;
+    $adminUsername = null;
+    $adminPassword = null;
 
     try {
         // Primary: Read from credentials.json (created by creds.sh with actual Kinsta domain)
@@ -583,7 +583,7 @@ try {
         if (file_exists($credsJsonFile)) {
             $credsData = json_decode(file_get_contents($credsJsonFile), true);
             if (! empty($credsData['site_url'])) {
-                $domain  = $credsData['site_url'];
+                $domain = $credsData['site_url'];
                 // Ensure it has https:// prefix
                 $siteUrl = (strpos($domain, 'http') === 0) ? $domain : 'https://' . $domain;
                 writeDeploymentLog("Site URL from credentials.json: $siteUrl", 'INFO');
@@ -621,12 +621,20 @@ try {
     // Update deployment with site details in database
     if ($dbLogger && $dbLogger->isAvailable() && $siteUrl) {
         try {
+            // Try to pick up kinsta site id if present from tmp file
+            $kinstaSiteId = null;
+            $siteIdFile   = SCRIPT_DIR . '/tmp/site_id.txt';
+            if (file_exists($siteIdFile)) {
+                $kinstaSiteId = trim(file_get_contents($siteIdFile));
+            }
+
             $dbLogger->updateDeploymentSiteDetails(
                 $deploymentId,
                 $siteUrl,
                 $adminUrl ?? ($siteUrl . '/wp-admin'),
                 $adminUsername ?? 'admin',
-                $adminPassword ?? 'N/A'
+                $adminPassword ?? 'N/A',
+                $kinstaSiteId
             );
             writeDeploymentLog('Updated deployment with site details in database', 'INFO');
         } catch (Exception $e) {

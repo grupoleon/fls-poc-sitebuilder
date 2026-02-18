@@ -375,18 +375,52 @@ class DatabaseLogger
      * @param string $adminUrl Admin URL
      * @param string $adminUsername Admin username
      * @param string $adminPassword Admin password (will be encrypted)
+     * @param string|null $kinstaSiteId Optional Kinsta site identifier
      * @return bool Success status
      */
-    public function updateDeploymentSiteDetails($deploymentId, $siteUrl, $adminUrl, $adminUsername, $adminPassword)
+    public function updateDeploymentSiteDetails($deploymentId, $siteUrl, $adminUrl, $adminUsername, $adminPassword, $kinstaSiteId = null)
     {
         // Simple encryption for password storage
         $encryptedPassword = base64_encode($adminPassword);
+
+        // Derive domain from site URL (if present)
+        $domain = null;
+        if (! empty($siteUrl)) {
+            $parsedHost = parse_url($siteUrl, PHP_URL_HOST);
+            $domain     = $parsedHost ?: null;
+        }
+
+        // Deduplicate: remove existing records for same domain or same kinsta_site_id (except current deployment)
+        try {
+            $conditions = [];
+            $params     = [];
+
+            if (! empty($domain)) {
+                $conditions[] = '(domain = ?)';
+                $params[]     = $domain;
+            }
+
+            if (! empty($kinstaSiteId)) {
+                $conditions[] = '(kinsta_site_id = ?)';
+                $params[]     = $kinstaSiteId;
+            }
+
+            if (! empty($conditions)) {
+                $sqlDel   = 'DELETE FROM deployments WHERE (' . implode(' OR ', $conditions) . ') AND deployment_id != ?';
+                $params[] = $deploymentId;
+                $this->execute($sqlDel, $params);
+            }
+        } catch (PDOException $e) {
+            error_log('DatabaseLogger: Failed to deduplicate deployments - ' . $e->getMessage());
+        }
 
         $sql = "UPDATE deployments
                 SET site_url = ?,
                     admin_url = ?,
                     admin_username = ?,
-                    admin_password = ?
+                    admin_password = ?,
+                    domain = ?,
+                    kinsta_site_id = ?
                 WHERE deployment_id = ?";
 
         $stmt = $this->execute($sql, [
@@ -394,6 +428,8 @@ class DatabaseLogger
             $adminUrl,
             $adminUsername,
             $encryptedPassword,
+            $domain,
+            $kinstaSiteId,
             $deploymentId,
         ]);
 
@@ -540,6 +576,54 @@ class DatabaseLogger
     }
 
     /**
+     * Delete a deployment by its deployment_id
+     *
+     * @param string $deploymentId
+     * @return bool
+     */
+    public function deleteDeploymentById($deploymentId)
+    {
+        if (! $this->isAvailable || empty($deploymentId)) {
+            return false;
+        }
+
+        $stmt = $this->execute("DELETE FROM deployments WHERE deployment_id = ?", [$deploymentId]);
+        return $stmt !== false;
+    }
+
+    /**
+     * Get raw list of deployments (no grouping) - used for validation/cleanup
+     *
+     * @param int $limit
+     * @return array
+     */
+    public function getAllDeploymentsRaw($limit = 1000)
+    {
+        if (! $this->isAvailable) {
+            return [];
+        }
+
+        try {
+            $sql  = "SELECT * FROM deployments ORDER BY start_time DESC LIMIT ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$limit]);
+            $rows = $stmt->fetchAll();
+
+            // Decrypt passwords for returning
+            foreach ($rows as &$row) {
+                if (! empty($row['admin_password'])) {
+                    $row['admin_password'] = base64_decode($row['admin_password']);
+                }
+            }
+
+            return $rows;
+        } catch (PDOException $e) {
+            error_log('DatabaseLogger: Failed to fetch all deployments raw - ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Get all deployments grouped by site domain
      *
      * @param int $limit Max deployments per domain
@@ -568,11 +652,14 @@ class DatabaseLogger
             $stmt->execute([$limit]);
             $deployments = $stmt->fetchAll();
 
-            // Group by domain (extracted from site_url)
+            // Group by domain (prefer explicit `domain` column, fallback to parsing site_url)
             $grouped = [];
             foreach ($deployments as $deploy) {
                 $domain = 'Unknown';
-                if (! empty($deploy['site_url'])) {
+
+                if (! empty($deploy['domain'])) {
+                    $domain = $deploy['domain'];
+                } elseif (! empty($deploy['site_url'])) {
                     $parsed = parse_url($deploy['site_url']);
                     $domain = $parsed['host'] ?? $deploy['site_url'];
                 }
@@ -585,7 +672,7 @@ class DatabaseLogger
                 $steps = [];
                 if (! empty($deploy['steps_summary'])) {
                     foreach (explode('|', $deploy['steps_summary']) as $stepStr) {
-                        $parts  = explode(':', $stepStr);
+                        $parts   = explode(':', $stepStr);
                         $steps[] = [
                             'key'      => $parts[0] ?? '',
                             'status'   => $parts[1] ?? '',
@@ -599,6 +686,11 @@ class DatabaseLogger
                 // Decrypt password
                 if (! empty($deploy['admin_password'])) {
                     $deploy['admin_password'] = base64_decode($deploy['admin_password']);
+                }
+
+                // Ensure domain is present in returned row
+                if (empty($deploy['domain']) && $domain !== 'Unknown') {
+                    $deploy['domain'] = $domain;
                 }
 
                 $grouped[$domain][] = $deploy;
@@ -660,7 +752,7 @@ class DatabaseLogger
         }
 
         try {
-            $sql  = "SELECT task_id, task_name, status, last_fetched_at
+            $sql = "SELECT task_id, task_name, status, last_fetched_at
                      FROM clickup_tasks ORDER BY last_fetched_at DESC";
             $stmt = $this->pdo->query($sql);
             return $stmt->fetchAll();

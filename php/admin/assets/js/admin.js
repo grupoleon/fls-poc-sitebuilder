@@ -7721,6 +7721,40 @@ class AdminInterface {
         }
     }
 
+    /**
+     * Validate each DB deployment that has a Kinsta site id — remove entries for missing sites.
+     */
+    async refreshDeploymentList() {
+        const btn=document.getElementById('update-deployments-list-btn');
+        const orig=btn? btn.innerHTML:null;
+        if(btn) {
+            btn.disabled=true;
+            btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i> Updating...';
+        }
+
+        try {
+            const res=await fetch('?action=refresh_deployments_list');
+            const data=await res.json();
+
+            if(data.success) {
+                const checked=data.data?.checked??0;
+                const removed=data.data?.removed??0;
+                this.showAlert(`Checked ${checked} site(s) — removed ${removed} stale record(s)`,'success');
+                await this.loadAllDeployments();
+            } else {
+                this.showAlert(data.error||'Failed to refresh deployment list','error');
+            }
+        } catch(err) {
+            console.error('refreshDeploymentList failed',err);
+            this.showAlert('Failed to refresh deployment list','error');
+        } finally {
+            if(btn) {
+                btn.disabled=false;
+                btn.innerHTML=orig;
+            }
+        }
+    }
+
     renderAllDeployments(deploymentsByDomain) {
         const container=document.getElementById('deployments-list');
         if(!container) return;
@@ -7731,9 +7765,9 @@ class AdminInterface {
             return;
         }
 
-        const stepLabels={'create-site':'Setup','get-cred':'Creds','trigger-deploy':'Deploy','github-actions':'Actions'};
+        const stepLabels={'create-site': 'Setup','get-cred': 'Creds','trigger-deploy': 'Deploy','github-actions': 'Actions'};
         const statusBadge=(status) => {
-            const colors={'completed':'background:#059669;color:#fff','failed':'background:#dc2626;color:#fff','running':'background:#2563eb;color:#fff'};
+            const colors={'completed': 'background:#059669;color:#fff','failed': 'background:#dc2626;color:#fff','running': 'background:#2563eb;color:#fff'};
             return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${colors[status]||'background:#6b7280;color:#fff'}">${status}</span>`;
         };
 
@@ -7747,11 +7781,11 @@ class AdminInterface {
                     <div style="padding:12px 16px;background:var(--bg-secondary,#f9fafb);border-bottom:1px solid var(--border-color,#e5e7eb);display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.parentElement.querySelector('.domain-deploys').classList.toggle('collapsed')">
                         <div>
                             <strong style="font-size:14px;">${this.escapeHtml(domain)}</strong>
-                            <span style="margin-left:8px;font-size:12px;color:var(--text-muted,#6b7280);">${deploys.length} deployment${deploys.length!==1?'s':''}</span>
+                            <span style="margin-left:8px;font-size:12px;color:var(--text-muted,#6b7280);">${deploys.length} deployment${deploys.length!==1? 's':''}</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px;">
-                            ${latestDeploy.site_url?`<a href="${this.escapeHtml(latestDeploy.site_url)}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> Visit</a>`:''}
-                            ${latestDeploy.admin_url?`<a href="${this.escapeHtml(latestDeploy.admin_url)}" target="_blank" style="font-size:12px;color:#059669;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-lock"></i> Admin</a>`:''}
+                            ${latestDeploy.site_url? `<a href="${this.escapeHtml(latestDeploy.site_url)}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> Visit</a>`:''}
+                            ${latestDeploy.admin_url? `<a href="${this.escapeHtml(latestDeploy.admin_url)}" target="_blank" style="font-size:12px;color:#059669;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-lock"></i> Admin</a>`:''}
                             <i class="fas fa-chevron-down" style="font-size:12px;color:var(--text-muted,#6b7280);"></i>
                         </div>
                     </div>
@@ -7761,6 +7795,8 @@ class AdminInterface {
                                 <tr style="background:var(--bg-tertiary,#f3f4f6);">
                                     <th style="padding:8px 12px;text-align:left;font-weight:600;">Date</th>
                                     <th style="padding:8px 12px;text-align:left;font-weight:600;">User</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Kinsta ID</th>
+                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Credentials</th>
                                     <th style="padding:8px 12px;text-align:left;font-weight:600;">Status</th>
                                     <th style="padding:8px 12px;text-align:left;font-weight:600;">Duration</th>
                                     <th style="padding:8px 12px;text-align:left;font-weight:600;">Steps</th>
@@ -7769,23 +7805,46 @@ class AdminInterface {
                             </thead>
                             <tbody>
                                 ${deploys.map(d => {
-                                    const duration=d.total_duration?this.formatSeconds(d.total_duration):'-';
-                                    const stepsHtml=(d.steps||[]).map(s => {
-                                        const label=stepLabels[s.key]||s.key;
-                                        const color=s.status==='completed'?'#059669':s.status==='failed'?'#dc2626':'#6b7280';
-                                        return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin:1px;border:1px solid ${color};color:${color};" title="${s.key}: ${s.status} (${s.duration}s)">${label}</span>`;
-                                    }).join('');
-                                    const clickup=d.clickup_task_id?`<a href="https://app.clickup.com/t/${d.clickup_task_id}" target="_blank" style="color:#7c3aed;text-decoration:none;font-size:11px;" onclick="event.stopPropagation()">${d.clickup_task_id.substring(0,8)}...</a>`:'-';
+                const duration=d.total_duration? this.formatSeconds(d.total_duration):'-';
+                const stepsHtml=(d.steps||[]).map(s => {
+                    const label=stepLabels[s.key]||s.key;
+                    const color=s.status==='completed'? '#059669':s.status==='failed'? '#dc2626':'#6b7280';
+                    return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin:1px;border:1px solid ${color};color:${color};" title="${s.key}: ${s.status} (${s.duration}s)">${label}</span>`;
+                }).join('');
+                const clickup=d.clickup_task_id? `<a href="https://app.clickup.com/t/${d.clickup_task_id}" target="_blank" style="color:#7c3aed;text-decoration:none;font-size:11px;" onclick="event.stopPropagation()">${d.clickup_task_id.substring(0,8)}...</a>`:'-';
 
-                                    return `<tr style="border-top:1px solid var(--border-color,#e5e7eb);">
+                // Credentials: both username and password are hidden by default (masked)
+                const kinstaIdCol=d.kinsta_site_id? this.escapeHtml(d.kinsta_site_id):'-';
+                const userValue=d.admin_username||'';
+                const passValue=d.admin_password||'';
+
+                const credsHtml=`
+                                        <div style="display:flex;flex-direction:column;gap:6px;max-width:260px;">
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <small style="width:50px;color:var(--text-muted,#6b7280)">User</small>
+                                                <span id="cred-${d.deployment_id}-user" data-value="${this.escapeHtml(userValue)}" data-masked="true">${userValue? '••••••':'-'}</span>
+                                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="window.adminInterface.toggleCredVisibility('${d.deployment_id}','user', this)">Show</button>
+                                                <button class="btn btn-sm btn-light ms-1" data-copy="${this.escapeHtml(userValue)}" onclick="window.adminInterface.copyFromButton(this)">Copy</button>
+                                            </div>
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <small style="width:50px;color:var(--text-muted,#6b7280)">Pass</small>
+                                                <span id="cred-${d.deployment_id}-pass" data-value="${this.escapeHtml(passValue)}" data-masked="true">${passValue? '••••••':'-'}</span>
+                                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="window.adminInterface.toggleCredVisibility('${d.deployment_id}','pass', this)">Show</button>
+                                                <button class="btn btn-sm btn-light ms-1" data-copy="${this.escapeHtml(passValue)}" onclick="window.adminInterface.copyFromButton(this)">Copy</button>
+                                            </div>
+                                        </div>`;
+
+                return `<tr style="border-top:1px solid var(--border-color,#e5e7eb);">
                                         <td style="padding:8px 12px;white-space:nowrap;">${d.start_time||'-'}</td>
                                         <td style="padding:8px 12px;">${this.escapeHtml(d.user_email||'-')}</td>
+                                        <td style="padding:8px 12px;white-space:nowrap;">${kinstaIdCol}</td>
+                                        <td style="padding:8px 12px;">${credsHtml}</td>
                                         <td style="padding:8px 12px;">${statusBadge(d.status)}</td>
                                         <td style="padding:8px 12px;">${duration}</td>
                                         <td style="padding:8px 12px;">${stepsHtml||'-'}</td>
                                         <td style="padding:8px 12px;">${clickup}</td>
                                     </tr>`;
-                                }).join('')}
+            }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -7799,7 +7858,47 @@ class AdminInterface {
         if(!seconds||seconds<=0) return '-';
         const mins=Math.floor(seconds/60);
         const secs=seconds%60;
-        return mins>0?`${mins}m ${secs}s`:`${secs}s`;
+        return mins>0? `${mins}m ${secs}s`:`${secs}s`;
+    }
+
+    /**
+     * Toggle visibility of credential (user/pass) for a deployment row
+     * - stores plaintext in data-value attribute and shows masked value by default
+     */
+    toggleCredVisibility(deploymentId,field,btn) {
+        try {
+            const span=document.getElementById(`cred-${deploymentId}-${field}`);
+            if(!span) return;
+            const masked=span.getAttribute('data-masked')==='true';
+            if(masked) {
+                span.textContent=span.getAttribute('data-value')||'';
+                span.setAttribute('data-masked','false');
+                if(btn) btn.textContent='Hide';
+            } else {
+                span.textContent=span.getAttribute('data-value')? '••••••':'-';
+                span.setAttribute('data-masked','true');
+                if(btn) btn.textContent='Show';
+            }
+        } catch(e) {
+            console.error('toggleCredVisibility error',e);
+        }
+    }
+
+    /**
+     * Copy the value contained in the button's data-copy attribute to clipboard
+     */
+    async copyFromButton(button) {
+        if(!button) return;
+        const value=button.dataset.copy||'';
+        try {
+            await navigator.clipboard.writeText(value||'');
+            const orig=button.innerHTML;
+            button.innerHTML='Copied';
+            setTimeout(() => button.innerHTML=orig,1200);
+        } catch(err) {
+            console.error('Copy failed',err);
+            this.showAlert('Failed to copy to clipboard','error');
+        }
     }
 
     async loadDeploymentLogs(realtime=false) {

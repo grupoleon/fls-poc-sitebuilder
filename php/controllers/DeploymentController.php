@@ -594,6 +594,50 @@ class DeploymentController
     }
 
     /**
+     * Refresh deployment list by validating Kinsta site IDs and removing records for missing sites
+     */
+    public function refreshDeploymentList(): void
+    {
+        try {
+            require_once __DIR__ . '/../admin/includes/DatabaseLogger.php';
+            $dbLogger = \DatabaseLogger::getInstance();
+
+            if (! $dbLogger->isAvailable()) {
+                Response::error('Database not available');
+                return;
+            }
+
+            $kinstaService = KinstaService::fromConfig($this->configManager);
+
+            $rows = $dbLogger->getAllDeploymentsRaw(1000);
+
+            $checked = 0;
+            $removed = 0;
+
+            foreach ($rows as $row) {
+                if (empty($row['kinsta_site_id'])) {
+                    continue; // only validate records that have a Kinsta site id
+                }
+
+                $checked++;
+                try {
+                    $siteInfo = $kinstaService->getSiteInfo($row['kinsta_site_id']);
+                    // exists -> keep
+                } catch (\Exception $e) {
+                    // site does not exist or API returned error -> remove deployment record
+                    $dbLogger->deleteDeploymentById($row['deployment_id']);
+                    $removed++;
+                }
+            }
+
+            Response::success(['checked' => $checked, 'removed' => $removed], 'Deployment list refreshed');
+        } catch (\Exception $e) {
+            Logger::error("Refresh deployment list error: " . $e->getMessage());
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
      * Get GitHub Actions status
      */
     public function getGithubActionsStatus(): void

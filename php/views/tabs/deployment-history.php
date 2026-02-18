@@ -7,9 +7,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h2 class="card-title mb-0">All Deployments</h2>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="refresh-deployments-btn" onclick="window.adminInterface?.loadAllDeployments()">
-                                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                                </button>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm me-2" id="refresh-deployments-btn" onclick="window.adminInterface?.loadAllDeployments()">
+                                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="update-deployments-list-btn" onclick="window.adminInterface?.refreshDeploymentList()">
+                                        <i class="fas fa-check-circle me-1"></i> Update List
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div id="deployments-list">
