@@ -68,6 +68,16 @@ class DeploymentManager
             mkdir($this->scriptDir . '/tmp', 0755, true);
         }
 
+        // Capture ClickUp data BEFORE cleanupTmpFolder() deletes the status file.
+        // DeploymentController writes clickup_task_id and clickup_integration_enabled
+        // to deployment_status.json before calling triggerDeployment(), but cleanupTmpFolder()
+        // wipes the entire /tmp directory (including that file). We must read it here first.
+        $statusFilePre     = $this->scriptDir . '/tmp/deployment_status.json';
+        $preExistingStatus = [];
+        if (file_exists($statusFilePre)) {
+            $preExistingStatus = json_decode(file_get_contents($statusFilePre), true) ?: [];
+        }
+
         // Clean up /tmp folder before deployment starts
         $this->cleanupTmpFolder();
 
@@ -84,13 +94,8 @@ class DeploymentManager
         // Create initial deployment status
         $this->resetDeployment();
 
-        // Update status to starting (preserve clickup_task_id if exists)
-        $statusFile     = $this->scriptDir . '/tmp/deployment_status.json';
-        $existingStatus = [];
-        if (file_exists($statusFile)) {
-            $existingStatus = json_decode(file_get_contents($statusFile), true) ?: [];
-        }
-
+        // Update status to starting, restoring ClickUp data captured before cleanup
+        $statusFile    = $this->scriptDir . '/tmp/deployment_status.json';
         $initialStatus = [
             'status'       => 'starting',
             'step'         => 'initializing',
@@ -102,10 +107,15 @@ class DeploymentManager
             'logs'         => ['Deployment requested from web interface'],
         ];
 
-        // Preserve clickup_task_id if it exists
-        if (isset($existingStatus['clickup_task_id']) && ! empty($existingStatus['clickup_task_id'])) {
-            $initialStatus['clickup_task_id'] = $existingStatus['clickup_task_id'];
-            error_log("DeploymentManager: Preserving ClickUp Task ID in initial status: {$existingStatus['clickup_task_id']}");
+        // Restore clickup_task_id from data captured before cleanup
+        if (! empty($preExistingStatus['clickup_task_id'])) {
+            $initialStatus['clickup_task_id'] = $preExistingStatus['clickup_task_id'];
+            error_log("DeploymentManager: Preserving ClickUp Task ID in initial status: {$preExistingStatus['clickup_task_id']}");
+        }
+
+        // Restore clickup_integration_enabled from data captured before cleanup
+        if (isset($preExistingStatus['clickup_integration_enabled'])) {
+            $initialStatus['clickup_integration_enabled'] = $preExistingStatus['clickup_integration_enabled'];
         }
 
         file_put_contents($statusFile, json_encode($initialStatus, JSON_PRETTY_PRINT));
