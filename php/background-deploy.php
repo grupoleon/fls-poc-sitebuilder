@@ -607,12 +607,25 @@ try {
             $adminUrl = rtrim($siteUrl, '/') . '/wp-admin';
         }
 
-        // Read admin credentials from site.json
+        // Read admin credentials from config.json (primary source) or site.json (fallback)
+        $configFile     = SCRIPT_DIR . '/config/config.json';
         $siteConfigFile = SCRIPT_DIR . '/config/site.json';
-        if (file_exists($siteConfigFile)) {
+
+        $adminUsername = null;
+        $adminPassword = null;
+
+        // Try config.json first (contains generated credentials from deploy.sh)
+        if (file_exists($configFile)) {
+            $config        = json_decode(file_get_contents($configFile), true);
+            $adminUsername = $config['site']['admin_user'] ?? null;
+            $adminPassword = $config['site']['admin_password'] ?? null;
+        }
+
+        // Fallback to site.json if credentials not found in config.json
+        if ((empty($adminUsername) || empty($adminPassword)) && file_exists($siteConfigFile)) {
             $siteConfig    = json_decode(file_get_contents($siteConfigFile), true);
-            $adminUsername = $siteConfig['admin_user'] ?? null;
-            $adminPassword = $siteConfig['admin_password'] ?? null;
+            $adminUsername = $adminUsername ?: ($siteConfig['admin_user'] ?? null);
+            $adminPassword = $adminPassword ?: ($siteConfig['admin_password'] ?? null);
         }
     } catch (Exception $e) {
         writeDeploymentLog('Failed to extract site details: ' . $e->getMessage(), 'WARNING');
