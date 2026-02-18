@@ -13,11 +13,18 @@ require_once __DIR__ . '/../admin/includes/SsoManager.php';
  */
 class SsoController
 {
-    private SsoManager $ssoManager;
+    private ?SsoManager $ssoManager = null;
 
-    public function __construct()
+    /**
+     * Lazy getter — DB connection only happens when an SSO route is actually called,
+     * not at bootstrap time. Prevents connection failures from breaking the entire app.
+     */
+    private function getSsoManager(): SsoManager
     {
-        $this->ssoManager = new SsoManager();
+        if ($this->ssoManager === null) {
+            $this->ssoManager = new SsoManager();
+        }
+        return $this->ssoManager;
     }
 
     /**
@@ -29,7 +36,7 @@ class SsoController
     {
         $this->requireAuth();
 
-        $sites = $this->ssoManager->listSites();
+        $sites = $this->getSsoManager()->listSites();
         Response::success($sites);
     }
 
@@ -59,7 +66,7 @@ class SsoController
         }
 
         $createdBy = Auth::getEmail() ?: 'unknown';
-        $success   = $this->ssoManager->registerSite($domain, $createdBy, $notes);
+        $success   = $this->getSsoManager()->registerSite($domain, $createdBy, $notes);
 
         if ($success) {
             Logger::info("SSO site registered: {$domain} by {$createdBy}");
@@ -87,7 +94,7 @@ class SsoController
             return;
         }
 
-        $success = $this->ssoManager->deactivateSite($domain);
+        $success = $this->getSsoManager()->deactivateSite($domain);
 
         if ($success) {
             Logger::info("SSO site deactivated: {$domain} by " . (Auth::getEmail() ?: 'unknown'));
@@ -106,7 +113,7 @@ class SsoController
     {
         $this->requireAuth();
 
-        $deleted = $this->ssoManager->cleanupTokens();
+        $deleted = $this->getSsoManager()->cleanupTokens();
         Logger::info("SSO token cleanup: {$deleted} tokens removed");
         Response::success(['deleted' => $deleted], "Cleaned up {$deleted} expired tokens");
     }

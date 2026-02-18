@@ -42,19 +42,36 @@ class Database
     }
 
     /**
-     * Get default database configuration
+     * Get default database configuration.
+     *
+     * Supports both standard env var names (DB_USERNAME, DB_DATABASE) and
+     * Kinsta-style names (DB_USER, DB_NAME, DB_PASS). When DB_HOST is set,
+     * defaults to MySQL instead of SQLite so Kinsta deployments work without
+     * needing DB_DRIVER explicitly.
      *
      * @return array
      */
     private static function getDefaultConfig(): array
     {
+        $host     = getenv('DB_HOST') ?: 'localhost';
+        $username = getenv('DB_USERNAME') ?: getenv('DB_USER') ?: '';
+        $password = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: '';
+        $database = getenv('DB_DATABASE') ?: getenv('DB_NAME') ?: '';
+
+        // Auto-detect driver: use MySQL when host credentials are available, else SQLite
+        $hasCredentials = ! empty($username) && ! empty($password) && ! empty($database);
+        $defaultDriver  = $hasCredentials ? 'mysql' : 'sqlite';
+        $driver         = getenv('DB_DRIVER') ?: $defaultDriver;
+
         return [
-            'driver'   => getenv('DB_DRIVER') ?: 'sqlite',
-            'database' => getenv('DB_DATABASE') ?: dirname(dirname(__DIR__)) . '/database/app.db',
-            'host'     => getenv('DB_HOST') ?: 'localhost',
+            'driver'   => $driver,
+            'database' => $driver === 'sqlite'
+                ? (getenv('DB_DATABASE') ?: dirname(dirname(__DIR__)) . '/database/app.db')
+                : $database,
+            'host'     => $host,
             'port'     => getenv('DB_PORT') ?: 3306,
-            'username' => getenv('DB_USERNAME') ?: '',
-            'password' => getenv('DB_PASSWORD') ?: '',
+            'username' => $username,
+            'password' => $password,
             'charset'  => getenv('DB_CHARSET') ?: 'utf8mb4',
         ];
     }
