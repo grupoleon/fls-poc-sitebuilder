@@ -1294,6 +1294,9 @@ class AdminInterface {
             case 'deployment-history':
                 this.loadAllDeployments();
                 break;
+            case 'sso-sites':
+                this.loadSsoSites();
+                break;
         }
     }
 
@@ -7852,6 +7855,189 @@ class AdminInterface {
         }
 
         container.innerHTML=html;
+    }
+
+    // -------------------------------------------------------------------------
+    // SSO Sites Management
+    // -------------------------------------------------------------------------
+
+    async loadSsoSites() {
+        const container=document.getElementById('sso-sites-list');
+        if(!container) return;
+        container.innerHTML='<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i> Loading SSO sites...</div>';
+        try {
+            const res=await fetch('?action=sso_list_sites');
+            const data=await res.json();
+            if(data.success) {
+                this.renderSsoSites(data.data||[]);
+            } else {
+                container.innerHTML=`<div class="text-center text-muted py-4">Failed to load: ${this.escapeHtml(data.error||'Unknown error')}</div>`;
+            }
+        } catch(err) {
+            console.error('loadSsoSites failed',err);
+            container.innerHTML='<div class="text-center text-muted py-4">Failed to load SSO sites.</div>';
+        }
+    }
+
+    renderSsoSites(sites) {
+        const container=document.getElementById('sso-sites-list');
+        if(!container) return;
+
+        if(!sites||sites.length===0) {
+            container.innerHTML='<div class="text-center text-muted py-4">No SSO sites registered yet. Deploy a site or register one manually above.</div>';
+            return;
+        }
+
+        const rows=sites.map(s => {
+            const active=parseInt(s.is_active)===1;
+            const badge=active
+                ? '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#059669;color:#fff;">Active</span>'
+                : '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#6b7280;color:#fff;">Inactive</span>';
+            const toggleLabel=active? 'Deactivate':'Reactivate';
+            const toggleClass=active? 'btn-outline-danger':'btn-outline-success';
+            const created=s.created_at? s.created_at.substring(0,10):'—';
+
+            return `<tr style="border-bottom:1px solid var(--border-color,#e5e7eb);">
+                <td style="padding:10px 14px;font-family:monospace;font-size:13px;">${this.escapeHtml(s.domain)}</td>
+                <td style="padding:10px 14px;">${badge}</td>
+                <td style="padding:10px 14px;font-size:12px;color:var(--text-muted,#6b7280);">${this.escapeHtml(s.created_by||'—')}</td>
+                <td style="padding:10px 14px;font-size:12px;max-width:260px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="text" class="form-input" style="flex:1;font-size:12px;padding:4px 8px;"
+                            id="sso-notes-${s.id}"
+                            value="${this.escapeHtml(s.notes||'')}" placeholder="Add notes...">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                            style="padding:3px 8px;font-size:11px;white-space:nowrap;"
+                            onclick="window.adminInterface?.ssoSaveNotes(${s.id},'${this.escapeHtml(s.domain)}')">
+                            Save
+                        </button>
+                    </div>
+                </td>
+                <td style="padding:10px 14px;font-size:12px;color:var(--text-muted,#6b7280);">${created}</td>
+                <td style="padding:10px 14px;">
+                    <button type="button" class="btn ${toggleClass} btn-sm"
+                        style="font-size:11px;"
+                        onclick="window.adminInterface?.ssoToggleActive('${this.escapeHtml(s.domain)}',${active})">
+                        ${toggleLabel}
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        container.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="background:var(--bg-tertiary,#f3f4f6);">
+                    <th style="padding:10px 14px;text-align:left;font-weight:600;">Domain</th>
+                    <th style="padding:10px 14px;text-align:left;font-weight:600;">Status</th>
+                    <th style="padding:10px 14px;text-align:left;font-weight:600;">Registered By</th>
+                    <th style="padding:10px 14px;text-align:left;font-weight:600;">Notes</th>
+                    <th style="padding:10px 14px;text-align:left;font-weight:600;">Date</th>
+                    <th style="padding:10px 14px;text-align:left;font-weight:600;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    async ssoRegisterSite() {
+        const domainEl=document.getElementById('sso-new-domain');
+        const notesEl=document.getElementById('sso-new-notes');
+        const btn=document.getElementById('sso-register-btn');
+
+        const domain=(domainEl?.value||'').trim();
+        if(!domain) { this.showAlert('Domain is required','error'); return; }
+
+        const origHtml=btn? btn.innerHTML:null;
+        if(btn){ btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i> Registering...'; }
+
+        try {
+            const res=await fetch('?action=sso_register_site',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({domain, notes:(notesEl?.value||'').trim()})
+            });
+            const data=await res.json();
+            if(data.success) {
+                this.showAlert(data.message||'Site registered','success');
+                if(domainEl) domainEl.value='';
+                if(notesEl) notesEl.value='';
+                await this.loadSsoSites();
+            } else {
+                this.showAlert(data.error||'Failed to register site','error');
+            }
+        } catch(err) {
+            console.error('ssoRegisterSite failed',err);
+            this.showAlert('Failed to register site','error');
+        } finally {
+            if(btn){ btn.disabled=false; btn.innerHTML=origHtml; }
+        }
+    }
+
+    async ssoSaveNotes(siteId, domain) {
+        const input=document.getElementById(`sso-notes-${siteId}`);
+        const notes=(input?.value||'').trim();
+        try {
+            const res=await fetch('?action=sso_update_site',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({domain, notes})
+            });
+            const data=await res.json();
+            if(data.success) {
+                this.showAlert('Notes saved','success');
+            } else {
+                this.showAlert(data.error||'Failed to save notes','error');
+            }
+        } catch(err) {
+            console.error('ssoSaveNotes failed',err);
+            this.showAlert('Failed to save notes','error');
+        }
+    }
+
+    async ssoToggleActive(domain, currentlyActive) {
+        try {
+            let res, data;
+            if(currentlyActive) {
+                res=await fetch('?action=sso_deactivate_site',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({domain})
+                });
+            } else {
+                // Re-activate: use register_site which is idempotent / re-activates
+                res=await fetch('?action=sso_register_site',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({domain, notes:''})
+                });
+            }
+            data=await res.json();
+            if(data.success) {
+                this.showAlert(data.message||'Updated','success');
+                await this.loadSsoSites();
+            } else {
+                this.showAlert(data.error||'Failed to update','error');
+            }
+        } catch(err) {
+            console.error('ssoToggleActive failed',err);
+            this.showAlert('Failed to update SSO site','error');
+        }
+    }
+
+    async ssoCleanupTokens() {
+        try {
+            const res=await fetch('?action=sso_cleanup_tokens',{method:'POST'});
+            const data=await res.json();
+            if(data.success) {
+                const deleted=data.data?.deleted??0;
+                this.showAlert(`Cleaned up ${deleted} expired token(s)`,'success');
+            } else {
+                this.showAlert(data.error||'Failed to cleanup tokens','error');
+            }
+        } catch(err) {
+            console.error('ssoCleanupTokens failed',err);
+            this.showAlert('Failed to cleanup tokens','error');
+        }
     }
 
     formatSeconds(seconds) {

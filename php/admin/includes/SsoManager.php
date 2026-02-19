@@ -89,6 +89,25 @@ class SsoManager
     }
 
     /**
+     * Update the notes for a registered site. Also used to re-activate a site.
+     *
+     * @param string $domain  Hostname to update
+     * @param string $notes   New notes value
+     * @param bool   $activate  When true, also sets is_active = 1
+     * @return bool True if a row was modified
+     */
+    public function updateSite(string $domain, string $notes, bool $activate = false): bool
+    {
+        $domain  = strtolower(trim($domain));
+        $data    = ['notes' => $notes];
+        if ($activate) {
+            $data['is_active'] = 1;
+        }
+        $updated = $this->db->update('sso_sites', $data, ['domain' => $domain]);
+        return $updated > 0;
+    }
+
+    /**
      * Deactivate a site's SSO access without deleting the record.
      */
     public function deactivateSite(string $domain): bool

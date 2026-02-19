@@ -48,6 +48,12 @@
                         </a>
                     </div>
                     <div class="nav-item">
+                        <a href="#" class="nav-link" data-tab="sso-sites">
+                            <i class="fas fa-key nav-icon"></i>
+                            SSO Sites
+                        </a>
+                    </div>
+                    <div class="nav-item">
                         <a href="#" class="nav-link" data-tab="raw-configs">
                             <i class="fas fa-code nav-icon"></i>
                             Raw Configs

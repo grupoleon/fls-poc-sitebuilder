@@ -604,7 +604,20 @@ try {
         }
 
         if ($siteUrl) {
-            $adminUrl = rtrim($siteUrl, '/') . '/wp-admin';
+            // Determine login path — use custom slug when security & hide-login are enabled
+            $loginSlug  = 'wp-admin';
+            $cfgPath    = SCRIPT_DIR . '/config/config.json';
+            if (file_exists($cfgPath)) {
+                $cfg        = json_decode(file_get_contents($cfgPath), true) ?: [];
+                $secEnabled = $cfg['security']['enabled'] ?? false;
+                $hideLogin  = $cfg['security']['login_protection']['hide_login_page'] ?? false;
+                $customSlug = trim($cfg['security']['login_protection']['custom_login_url'] ?? '', '/');
+                if ($secEnabled && $hideLogin && $customSlug !== '' && $customSlug !== 'null') {
+                    $loginSlug = $customSlug;
+                }
+            }
+            $adminUrl = rtrim($siteUrl, '/') . '/' . $loginSlug;
+            writeDeploymentLog("Admin URL set to: $adminUrl (slug: $loginSlug)", 'INFO');
         }
 
         // Read admin credentials from config.json (primary source) or site.json (fallback)
@@ -652,6 +665,25 @@ try {
             writeDeploymentLog('Updated deployment with site details in database', 'INFO');
         } catch (Exception $e) {
             writeDeploymentLog('Failed to update site details in database: ' . $e->getMessage(), 'WARNING');
+        }
+
+        // Auto-register deployed site with SSO
+        try {
+            require_once __DIR__ . '/core/Database.php';
+            require_once __DIR__ . '/admin/includes/SsoManager.php';
+            $ssoDomain = parse_url($siteUrl, PHP_URL_HOST);
+            if ($ssoDomain) {
+                $ssoManager = new SsoManager();
+                $ssoNotes   = "Auto-registered during deployment {$deploymentId}";
+                $registered = $ssoManager->registerSite($ssoDomain, $userEmail ?? 'system', $ssoNotes);
+                if ($registered) {
+                    writeDeploymentLog("SSO auto-registration successful for domain: $ssoDomain", 'INFO');
+                } else {
+                    writeDeploymentLog("SSO auto-registration returned false for domain: $ssoDomain", 'WARNING');
+                }
+            }
+        } catch (Exception $e) {
+            writeDeploymentLog('SSO auto-registration failed: ' . $e->getMessage(), 'WARNING');
         }
     }
 

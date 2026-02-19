@@ -176,6 +176,7 @@ class Router
         // SSO site management routes
         $this->register('sso_list_sites', 'SsoController', 'listSites');
         $this->register('sso_register_site', 'SsoController', 'registerSite');
+        $this->register('sso_update_site', 'SsoController', 'updateSite');
         $this->register('sso_deactivate_site', 'SsoController', 'deactivateSite');
         $this->register('sso_cleanup_tokens', 'SsoController', 'cleanupTokens');
 

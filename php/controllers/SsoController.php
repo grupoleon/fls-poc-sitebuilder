@@ -105,6 +105,36 @@ class SsoController
     }
 
     /**
+     * Update notes for a registered site, and optionally re-activate it.
+     *
+     * Input: { domain: "site.kinsta.cloud", notes: "updated note", activate: true }
+     * Response: { success: true, message: "Site updated" }
+     */
+    public function updateSite(): void
+    {
+        $this->requireAuth();
+
+        $input    = $this->getJsonInput();
+        $domain   = trim((string) ($input['domain'] ?? ''));
+        $notes    = trim((string) ($input['notes'] ?? ''));
+        $activate = (bool) ($input['activate'] ?? false);
+
+        if (empty($domain)) {
+            Response::error('domain is required', null, 400);
+            return;
+        }
+
+        $success = $this->getSsoManager()->updateSite($domain, $notes, $activate);
+
+        if ($success) {
+            Logger::info("SSO site updated: {$domain} by " . (Auth::getEmail() ?: 'unknown'));
+            Response::success(null, "Site '{$domain}' updated");
+        } else {
+            Response::error("Site '{$domain}' not found", null, 404);
+        }
+    }
+
+    /**
      * Delete expired/used SSO tokens older than 24 hours.
      *
      * Response: { success: true, data: { deleted: N } }
