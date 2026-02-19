@@ -229,9 +229,17 @@ if (! $hasGitHubToken && ! $testMode) {
 
 // Main deployment process
 try {
-    // Get user information from session
-    $userEmail = $_SESSION['google_auth']['email'] ?? 'system@unknown';
-    $userName  = $_SESSION['google_auth']['name'] ?? 'System';
+    // Get user information — prefer the tmp file written by the web request
+    // (background process runs in a separate context without the web session)
+    $userEmail = null;
+    $deployerEmailFile = SCRIPT_DIR . '/tmp/deployer_email.txt';
+    if (file_exists($deployerEmailFile)) {
+        $userEmail = trim(file_get_contents($deployerEmailFile)) ?: null;
+    }
+    if (empty($userEmail)) {
+        $userEmail = $_SESSION['google_auth']['email'] ?? 'system@unknown';
+    }
+    $userName = $_SESSION['google_auth']['name'] ?? $userEmail;
 
     // Generate unique deployment ID
     $deploymentId = 'deploy_' . date('Ymd_His') . '_' . substr(md5(uniqid()), 0, 8);

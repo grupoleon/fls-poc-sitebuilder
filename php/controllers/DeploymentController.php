@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../core/Response.php';
 require_once __DIR__ . '/../core/Logger.php';
 require_once __DIR__ . '/../services/KinstaService.php';
+require_once __DIR__ . '/../admin/includes/Auth.php';
 
 /**
  * DeploymentController
@@ -517,6 +518,16 @@ class DeploymentController
                 file_put_contents($statusFile, json_encode($status, JSON_PRETTY_PRINT));
             }
 
+            // Persist the current user's email so background-deploy.php can read it
+            // (background process runs in a separate PHP context without web session)
+            $tmpDir = dirname(dirname(__DIR__)) . '/tmp';
+            if (! is_dir($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
+            Auth::init();
+            $deployerEmail = Auth::getEmail() ?: ($_SESSION['google_auth']['email'] ?? 'unknown');
+            file_put_contents($tmpDir . '/deployer_email.txt', $deployerEmail);
+
             $result = $this->deploymentManager->triggerDeployment($step, $force);
 
                             // Wait a moment for status file to be written
@@ -540,6 +551,15 @@ class DeploymentController
         set_time_limit(10);
 
         try {
+            // Persist deployer email for background process
+            $tmpDir = dirname(dirname(__DIR__)) . '/tmp';
+            if (! is_dir($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
+            Auth::init();
+            $deployerEmail = Auth::getEmail() ?: ($_SESSION['google_auth']['email'] ?? 'unknown');
+            file_put_contents($tmpDir . '/deployer_email.txt', $deployerEmail);
+
             $result = $this->deploymentManager->triggerDeploymentAgain();
 
                             // Wait a moment for status file to be written

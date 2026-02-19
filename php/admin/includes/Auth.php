@@ -31,6 +31,16 @@ class Auth
     public static function init($configDir = null)
     {
         if (session_status() === PHP_SESSION_NONE) {
+            // Keep session cookie alive for 30 days — no forced re-login due to inactivity
+            $thirtyDays = 30 * 24 * 60 * 60;
+            session_set_cookie_params([
+                'lifetime' => $thirtyDays,
+                'path'     => '/',
+                'secure'   => isset($_SERVER['HTTPS']),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            ini_set('session.gc_maxlifetime', $thirtyDays);
             session_start();
         }
 
@@ -91,12 +101,17 @@ class Auth
             return false;
         }
 
-                                        // Check session expiry (8 hours)
-        $sessionDuration = 8 * 60 * 60; // 8 hours in seconds
-        if (time() - $auth['logged_in_at'] > $sessionDuration) {
+        // Rolling idle timeout: 30 days since last activity (updated on every request).
+        // Falls back to logged_in_at for sessions created before this change.
+        $idleLimit     = 30 * 24 * 60 * 60; // 30 days
+        $lastActivity  = $auth['last_activity'] ?? $auth['logged_in_at'];
+        if (time() - $lastActivity > $idleLimit) {
             self::logout();
             return false;
         }
+
+        // Refresh the last_activity timestamp on every authenticated request
+        $_SESSION['google_auth']['last_activity'] = time();
 
         // Check if access token is expired and needs refresh
         if (isset($auth['expires_at']) && time() > $auth['expires_at']) {

@@ -7774,79 +7774,136 @@ class AdminInterface {
             return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${colors[status]||'background:#6b7280;color:#fff'}">${status}</span>`;
         };
 
+        // Inline style helpers (avoids class name conflicts with host page)
+        const btnBase='display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:filter 0.15s;white-space:nowrap;';
+        const iconBtn='display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:5px;font-size:11px;cursor:pointer;border:1px solid transparent;transition:filter 0.15s;';
+
         let html='';
         for(const domain of domains) {
             const deploys=deploymentsByDomain[domain];
             const latestDeploy=deploys[0];
 
+            const visitBtn=latestDeploy.site_url
+                ? `<a href="${this.escapeHtml(latestDeploy.site_url)}" target="_blank"
+                       onclick="event.stopPropagation()"
+                       title="Open site"
+                       style="${btnBase}background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;"
+                       onmouseover="this.style.filter='brightness(0.93)'" onmouseout="this.style.filter=''">
+                       <i class="fas fa-external-link-alt"></i> Visit
+                   </a>` : '';
+
+            const adminBtn=latestDeploy.admin_url
+                ? `<a href="${this.escapeHtml(latestDeploy.admin_url)}" target="_blank"
+                       onclick="event.stopPropagation()"
+                       title="Open admin login"
+                       style="${btnBase}background:#f0fdf4;color:#166534;border-color:#bbf7d0;"
+                       onmouseover="this.style.filter='brightness(0.93)'" onmouseout="this.style.filter=''">
+                       <i class="fas fa-shield-alt"></i> Admin
+                   </a>` : '';
+
             html+=`
                 <div class="mb-4" style="border:1px solid var(--border-color,#e5e7eb);border-radius:8px;overflow:hidden;">
-                    <div style="padding:12px 16px;background:var(--bg-secondary,#f9fafb);border-bottom:1px solid var(--border-color,#e5e7eb);display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.parentElement.querySelector('.domain-deploys').classList.toggle('collapsed')">
-                        <div>
+                    <div style="padding:12px 16px;background:var(--bg-secondary,#f9fafb);border-bottom:1px solid var(--border-color,#e5e7eb);display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;"
+                         onclick="this.parentElement.querySelector('.domain-deploys').classList.toggle('collapsed')">
+                        <div style="display:flex;align-items:center;gap:10px;">
                             <strong style="font-size:14px;">${this.escapeHtml(domain)}</strong>
-                            <span style="margin-left:8px;font-size:12px;color:var(--text-muted,#6b7280);">${deploys.length} deployment${deploys.length!==1? 's':''}</span>
+                            <span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--bg-tertiary,#e5e7eb);color:var(--text-muted,#6b7280);">${deploys.length} deployment${deploys.length!==1?'s':''}</span>
                         </div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            ${latestDeploy.site_url? `<a href="${this.escapeHtml(latestDeploy.site_url)}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> Visit</a>`:''}
-                            ${latestDeploy.admin_url? `<a href="${this.escapeHtml(latestDeploy.admin_url)}" target="_blank" style="font-size:12px;color:#059669;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-lock"></i> Admin</a>`:''}
-                            <i class="fas fa-chevron-down" style="font-size:12px;color:var(--text-muted,#6b7280);"></i>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            ${visitBtn}
+                            ${adminBtn}
+                            <i class="fas fa-chevron-down" style="font-size:11px;color:var(--text-muted,#6b7280);margin-left:4px;"></i>
                         </div>
                     </div>
-                    <div class="domain-deploys" style="max-height:600px;overflow-y:auto;">
-                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <div class="domain-deploys" style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
                             <thead>
-                                <tr style="background:var(--bg-tertiary,#f3f4f6);">
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Date</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">User</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Kinsta ID</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Credentials</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Status</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Duration</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">Steps</th>
-                                    <th style="padding:8px 12px;text-align:left;font-weight:600;">ClickUp</th>
+                                <tr style="background:var(--bg-tertiary,#f3f4f6);border-bottom:2px solid var(--border-color,#e5e7eb);">
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;">Date</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;">Deployed By</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;">Kinsta ID</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;">Credentials</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;">Status</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;">Duration</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;">Steps</th>
+                                    <th style="padding:9px 14px;text-align:left;font-weight:600;">ClickUp</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${deploys.map(d => {
+                                ${deploys.map((d,idx) => {
                 const duration=d.total_duration? this.formatSeconds(d.total_duration):'-';
+
                 const stepsHtml=(d.steps||[]).map(s => {
                     const label=stepLabels[s.key]||s.key;
-                    const color=s.status==='completed'? '#059669':s.status==='failed'? '#dc2626':'#6b7280';
-                    return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin:1px;border:1px solid ${color};color:${color};" title="${s.key}: ${s.status} (${s.duration}s)">${label}</span>`;
+                    const bg  =s.status==='completed'? '#f0fdf4':s.status==='failed'? '#fef2f2':'#f3f4f6';
+                    const col =s.status==='completed'? '#166534':s.status==='failed'? '#991b1b':'#374151';
+                    const bdr =s.status==='completed'? '#bbf7d0':s.status==='failed'? '#fecaca':'#d1d5db';
+                    return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;margin:1px;background:${bg};color:${col};border:1px solid ${bdr};" title="${s.key}: ${s.status} (${s.duration}s)">${label}</span>`;
                 }).join('');
-                const clickup=d.clickup_task_id? `<a href="https://app.clickup.com/t/${d.clickup_task_id}" target="_blank" style="color:#7c3aed;text-decoration:none;font-size:11px;" onclick="event.stopPropagation()">${d.clickup_task_id.substring(0,8)}...</a>`:'-';
 
-                // Credentials: both username and password are hidden by default (masked)
-                const kinstaIdCol=d.kinsta_site_id? this.escapeHtml(d.kinsta_site_id):'-';
+                const clickup=d.clickup_task_id
+                    ? `<a href="https://app.clickup.com/t/${d.clickup_task_id}" target="_blank"
+                           onclick="event.stopPropagation()" title="Open in ClickUp"
+                           style="${btnBase}background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe;"
+                           onmouseover="this.style.filter='brightness(0.93)'" onmouseout="this.style.filter=''">
+                           <i class="fas fa-tasks" style="font-size:10px;"></i> ${d.clickup_task_id.substring(0,8)}
+                       </a>` : '<span style="color:var(--text-muted,#9ca3af);">—</span>';
+
+                const kinstaIdCol=d.kinsta_site_id
+                    ? `<span style="font-family:monospace;font-size:11px;color:var(--text-muted,#6b7280);" title="${this.escapeHtml(d.kinsta_site_id)}">${this.escapeHtml(d.kinsta_site_id.substring(0,18))}${d.kinsta_site_id.length>18?'…':''}</span>`
+                    : '<span style="color:var(--text-muted,#9ca3af);">—</span>';
+
                 const userValue=d.admin_username||'';
                 const passValue=d.admin_password||'';
 
-                const credsHtml=`
-                                        <div style="display:flex;flex-direction:column;gap:6px;max-width:260px;">
-                                            <div style="display:flex;align-items:center;gap:8px;">
-                                                <small style="width:50px;color:var(--text-muted,#6b7280)">User</small>
-                                                <span id="cred-${d.deployment_id}-user" data-value="${this.escapeHtml(userValue)}" data-masked="true">${userValue? '••••••':'-'}</span>
-                                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="window.adminInterface.toggleCredVisibility('${d.deployment_id}','user', this)">Show</button>
-                                                <button class="btn btn-sm btn-light ms-1" data-copy="${this.escapeHtml(userValue)}" onclick="window.adminInterface.copyFromButton(this)">Copy</button>
-                                            </div>
-                                            <div style="display:flex;align-items:center;gap:8px;">
-                                                <small style="width:50px;color:var(--text-muted,#6b7280)">Pass</small>
-                                                <span id="cred-${d.deployment_id}-pass" data-value="${this.escapeHtml(passValue)}" data-masked="true">${passValue? '••••••':'-'}</span>
-                                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="window.adminInterface.toggleCredVisibility('${d.deployment_id}','pass', this)">Show</button>
-                                                <button class="btn btn-sm btn-light ms-1" data-copy="${this.escapeHtml(passValue)}" onclick="window.adminInterface.copyFromButton(this)">Copy</button>
-                                            </div>
-                                        </div>`;
+                const showToggleStyle=`${iconBtn}background:#f3f4f6;color:#374151;border-color:#d1d5db;`;
+                const copyBtnStyle  =`${iconBtn}background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;`;
 
-                return `<tr style="border-top:1px solid var(--border-color,#e5e7eb);">
-                                        <td style="padding:8px 12px;white-space:nowrap;">${d.start_time||'-'}</td>
-                                        <td style="padding:8px 12px;">${this.escapeHtml(d.user_email||'-')}</td>
-                                        <td style="padding:8px 12px;white-space:nowrap;">${kinstaIdCol}</td>
-                                        <td style="padding:8px 12px;">${credsHtml}</td>
-                                        <td style="padding:8px 12px;">${statusBadge(d.status)}</td>
-                                        <td style="padding:8px 12px;">${duration}</td>
-                                        <td style="padding:8px 12px;">${stepsHtml||'-'}</td>
-                                        <td style="padding:8px 12px;">${clickup}</td>
-                                    </tr>`;
+                const credsHtml=`
+                    <div style="display:flex;flex-direction:column;gap:5px;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="width:36px;font-size:10px;font-weight:600;color:var(--text-muted,#6b7280);text-transform:uppercase;letter-spacing:.4px;">User</span>
+                            <code id="cred-${d.deployment_id}-user" data-value="${this.escapeHtml(userValue)}" data-masked="true"
+                                  style="flex:1;font-size:12px;background:var(--bg-tertiary,#f3f4f6);padding:2px 6px;border-radius:4px;min-width:80px;">${userValue?'••••••':'—'}</code>
+                            <button title="Show / hide" style="${showToggleStyle}"
+                                onmouseover="this.style.filter='brightness(0.92)'" onmouseout="this.style.filter=''"
+                                onclick="window.adminInterface.toggleCredVisibility('${d.deployment_id}','user',this)">
+                                <i class="fas fa-eye" style="pointer-events:none;"></i>
+                            </button>
+                            <button title="Copy to clipboard" style="${copyBtnStyle}"
+                                onmouseover="this.style.filter='brightness(0.92)'" onmouseout="this.style.filter=''"
+                                data-copy="${this.escapeHtml(userValue)}" onclick="window.adminInterface.copyFromButton(this)">
+                                <i class="fas fa-copy" style="pointer-events:none;"></i>
+                            </button>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="width:36px;font-size:10px;font-weight:600;color:var(--text-muted,#6b7280);text-transform:uppercase;letter-spacing:.4px;">Pass</span>
+                            <code id="cred-${d.deployment_id}-pass" data-value="${this.escapeHtml(passValue)}" data-masked="true"
+                                  style="flex:1;font-size:12px;background:var(--bg-tertiary,#f3f4f6);padding:2px 6px;border-radius:4px;min-width:80px;">${passValue?'••••••':'—'}</code>
+                            <button title="Show / hide" style="${showToggleStyle}"
+                                onmouseover="this.style.filter='brightness(0.92)'" onmouseout="this.style.filter=''"
+                                onclick="window.adminInterface.toggleCredVisibility('${d.deployment_id}','pass',this)">
+                                <i class="fas fa-eye" style="pointer-events:none;"></i>
+                            </button>
+                            <button title="Copy to clipboard" style="${copyBtnStyle}"
+                                onmouseover="this.style.filter='brightness(0.92)'" onmouseout="this.style.filter=''"
+                                data-copy="${this.escapeHtml(passValue)}" onclick="window.adminInterface.copyFromButton(this)">
+                                <i class="fas fa-copy" style="pointer-events:none;"></i>
+                            </button>
+                        </div>
+                    </div>`;
+
+                const rowBg=idx%2===0?'':'background:var(--bg-secondary,#fafafa)';
+                return `<tr style="border-bottom:1px solid var(--border-color,#f0f0f0);${rowBg};">
+                    <td style="padding:10px 14px;white-space:nowrap;color:var(--text-muted,#6b7280);font-size:12px;">${d.start_time||'—'}</td>
+                    <td style="padding:10px 14px;font-size:12px;">${this.escapeHtml(d.user_email||'—')}</td>
+                    <td style="padding:10px 14px;">${kinstaIdCol}</td>
+                    <td style="padding:10px 14px;">${credsHtml}</td>
+                    <td style="padding:10px 14px;">${statusBadge(d.status)}</td>
+                    <td style="padding:10px 14px;white-space:nowrap;font-size:12px;">${duration}</td>
+                    <td style="padding:10px 14px;">${stepsHtml||'<span style="color:var(--text-muted,#9ca3af);">—</span>'}</td>
+                    <td style="padding:10px 14px;">${clickup}</td>
+                </tr>`;
             }).join('')}
                             </tbody>
                         </table>
