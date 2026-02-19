@@ -401,6 +401,7 @@ h6 {
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.1);
     transition: all var(--transition-normal);
+    padding: 5px 0;
 }
 
 .nav-link:hover .nav-icon {
