@@ -739,12 +739,10 @@ upload_images() {
             exit 1
         fi
     else
-        print_error "No files found in local uploads directory — aborting deployment"
-        print_error "  Checked: $uploads_dir"
-        print_error "  Directory contents:"
-        ls -la "$uploads_dir" 2>/dev/null || print_error "  (directory not accessible)"
-        print_error "  Upload images via the sitebuilder UI before deploying."
-        exit 1
+        print_warning "No files found in uploads directory — skipping image upload (theme defaults will be used)"
+        print_info "  Checked: $uploads_dir"
+        log_step_complete "Upload Media Files"
+        return
     fi
 
     log_step_complete "Upload Media Files"
