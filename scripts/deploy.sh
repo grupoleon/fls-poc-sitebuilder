@@ -707,15 +707,29 @@ upload_images() {
         
         # Upload with rsync - preserve directory structure by uploading the contents
         # This will create /tmp/uploads/images/slides/ structure on server
-        if rsync -azv --exclude='.DS_Store' -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p $KINSTA_PORT" \
+        if rsync -az --exclude='.DS_Store' -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p $KINSTA_PORT" \
             "$uploads_dir/" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/" 2>&1; then
-            print_success "All uploads directory contents transferred ($file_count files)"
-            print_success "Server structure: /tmp/uploads/images/slides/"
-            
-            # Verify upload by listing server directory structure
-            print_info "Verifying uploaded structure on server..."
+            print_success "rsync completed — verifying file count on server..."
+
+            # Verify actual files (not just directories) were transferred
+            local server_count
+            server_count=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
+                "find /tmp/uploads -type f ! -name '.DS_Store' 2>/dev/null | wc -l | tr -d ' '" 2>/dev/null || echo "0")
+            server_count=$(echo "$server_count" | tr -d ' \n')
+
+            if [[ "${server_count:-0}" -eq 0 ]]; then
+                print_error "Upload verification FAILED: rsync exited 0 but no files found on server"
+                print_error "  Source:      $uploads_dir/ ($file_count files)"
+                print_error "  Destination: /tmp/uploads/ (0 files)"
+                print_error "  Check SSH key permissions and rsync connectivity"
+                exit 1
+            fi
+
+            print_success "Upload verified: $server_count / $file_count files on server"
+
+            # Show directory tree for confirmation
             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
-                "find /tmp/uploads -type d | sort" 2>/dev/null || print_warning "Could not verify server directory structure"
+                "find /tmp/uploads -type d | sort" 2>/dev/null || true
         else
             rsync_exit_code=$?
             print_error "Failed to upload files via rsync (exit code: $rsync_exit_code)"
