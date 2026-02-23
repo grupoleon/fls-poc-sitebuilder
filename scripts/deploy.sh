@@ -696,58 +696,57 @@ upload_images() {
     
     # Upload entire uploads directory recursively to preserve structure
     print_info "Uploading entire uploads directory (preserves images/slides/ structure)..."
-    
-    # Create uploads directory on server (parent directory)
-    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/uploads"
-    
-    # Count all files in uploads directory (excluding .DS_Store)
+
+    # Count local files FIRST — do NOT create remote dir until we know there is something to upload
     if find "$uploads_dir" -type f ! -name ".DS_Store" -print -quit | grep -q .; then
         file_count=$(find "$uploads_dir" -type f ! -name ".DS_Store" | wc -l | tr -d ' ')
         print_info "Found $file_count files to upload from uploads/ directory"
-        
-        # Upload with rsync - preserve directory structure by uploading the contents
-        # This will create /tmp/uploads/images/slides/ structure on server
-        if rsync -az --exclude='.DS_Store' -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p $KINSTA_PORT" \
-            "$uploads_dir/" "${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/" 2>&1; then
-            print_success "rsync completed — verifying file count on server..."
 
-            # Verify actual files (not just directories) were transferred
+        # Create uploads directory on server only when we have files to send
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" "mkdir -p /tmp/uploads"
+
+        # Transfer entire uploads directory tree via tar-over-SSH.
+        # Avoids rsync (requires remote rsync binary, unavailable on Kinsta WordPress SSH).
+        # tar runs locally, pipes compressed stream over the same SSH channel used by scp/ssh
+        # everywhere else in this script, and extracts on the remote side — no extra binary needed.
+        print_info "Transferring uploads via tar pipe (preserves images/slides/ structure)..."
+        local ssh_cmd="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p $KINSTA_PORT"
+        if tar -czf - --exclude='.DS_Store' -C "$uploads_dir" . | \
+            $ssh_cmd "${KINSTA_USER}@${KINSTA_HOST}" "tar -xzf - -C /tmp/uploads"; then
+
+            # Verify actual files were received on the server
             local server_count
-            server_count=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
+            server_count=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
                 "find /tmp/uploads -type f ! -name '.DS_Store' 2>/dev/null | wc -l | tr -d ' '" 2>/dev/null || echo "0")
             server_count=$(echo "$server_count" | tr -d ' \n')
 
             if [[ "${server_count:-0}" -eq 0 ]]; then
-                print_error "Upload verification FAILED: rsync exited 0 but no files found on server"
+                print_error "Upload verification FAILED: tar transfer exited 0 but no files found on server"
                 print_error "  Source:      $uploads_dir/ ($file_count files)"
                 print_error "  Destination: /tmp/uploads/ (0 files)"
-                print_error "  Check SSH key permissions and rsync connectivity"
                 exit 1
             fi
 
             print_success "Upload verified: $server_count / $file_count files on server"
 
             # Show directory tree for confirmation
-            ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/id_rsa -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
+            ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$HOME/.ssh/id_rsa" -p "$KINSTA_PORT" "${KINSTA_USER}@${KINSTA_HOST}" \
                 "find /tmp/uploads -type d | sort" 2>/dev/null || true
         else
-            rsync_exit_code=$?
-            print_error "Failed to upload files via rsync (exit code: $rsync_exit_code)"
-            print_error "Check SSH connectivity and permissions:"
-            print_error "  • Source: $uploads_dir/"
-            print_error "  • Destination: ${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/"
-            print_error "  • SSH key: $HOME/.ssh/id_rsa"
-            print_error "  • Port: $KINSTA_PORT"
-            print_error "  • File count: $file_count files"
+            print_error "Failed to transfer uploads via tar pipe"
+            print_error "  Source:      $uploads_dir/ ($file_count files)"
+            print_error "  Destination: ${KINSTA_USER}@${KINSTA_HOST}:/tmp/uploads/"
             exit 1
         fi
     else
-        print_warning "No files found to upload in uploads directory"
-        print_info "Checked directory: $uploads_dir"
-        print_info "Directory contents:"
-        ls -la "$uploads_dir" 2>/dev/null || print_info "Directory not accessible"
+        print_error "No files found in local uploads directory — aborting deployment"
+        print_error "  Checked: $uploads_dir"
+        print_error "  Directory contents:"
+        ls -la "$uploads_dir" 2>/dev/null || print_error "  (directory not accessible)"
+        print_error "  Upload images via the sitebuilder UI before deploying."
+        exit 1
     fi
-    
+
     log_step_complete "Upload Media Files"
 }
 
